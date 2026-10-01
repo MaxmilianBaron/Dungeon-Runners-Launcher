@@ -1,0 +1,45 @@
+<Window x:Class="DungeonRunners.Launcher.MainWindow" xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Dungeon Runners · Reborn" Width="960" Height="800" MinWidth="800" MinHeight="650" WindowStartupLocation="CenterScreen" Background="#100E0C" Foreground="#EFE6CF" FontFamily="{StaticResource GameFont}" FontSize="16" Opened="OnLoaded" Closing="OnClosing" UseLayoutRounding="True">
+  <Border BorderBrush="{StaticResource GoldFrame}" BorderThickness="4" Padding="5">
+    <Border BorderBrush="#57422D" BorderThickness="1">
+      <Border.Background><ImageBrush Source="avares://DungeonRunnersLauncher/Assets/AdBackground.png" Stretch="Fill" /></Border.Background>
+      <Grid Margin="8,0" ColumnDefinitions="11*,78*,11*">
+        <Grid Grid.Column="1" Margin="0,8,0,12" RowDefinitions="78,*,Auto,Auto,36">
+          <Grid ColumnDefinitions="150,*,150">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+              <Button x:Name="Website" Content="Website" Click="WebsiteClick" FontSize="12" MinHeight="28" Padding="6,2" />
+              <Button x:Name="Armory" Content="Armory" Click="ArmoryClick" FontSize="12" MinHeight="28" Padding="6,2" Margin="6,0,0,0" />
+            </StackPanel>
+            <Image x:Name="Logo" Grid.Column="1" Source="avares://DungeonRunnersLauncher/Assets/AdFrame_DRLogo.png" MaxWidth="312" Height="78" Stretch="Uniform" Margin="8,0" />
+            <Button x:Name="Discord" Grid.Column="2" Content="Discord" Click="DiscordClick" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="12" MinHeight="28" Padding="8,2" />
+          </Grid>
+          <Border Grid.Row="1" BorderBrush="{StaticResource GoldFrame}" BorderThickness="2" Background="Black" Margin="0,6,0,12" ClipToBounds="True">
+            <Grid x:Name="ArtworkHost" ClipToBounds="True" MinHeight="160">
+              <Rectangle x:Name="ArtworkRear"><Rectangle.Fill><ImageBrush SourceRect="0%,21.875%,100%,53.515625%" Stretch="UniformToFill" /></Rectangle.Fill></Rectangle>
+              <Rectangle x:Name="ArtworkFront"><Rectangle.Fill><ImageBrush SourceRect="0%,21.875%,100%,53.515625%" Stretch="UniformToFill" /></Rectangle.Fill></Rectangle>
+              <Border x:Name="AddonsPanel" IsVisible="False" Background="#F5110F0C" Padding="22,18">
+                <Grid RowDefinitions="Auto,*,Auto">
+                  <DockPanel><Button DockPanel.Dock="Right" Content="Close" Click="CloseAddonsClick" HorizontalAlignment="Right" FontSize="13" MinHeight="30" Padding="10,4" Margin="12,0,0,0" /><TextBlock Text="Dungeon Runners Addons" FontSize="22" Foreground="{StaticResource Accent}" TextWrapping="Wrap" /></DockPanel>
+                  <TextBlock Grid.Row="1" Text="Install or update the public addon collection.&#10;Your settings and history are preserved.&#10;In the game, open ESC → Addons." TextWrapping="Wrap" VerticalAlignment="Center" FontSize="16" Margin="0,12" />
+                  <Button x:Name="InstallAddons" Grid.Row="2" Content="Install addons" Click="InstallAddonsClick" HorizontalAlignment="Left" MinWidth="210" />
+                </Grid>
+              </Border>
+            </Grid>
+          </Border>
+          <StackPanel Grid.Row="2">
+            <DockPanel Margin="0,0,0,7"><TextBlock x:Name="VersionLabel" DockPanel.Dock="Right" HorizontalAlignment="Right" Text="Client 666 · Release 1.0.0" Foreground="{StaticResource Muted}" FontSize="13" /><TextBlock Text="Installation folder" Foreground="{StaticResource Accent}" FontSize="16" /></DockPanel>
+            <Grid ColumnDefinitions="*,Auto"><TextBox x:Name="Folder" AutomationProperties.Name="Installation folder" TextChanged="FolderChanged" Padding="8,5" /><Button x:Name="Browse" Grid.Column="1" Content="Browse" Margin="10,0,0,0" Click="BrowseClick" FontSize="12" MinHeight="30" Padding="10,2" /></Grid>
+            <CheckBox x:Name="DesktopShortcut" Content="Create a desktop shortcut" IsChecked="True" Margin="0,7,0,8" />
+          </StackPanel>
+          <Border Grid.Row="3" Background="#CA090806" BorderBrush="#56422C" BorderThickness="1" Padding="12,7" Margin="0,0,0,10">
+            <Grid RowDefinitions="Auto,Auto,Auto">
+              <DockPanel><Button x:Name="Cancel" Content="Cancel" DockPanel.Dock="Right" Click="CancelClick" IsVisible="False" Padding="9,1" MinHeight="24" FontSize="12" Margin="12,0,0,0" /><TextBlock x:Name="Status" Text="Checking for updates" FontSize="17" Foreground="{StaticResource Accent}" VerticalAlignment="Center" /></DockPanel>
+              <TextBlock x:Name="Detail" Grid.Row="1" Text="Connecting to the release service…" Foreground="{StaticResource Muted}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" FontSize="14" MaxHeight="44" ToolTip.Tip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+              <DockPanel x:Name="TransferRow" Grid.Row="2" IsVisible="False" Margin="0,5,0,0"><TextBlock x:Name="Transfer" DockPanel.Dock="Right" Text="" Foreground="{StaticResource Muted}" FontSize="11" Margin="12,0,0,0" /><ProgressBar x:Name="Progress" Height="5" Foreground="{StaticResource Accent}" Background="#302619" BorderThickness="0" Minimum="0" Maximum="100" IsVisible="False" VerticalAlignment="Center" /></DockPanel>
+            </Grid>
+          </Border>
+          <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center"><Button x:Name="Primary" Content="Install game" Click="PrimaryClick" FontSize="14" MinWidth="124" MinHeight="34" Padding="10,2" Margin="0,0,10,0" /><Button x:Name="Update" Content="Update" Click="UpdateClick" FontSize="14" MinWidth="104" MinHeight="34" Padding="10,2" Margin="0,0,10,0" /><Button x:Name="Addons" Content="Addons" Click="AddonsClick" FontSize="14" MinWidth="104" MinHeight="34" Padding="10,2" Margin="0,0,18,0" /><Button x:Name="Repair" Content="Repair" Click="RepairClick" VerticalAlignment="Center" FontSize="12" MinHeight="28" Padding="8,2" ToolTip.Tip="Verify and restore game files" /></StackPanel>
+        </Grid>
+      </Grid>
+    </Border>
+  </Border>
+</Window>
