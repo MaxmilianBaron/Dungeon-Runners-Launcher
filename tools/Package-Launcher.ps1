@@ -156,7 +156,9 @@ try {
             $outputs += $updateBinary
         }
         $image = Join-Path $stage 'Dungeon-Runners-Launcher-Mac.dmg'
-        & hdiutil create -ov -format UDZO -volname 'Dungeon Runners Launcher' -srcfolder $distribution $image
+        $payloadBytes = (Get-ChildItem -LiteralPath $distribution -File -Recurse | Measure-Object -Property Length -Sum).Sum
+        $imageSizeMiB = [long][Math]::Ceiling($payloadBytes / 1MB * 1.2) + 64
+        & hdiutil create -ov -fs HFS+ -size ($imageSizeMiB.ToString([Globalization.CultureInfo]::InvariantCulture) + 'm') -format UDZO -volname 'Dungeon Runners Launcher' -srcfolder $distribution $image
         if ($LASTEXITCODE -ne 0) { throw 'DMG creation failed.' }
         $destination = Join-Path $outputRoot 'Dungeon-Runners-Launcher-Mac.dmg'
         Move-Item -LiteralPath $image -Destination $destination -Force
