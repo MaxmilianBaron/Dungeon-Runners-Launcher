@@ -135,6 +135,10 @@ try {
             $outputs += $destination
         }
     }
+    if ($Platform -eq 'Linux') {
+        & (Join-Path $PSScriptRoot 'Package-LinuxInstaller.ps1') -OutputDirectory $outputRoot
+        $outputs += Join-Path $outputRoot 'Dungeon-Runners-Launcher-Linux.run'
+    }
     if ($Platform -eq 'Mac') {
         Copy-Item -LiteralPath (Join-Path $projectRoot 'src/Client.Launcher/Assets/DungeonRunners.icns') -Destination $resourceRoot
         Copy-Item -LiteralPath (Join-Path $projectRoot 'Launcher.sh') -Destination $resourceRoot

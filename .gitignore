@@ -6,3 +6,9 @@ artifacts/
 *.key
 *.pem
 *.log
+*.apk
+*.aab
+*.jks
+*.keystore
+local.properties
+Temp/

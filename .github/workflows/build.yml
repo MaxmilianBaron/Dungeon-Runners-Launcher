@@ -58,4 +58,5 @@ jobs:
             artifacts/DungeonRunnersLauncher-osx-*
             artifacts/Dungeon-Runners-Launcher-Mac.dmg
             artifacts/Dungeon-Runners-Launcher-Linux*.AppImage
+            artifacts/Dungeon-Runners-Launcher-Linux.run
           retention-days: 14

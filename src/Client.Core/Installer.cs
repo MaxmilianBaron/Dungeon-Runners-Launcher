@@ -20,12 +20,14 @@ public sealed class Installer
     private readonly string publicKey;
     private readonly Action<string> gameGuard;
     private readonly Action<string>? checkpoint;
+    private readonly Func<string, long?>? availableSpace;
 
-    public Installer(string publicKey, Action<string> gameGuard, Action<string>? checkpoint = null)
+    public Installer(string publicKey, Action<string> gameGuard, Action<string>? checkpoint = null, Func<string, long?>? availableSpace = null)
     {
         this.publicKey = publicKey;
         this.gameGuard = gameGuard;
         this.checkpoint = checkpoint;
+        this.availableSpace = availableSpace;
     }
 
     public ClientManifest? InstalledManifest(string directory)
@@ -96,8 +98,10 @@ public sealed class Installer
         }
         var selected = manifest.Packages.Where(p => p.Files.Any(f => pending.Contains(f.Path))).ToArray();
         var need = selected.Sum(p => p.Size + p.Files.Sum(f => f.Size)) + pending.Sum(p => File.Exists(SafeFiles.Under(root, p)) ? new FileInfo(SafeFiles.Under(root, p)).Length : 0L) + 32L * 1024 * 1024;
-        var drive = new DriveInfo(Path.GetPathRoot(root)!);
-        if (drive.IsReady && drive.AvailableFreeSpace < need) throw new IOException("Not enough free disk space for a safe update.");
+        long? free;
+        if (availableSpace is not null) free = availableSpace(root);
+        else { var drive = new DriveInfo(Path.GetPathRoot(root)!); free = drive.IsReady ? drive.AvailableFreeSpace : null; }
+        if (free < need) throw new IOException("Not enough free disk space for a safe update.");
         var transaction = SafeFiles.Under(work, "transaction");
         Directory.CreateDirectory(transaction);
         var stage = SafeFiles.Under(transaction, "new");
@@ -208,7 +212,9 @@ public sealed class Installer
 
     public static async Task<bool> RecoverAsync(string root)
     {
+        var androidRecovered = AndroidAddons.Recover(root);
         var addonsRecovered = await AddonRemoval.RecoverAsync(root);
+        addonsRecovered |= androidRecovered;
         var work = SafeFiles.Under(root, ".dr-client");
         var transaction = SafeFiles.Under(work, "transaction");
         var path = SafeFiles.Under(transaction, "journal.json");
@@ -264,7 +270,7 @@ public sealed class Installer
         var manifest = Catalog.Verify(signedManifest, publicKey);
         var root = SafeFiles.Root(directory);
         using var installLock = Lock(root);
-        if (Directory.Exists(SafeFiles.Under(root, ".dr-client/transaction")) || AddonRemoval.Pending(root))
+        if (Directory.Exists(SafeFiles.Under(root, ".dr-client/transaction")) || AddonRemoval.Pending(root) || AndroidAddons.Pending(root))
         {
             gameGuard(root);
             await RecoverAsync(root);

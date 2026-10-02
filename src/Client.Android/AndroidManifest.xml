@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+  <queries>
+    <package android:name="com.winlator" />
+    <package android:name="org.winehq.wine" />
+  </queries>
+  <application android:allowBackup="false" android:usesCleartextTraffic="false" android:label="Dungeon Runners" android:icon="@drawable/game_icon" android:theme="@android:style/Theme.Material.NoActionBar" />
+</manifest>

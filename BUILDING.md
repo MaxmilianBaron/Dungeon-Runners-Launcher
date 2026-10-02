@@ -9,7 +9,9 @@ dotnet run --project tests/Client.UI.Tests -c Release -- artifacts/ui
 ./tools/Test-Package.ps1 -Platform Windows
 ```
 
-Use `-Platform Mac` on macOS or `-Platform Linux` on Linux. Windows produces a standalone x64 EXE. Mac produces a DMG containing an application for x64 and arm64. Linux produces separate x64 and arm64 AppImages using checksum-pinned appimagetool 1.9.1 and type2-runtime 20251108. The .NET runtime and license notices are embedded in each executable; `--licenses notices.txt` exports the notices.
+Use `-Platform Mac` on macOS or `-Platform Linux` on Linux. Windows produces a standalone x64 EXE. Mac produces a DMG containing an application for x64 and arm64. Linux produces a universal `.run` installer containing x64 and arm64 AppImages built with checksum-pinned appimagetool 1.9.1 and type2-runtime 20251108. The .NET runtime and license notices are embedded in each executable; `--licenses notices.txt` exports the notices.
+
+The Linux installer detects the kernel architecture and 64-bit userspace, extracts and verifies the selected AppImage, then opens the launcher using extract-and-run mode without FUSE. Enable execution in the file manager or run `sh Dungeon-Runners-Launcher-Linux.run`. `--detect` prints the selected architecture; `--verify` checks the embedded payload without starting it. `tools/Package-LinuxInstaller.ps1` can package existing AppImages. `tools/Test-LinuxInstaller.sh` checks both payloads, unsupported platforms, damaged downloads and temporary-file cleanup.
 
 ## Platforms
 
@@ -26,6 +28,23 @@ Existing Wine settings are preserved. Otherwise a game-specific prefix is create
 DirectX setup uses the [minimal redistributable layout](https://learn.microsoft.com/en-us/windows/win32/dxtecharts/directx-setup-for-game-developers#small-installation-packages) with the x86 D3DX9 31 and 40 cabinets required by the game and addons.
 
 On Windows 11 ARM64, Install, Update, Repair and Play configure per-user game emulation settings. Existing profiles are preserved. A single distinct profile from another verified client installation is copied; otherwise Windows' Safe emulation profile is used. Only ARM emulation flags are transferred. Changes are backed up under `.dr-client/backups`, read back after writing and restored on write failure. The game executable is not modified by this step. ARM64 game stability still requires testing on the target device.
+
+## Android preview
+
+.NET 10 SDK, Android workload, JDK 21 and Android SDK 36:
+
+```sh
+dotnet workload install android
+dotnet build src/Client.Android -c Release
+```
+
+Set `AndroidSdkDirectory` and `JavaSdkDirectory` for nonstandard SDK locations. The APK contains ARM64, ARMv7, x86_64 and x86 runtimes. Android 8+ is required; automatic runtime/APK installation requires Android 9+. Bundled runtime notices cover .NET 10.0.11 and Android workload 36.1.2; refresh them when changing runtime versions. Distribution builds require a persistent private keystore. Android updates verify the package ID, signing certificate and version code.
+
+The game folder is `Download/Dungeon Runners`. Grant file access, install the game, then use Game runtime to install the verified upstream Winlator APK. Create a compatible Winlator container, map Download and open `Dungeon Runners/DungeonRunners-Android.cmd`. Winlator requires ARM64 or a working ARM64 native bridge. Close the game before updating or removing addons. Main Update only updates already installed addons; removal preserves settings and history.
+
+Android APK updates read this repository's releases and select the newest release containing `DungeonRunners-Android.apk`, including Android previews. Downloads are bounded and checked against the release asset SHA-256. Publish Android previews as prereleases without changing the desktop latest release. Keep the APK signing key outside the repository.
+
+Game installation, updates and addon installation/removal passed on an Android 16 x86_64 emulator and an Android 12 ARMv7 phone. The physical-device test also verified APK replacement and preservation of addon settings. CI checks APK installation and startup on Android 15. Winlator crashes during Vulkan initialization on the local emulator before the game starts; no game patches were applied. ARM32-only phones cannot use the verified Winlator runtime. Physical-device gameplay remains unverified.
 
 ## Game packages
 
@@ -46,7 +65,7 @@ The launcher reads manifest schemas 1 and 2. Schema 2 requires launcher 1.0.1 fo
 
 Launcher updates use the latest stable GitHub release, bounded downloads and the release asset SHA-256 digest. Windows uses the standalone EXE; Unix packages also publish `DungeonRunnersLauncher-<runtime>` for the installed launcher. The replacement worker waits for the current launcher to exit, keeps a backup, replaces only its owned executable and restarts it. Modified or unowned launchers are preserved. Manual Update reports success only after all checks finish; an unavailable feed is reported as a check failure.
 
-Addon releases are obtained from the Addons repository over HTTPS and checked against the GitHub release asset SHA-256 digest before its installer or updater runs. Addon installation and rollback are delegated to those scripts. The launcher does not replace their installation rules.
+Addon releases are obtained from the Addons repository over HTTPS and checked against the GitHub release asset SHA-256 digest. Desktop installation and rollback use the addon scripts. Android validates the same public package manifest and applies its allowed files through a recoverable transaction; settings, history and unknown loaders are preserved.
 
 Existing installations show Play. Their first launch verifies all managed files and saves the signed manifest for subsequent offline launcher use. Later launches verify executable and DLL hashes and data-file sizes; Repair checks every managed file.
 

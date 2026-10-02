@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.0</TargetFramework>
+    <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>DungeonRunners.Android</RootNamespace>
+    <ApplicationId>com.aardvarkland.dungeonrunners</ApplicationId>
+    <ApplicationTitle>Dungeon Runners</ApplicationTitle>
+    <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
+    <ApplicationVersion>10001</ApplicationVersion>
+    <RuntimeIdentifiers>android-arm64;android-x64;android-arm;android-x86</RuntimeIdentifiers>
+    <AndroidPackageFormats>apk</AndroidPackageFormats>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <AndroidEnableMarshalMethods>false</AndroidEnableMarshalMethods>
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Client.Core/Client.Core.csproj" GlobalPropertiesToRemove="RuntimeIdentifier;RuntimeIdentifiers;SelfContained" />
+    <Compile Include="../Client.Launcher/ReleaseKey.cs" Link="ReleaseKey.cs" />
+    <AndroidAsset Include="../Client.Launcher/Assets/*.png" Link="Art/%(Filename)%(Extension)" />
+    <AndroidAsset Include="../Client.Launcher/Assets/Fonts/SourceSerif4-Regular.otf" Link="Fonts/SourceSerif4-Regular.otf" />
+    <AndroidAsset Include="../../LICENSE" Link="Licenses/LICENSE.txt" />
+    <AndroidAsset Include="../../NOTICE.md" Link="Licenses/NOTICE.txt" />
+    <AndroidAsset Include="Licenses/*.txt" Link="Licenses/%(Filename)%(Extension)" />
+    <AndroidAsset Include="../Client.Launcher/Assets/Fonts/LICENSE.md" Link="Licenses/SourceSerif4.txt" />
+    <AndroidResource Include="../Client.Launcher/Assets/DungeonRunners.png" Link="Resources/drawable/game_icon.png" />
+  </ItemGroup>
+</Project>

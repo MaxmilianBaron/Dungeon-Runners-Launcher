@@ -12,6 +12,8 @@ The client executable contains a launcher-entry patch pointing to `DungeonRunner
 
 The shared interface uses Avalonia (MIT), SkiaSharp, HarfBuzzSharp, MicroCom and Tmds.DBus. Self-contained downloads embed their license notices and the .NET runtime notices. Run the launcher with `--licenses notices.txt` to export them.
 
+The Android interface uses Android system widgets and the .NET Android runtime. Its runtime notices are retained under `src/Client.Android/Licenses` and embedded in the APK. Desktop UI dependencies are not included in the APK. Winlator is downloaded unmodified from https://github.com/brunodev85/winlator and retains its upstream licenses, including those of Wine, Box64 and its other bundled components.
+
 Linux AppImages include the unmodified AppImage type2-runtime. Its license and dependency notices are included in the image; corresponding sources are available from https://github.com/AppImage/type2-runtime/tree/20251108.
 
 Source Serif 4 is distributed under the SIL Open Font License 1.1. Its original license is retained beside the embedded font and in the download.
