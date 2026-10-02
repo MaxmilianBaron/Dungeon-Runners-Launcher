@@ -25,6 +25,8 @@ Existing Wine settings are preserved. Otherwise a game-specific prefix is create
 
 DirectX setup uses the [minimal redistributable layout](https://learn.microsoft.com/en-us/windows/win32/dxtecharts/directx-setup-for-game-developers#small-installation-packages) with the x86 D3DX9 31 and 40 cabinets required by the game and addons.
 
+On Windows 11 ARM64, Install, Update, Repair and Play configure per-user game emulation settings. Existing profiles are preserved. A single distinct profile from another verified client installation is copied; otherwise Windows' Safe emulation profile is used. Only ARM emulation flags are transferred. Changes are backed up under `.dr-client/backups`, read back after writing and restored on write failure. The game executable is not modified by this step. ARM64 game stability still requires testing on the target device.
+
 ## Game packages
 
 Extract the original client distribution into a separate directory. Do not use an installed client containing user files. `Client.Pack` accepts only the original executable checksum, applies the launcher-entry patch, selects a fixed file list and creates clean user settings.

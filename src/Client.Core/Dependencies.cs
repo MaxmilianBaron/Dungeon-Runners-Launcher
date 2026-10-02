@@ -1,8 +1,11 @@
 using System.Diagnostics;
+using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace DungeonRunners.Client;
+
+public sealed record RuntimeSetup(string? Wine, bool Changed);
 
 public static class Dependencies
 {
@@ -45,23 +48,30 @@ public static class Dependencies
         return OperatingSystem.IsMacOS() && File.Exists(local) ? local : null;
     }
 
-    public static async Task<string?> EnsureAsync(string root, Downloads downloads, IProgress<ProgressInfo>? progress, Action committing, CancellationToken token, Func<ProcessStartInfo, CancellationToken, Task>? execute = null)
+    public static async Task<RuntimeSetup> EnsureAsync(string root, Downloads downloads, IProgress<ProgressInfo>? progress, Action committing, CancellationToken token, Func<ProcessStartInfo, CancellationToken, Task>? execute = null, Func<bool>? configureCompatibility = null)
     {
         var run = execute ?? RunAsync;
         using var installLock = Installer.Lock(root);
         progress?.Report(new("Checking requirements", "Checking game runtime libraries…"));
         if (OperatingSystem.IsWindows())
         {
-            if (WindowsReady()) return null;
-            GameLaunch.EnsureClosed(root);
-            await InstallDirectXAsync(root, null, downloads, progress, committing, token, run);
-            if (!WindowsReady()) throw new IOException("DirectX setup finished, but required 32-bit libraries are still missing. Select Repair to retry.");
-            return null;
+            var installed = false;
+            if (!WindowsReady())
+            {
+                GameLaunch.EnsureClosed(root);
+                await InstallDirectXAsync(root, null, downloads, progress, committing, token, run);
+                if (!WindowsReady()) throw new IOException("DirectX setup finished, but required 32-bit libraries are still missing. Select Repair to retry.");
+                installed = true;
+            }
+            var configured = configureCompatibility?.Invoke() ?? ArmEmulation.Ensure(root, progress, committing, token);
+            return new(null, installed || configured);
         }
+        var changed = false;
         if (OperatingSystem.IsMacOS()) await EnsureRosettaAsync(root, progress, committing, token, run);
         var wine = FindWine(root);
         if (wine is null)
         {
+            changed = true;
             GameLaunch.EnsureClosed(root);
             if (OperatingSystem.IsMacOS()) wine = await InstallMacWineAsync(root, downloads, progress, committing, token, run);
             else if (OperatingSystem.IsLinux())
@@ -82,6 +92,7 @@ public static class Dependencies
         var librariesPresent = prefix.Length == 0 || HasDirectXLibraries(Path.Combine(prefix, "drive_c/windows/syswow64")) || HasDirectXLibraries(Path.Combine(prefix, "drive_c/windows/system32"));
         if (!librariesPresent || !File.Exists(marker) || new FileInfo(marker).Length > 32768 || File.ReadAllText(marker) != identity)
         {
+            changed = true;
             GameLaunch.EnsureClosed(root);
             progress?.Report(new("Preparing requirements", "Initializing the game runtime…"));
             token.ThrowIfCancellationRequested(); committing();
@@ -91,7 +102,7 @@ public static class Dependencies
             await run(check, CancellationToken.None);
             SafeFiles.WriteAtomic(marker, Encoding.UTF8.GetBytes(identity));
         }
-        return wine;
+        return new(wine, changed);
     }
 
     public static async Task EnsureAddonToolsAsync(IProgress<ProgressInfo>? progress, Action committing, CancellationToken token)
@@ -104,7 +115,19 @@ public static class Dependencies
         if (FindOnPath("python3") is null) throw new IOException("Python installation did not finish. Select Addons to retry.");
     }
 
-    public static bool HasDirectXLibraries(string folder) => DirectXLibraries.All(name => new FileInfo(Path.Combine(folder, name)) is { Exists: true, Length: > 0 });
+    public static bool HasDirectXLibraries(string folder) => DirectXLibraries.All(name => IsX86Library(Path.Combine(folder, name)));
+
+    private static bool IsX86Library(string path)
+    {
+        try
+        {
+            using var file = File.OpenRead(path);
+            using var pe = new PEReader(file);
+            return pe.PEHeaders.CoffHeader.Machine == Machine.I386 && pe.PEHeaders.PEHeader?.Magic == PEMagic.PE32
+                && (pe.PEHeaders.CoffHeader.Characteristics & Characteristics.Dll) != 0;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or BadImageFormatException) { return false; }
+    }
     private static bool WindowsReady() => HasDirectXLibraries(Environment.GetFolderPath(Environment.SpecialFolder.SystemX86));
 
     public static string PrepareDirectXSetup(string extracted)

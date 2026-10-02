@@ -35,6 +35,7 @@ public partial class MainWindow : Window
     private string? launcherCheckError;
     private string? updateMessage;
     private string? updateDetail;
+    private bool operationFailed;
     private bool restartPending;
     private bool clientContentUpdate;
     private readonly bool preview;
@@ -117,9 +118,15 @@ public partial class MainWindow : Window
             GameTaskbar.ConfigureExisting(SafeFiles.Root(Folder.Text!));
             if (LauncherReplacement.ReadResult(SafeFiles.Root(Folder.Text!)) is { } result)
             {
-                updateMessage = result.Success ? "Launcher updated" : "Launcher update failed";
-                updateDetail = result.Message;
-                ShowReady();
+                var root = SafeFiles.Root(Folder.Text!);
+                if (result.Success && GameLaunch.IsInstalled(root))
+                    await CompleteLauncherUpdateAsync(root);
+                else
+                {
+                    updateMessage = result.Success ? "Launcher updated" : "Launcher update failed";
+                    updateDetail = result.Message;
+                    ShowReady();
+                }
             }
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or Win32Exception or System.Runtime.InteropServices.COMException)
@@ -128,6 +135,14 @@ public partial class MainWindow : Window
         }
         await CheckInBackgroundAsync();
     }
+
+    private Task CompleteLauncherUpdateAsync(string root) => RunAsync(async token =>
+    {
+        ClientCompatibility.Require(root, ClientCompatibility.Read(SafeFiles.Under(root, "DungeonRunners.exe")), ClientCompatibility.Installed);
+        await EnsureRequirementsAsync(root, token);
+        updateMessage = "Launcher updated";
+        updateDetail = "Game requirements checked.";
+    });
 
     private void FitToScreen()
     {
@@ -339,8 +354,9 @@ public partial class MainWindow : Window
         Status.Foreground = Brushes.White;
         var missing = rememberedFolder && InstallationPanel.IsVisible;
         var checkError = addonCheckError ?? launcherCheckError;
-        Status.Text = missing ? "Game folder not found" : checkError is not null ? "Update check unavailable" : updateMessage ?? (Mode == "install" ? "Ready to install" : "");
-        Detail.Text = missing ? "Locate the folder containing DungeonRunners.exe, or choose a new installation folder." : checkError ?? updateDetail ?? "";
+        var showCheckError = checkError is not null && !(operationFailed && updateMessage is not null);
+        Status.Text = missing ? "Game folder not found" : showCheckError ? "Update check unavailable" : updateMessage ?? (Mode == "install" ? "Ready to install" : "");
+        Detail.Text = missing ? "Locate the folder containing DungeonRunners.exe, or choose a new installation folder." : showCheckError ? checkError : updateDetail ?? "";
     }
 
     private async Task RunAsync(Func<CancellationToken, Task> action, bool closeOnSuccess = false)
@@ -348,7 +364,7 @@ public partial class MainWindow : Window
         if (operation is not null || conflict is not null || preview) return;
         updateCheck?.Cancel();
         operation = new CancellationTokenSource();
-        updateMessage = null; updateDetail = null; restartPending = false;
+        updateMessage = null; updateDetail = null; restartPending = false; operationFailed = false;
         var succeeded = false;
         committing = false;
         Cancel.IsVisible = true;
@@ -363,14 +379,16 @@ public partial class MainWindow : Window
         catch (ClientConflictException e) { ShowConflict(e, action, closeOnSuccess); }
         catch (OperationCanceledException)
         {
-            Status.Text = operation.IsCancellationRequested ? "Cancelled" : "Connection timed out";
-            Detail.Text = "Select Update to retry. Existing game files and settings are preserved.";
+            operationFailed = true;
+            Status.Text = updateMessage = operation.IsCancellationRequested ? "Cancelled" : "Connection timed out";
+            Detail.Text = updateDetail = "Select Update to retry. Existing game files and settings are preserved.";
         }
-        catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException or HttpRequestException or InvalidOperationException or ArgumentException or System.Text.Json.JsonException or Win32Exception or KeyNotFoundException or System.Runtime.InteropServices.COMException)
+        catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException or System.Security.SecurityException or HttpRequestException or InvalidOperationException or ArgumentException or System.Text.Json.JsonException or Win32Exception or KeyNotFoundException or System.Runtime.InteropServices.COMException)
         {
-            Status.Text = "Could not finish";
+            operationFailed = true;
+            Status.Text = updateMessage = "Could not finish";
             Status.Foreground = new SolidColorBrush(Color.FromRgb(245, 174, 140));
-            Detail.Text = e.Message;
+            Detail.Text = updateDetail = e.Message;
         }
         finally
         {
@@ -442,11 +460,11 @@ public partial class MainWindow : Window
         var result = await Task.Run(() => installer.ApplyAsync(root, releaseBytes!, downloads.PackageAsync, progress, token), token);
         InstallationLocation.Save(root); rememberedFolder = true;
         await InstallEntryPointsAsync(root, createShortcut, installer.InstalledManifest(root)?.Schema == 2);
-        await EnsureRequirementsAsync(root, token);
-        return result;
+        var requirements = await EnsureRequirementsAsync(root, token);
+        return result with { RequirementsChanged = requirements.Changed };
     }
 
-    private async Task<string?> EnsureRequirementsAsync(string root, CancellationToken token)
+    private async Task<RuntimeSetup> EnsureRequirementsAsync(string root, CancellationToken token)
     {
         committing = false;
         Cancel.IsEnabled = true;
@@ -487,7 +505,7 @@ public partial class MainWindow : Window
             if (mode != "play") { await InstallAsync(token); return; }
             var root = SafeFiles.Root(Folder.Text ?? "");
             ClientCompatibility.Require(root, ClientCompatibility.Read(SafeFiles.Under(root, "DungeonRunners.exe")), ClientCompatibility.Installed);
-            var wine = await EnsureRequirementsAsync(root, token);
+            var requirements = await EnsureRequirementsAsync(root, token);
             var manifest = LocalManifest() ?? releaseBytes;
             if (manifest is null)
             {
@@ -503,7 +521,7 @@ public partial class MainWindow : Window
             {
                 await Task.Run(() => installer.PreparePlayAsync(root, manifest, token, game =>
                 {
-                    process = Process.Start(GameLaunch.Command(game, wine)) ?? throw new IOException("The game could not be started.");
+                    process = Process.Start(GameLaunch.Command(game, requirements.Wine)) ?? throw new IOException("The game could not be started.");
                 }), token);
                 await GameTaskbar.ConfigureAsync(process!, root);
             }
@@ -532,7 +550,7 @@ public partial class MainWindow : Window
             updateMessage = "Restarting launcher";
             return;
         }
-        SetUpdateResult(result.ChangedFiles > 0 || addonsChanged, addonUpdate is not null);
+        SetUpdateResult(result.ChangedFiles > 0 || result.RequirementsChanged || addonsChanged, addonUpdate is not null);
     });
 
     private void SetUpdateResult(bool changed, bool addonsInstalled)

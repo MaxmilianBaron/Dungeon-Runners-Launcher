@@ -42,6 +42,9 @@ internal static partial class Program
             await Test("game launch keeps structured paths and existing Wine overrides", Launch);
             if (OperatingSystem.IsWindows()) await Test("taskbar relaunch belongs to the matching installation", Taskbar);
             await Test("runtime setup validates downloads, package plans, libraries and failures", RuntimeRequirements);
+            await Test("Windows ARM setup migrates game profiles and preserves custom settings", ArmProfiles);
+            await Test("Windows ARM setup backs up, verifies, rolls back and respects cancellation", ArmProfileFailures);
+            if (OperatingSystem.IsWindows()) await Test("Windows game compatibility values round-trip without changing the client", ArmRegistry);
             Console.WriteLine($"PASS: {passed} test groups.");
             return 0;
         }
@@ -455,7 +458,12 @@ internal static partial class Program
         File.WriteAllBytes(Path.Combine(libraries, "d3dx9_40.dll"), Array.Empty<byte>());
         Check(!Dependencies.HasDirectXLibraries(libraries), "Empty runtime library accepted.");
         File.WriteAllBytes(Path.Combine(libraries, "d3dx9_40.dll"), new byte[] { 1 });
-        Check(Dependencies.HasDirectXLibraries(libraries), "Complete runtime not detected.");
+        Check(!Dependencies.HasDirectXLibraries(libraries), "Corrupt runtime library accepted.");
+        var nativeDll = NativeDllFixture(0x14c);
+        foreach (var name in new[] { "d3dx9_31.dll", "d3dx9_40.dll" }) File.WriteAllBytes(Path.Combine(libraries, name), nativeDll);
+        Check(Dependencies.HasDirectXLibraries(libraries), "Complete x86 runtime not detected.");
+        File.WriteAllBytes(Path.Combine(libraries, "d3dx9_40.dll"), NativeDllFixture(0xAA64));
+        Check(!Dependencies.HasDirectXLibraries(libraries), "ARM64 library accepted for the x86 game.");
         var extracted = NewRoot();
         var components = new[] { "DXSETUP.exe", "DSETUP.dll", "dsetup32.dll", "dxupdate.cab", "OCT2006_d3dx9_31_x86.cab", "Nov2008_d3dx9_40_x86.cab" };
         foreach (var name in components) File.WriteAllText(Path.Combine(extracted, name), name);
@@ -505,7 +513,7 @@ internal static partial class Program
             await Dependencies.RunAsync(command, token);
         }
         string? wine;
-        try { wine = await Dependencies.EnsureAsync(root, downloads, progress, () => { }, CancellationToken.None, Execute); }
+        try { wine = (await Dependencies.EnsureAsync(root, downloads, progress, () => { }, CancellationToken.None, Execute)).Wine; }
         catch
         {
             var windows = OperatingSystem.IsWindows() ? Environment.GetFolderPath(Environment.SpecialFolder.Windows)

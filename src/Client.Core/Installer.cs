@@ -4,7 +4,10 @@ using System.Text.Json;
 
 namespace DungeonRunners.Client;
 
-public sealed record InstallResult(string Version, int ChangedFiles, bool Recovered);
+public sealed record InstallResult(string Version, int ChangedFiles, bool Recovered)
+{
+    public bool RequirementsChanged { get; init; }
+}
 public sealed record TransactionFile(string Path, bool Existed, string? PreviousHash, string NewHash);
 public sealed record Transaction(bool Committed, TransactionFile[] Files);
 

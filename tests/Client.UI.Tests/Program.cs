@@ -333,6 +333,11 @@ internal static class Program
             typeof(MainWindow).GetField("preview", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(window, false);
             await Run(_ => Task.FromException(new IOException("The game could not be started.")));
             Check(window.IsVisible && window.FindControl<Border>("StatusPanel")!.IsVisible && window.FindControl<TextBlock>("Detail")!.Text == "The game could not be started.", "Failed launch closed the launcher or hid its error.");
+            await Run(_ => Task.FromException(new System.Security.SecurityException("Windows denied compatibility setup.")), false);
+            typeof(MainWindow).GetField("addonCheckError", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(window, "Update check unavailable.");
+            typeof(MainWindow).GetMethod("ShowReady", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, null);
+            Check(window.IsVisible && window.FindControl<TextBlock>("Status")!.Text == "Could not finish" && window.FindControl<TextBlock>("Detail")!.Text == "Windows denied compatibility setup.", "Background refresh hid a runtime setup error.");
+            typeof(MainWindow).GetField("addonCheckError", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(window, null);
             var entered = new TaskCompletionSource();
             var pending = Run(async token => { entered.SetResult(); await Task.Delay(Timeout.Infinite, token); });
             await entered.Task;
@@ -340,6 +345,8 @@ internal static class Program
             Check(window.IsVisible, "Close interrupted an active operation without waiting for cancellation.");
             await pending;
             Check(window.IsVisible && window.FindControl<TextBlock>("Status")!.Text == "Cancelled", "Cancelled operation closed the launcher or lost its status.");
+            typeof(MainWindow).GetMethod("ShowReady", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, null);
+            Check(window.FindControl<TextBlock>("Status")!.Text == "Cancelled", "Background refresh hid cancellation.");
             var finish = new TaskCompletionSource();
             var committing = typeof(MainWindow).GetField("committing", BindingFlags.Instance | BindingFlags.NonPublic)!;
             pending = Run(async _ => { committing.SetValue(window, true); await finish.Task; }, false);

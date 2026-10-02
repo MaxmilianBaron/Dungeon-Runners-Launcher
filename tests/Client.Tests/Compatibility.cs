@@ -49,7 +49,9 @@ internal static partial class Program
         f.Manifest = f.Manifest with { Schema = 2, Packages = new[] { f.Manifest.Packages[0] with { Size = new FileInfo(archive).Length, Sha256 = await Catalog.HashAsync(archive), Files = files } } };
         await f.Apply();
         var executable = Path.Combine(f.Root, "DungeonRunners.exe");
+        Check(ArmEmulation.ValidClient(executable), "Installed client cannot supply an ARM profile.");
         File.WriteAllBytes(executable, local);
+        Check(ArmEmulation.ValidClient(executable), "Legacy client with an unrelated edit cannot supply an ARM profile.");
         var result = await f.Apply();
         var merged = File.ReadAllBytes(executable);
         Check(result.ChangedFiles == 1 && merged[0x40] == local[0x40], "Custom patches lost.");
@@ -61,6 +63,7 @@ internal static partial class Program
         await f.Install().PreparePlayAsync(f.Root, f.Signed, default);
         var corrupted = merged.ToArray(); corrupted[0x2fed11] ^= 1;
         File.WriteAllBytes(executable, corrupted);
+        Check(!ArmEmulation.ValidClient(executable), "Conflicting client accepted as an ARM profile source.");
         ClientConflictException? conflict = null;
         try { await f.Apply(); } catch (ClientConflictException error) { conflict = error; }
         Check(conflict is { CanRestore: true } && File.ReadAllBytes(executable).SequenceEqual(corrupted) && f.Acquired == acquired, "Conflict changed files or failed to stop early.");
