@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AssemblyName>DungeonRunnersLauncher</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/DungeonRunners.ico</ApplicationIcon>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../Client.Core/Client.Core.csproj" /></ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Themes.Simple" Version="12.1.3" />
+    <AvaloniaResource Include="Assets/**" />
+    <EmbeddedResource Include="../../LICENSE" LogicalName="DungeonRunners.Licenses.LICENSE.txt" />
+    <EmbeddedResource Include="../../NOTICE.md" LogicalName="DungeonRunners.Licenses.NOTICE.txt" />
+    <EmbeddedResource Include="../../licenses/*" LogicalName="DungeonRunners.Licenses.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Assets/Fonts/LICENSE.md" LogicalName="DungeonRunners.Licenses.SourceSerif4-OFL.txt" />
+    <EmbeddedResource Include="$(LauncherNoticeDirectory)/*" Condition="'$(LauncherNoticeDirectory)' != ''" LogicalName="DungeonRunners.Licenses.%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

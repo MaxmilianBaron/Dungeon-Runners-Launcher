@@ -1,0 +1,61 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: Windows
+          - os: ubuntu-22.04
+            platform: Linux
+          - os: macos-latest
+            platform: Mac
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet run --project tests/Client.Tests -c Release
+      - run: dotnet run --project tests/Client.UI.Tests -c Release -- artifacts/ui
+      - run: ./tools/Package-Launcher.ps1 -Platform ${{ matrix.platform }}
+      - name: Runtime installation
+        timeout-minutes: 20
+        env:
+          WINEDEBUG: -all
+          LIBGL_ALWAYS_SOFTWARE: 1
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP "runtime game"
+          if ($IsMacOS -and $root.StartsWith("/var/")) { $root = "/private" + $root }
+          if ($IsLinux) {
+            xvfb-run -a dotnet run --project tests/Client.Tests -c Release -- --runtime-integration $root
+          } else {
+            dotnet run --project tests/Client.Tests -c Release -- --runtime-integration $root
+          }
+          if ($LASTEXITCODE -ne 0) { throw "Runtime integration failed." }
+      - name: Packaged startup
+        run: ./tools/Test-Package.ps1 -Platform ${{ matrix.platform }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dungeon-Runners-Launcher-${{ matrix.platform }}
+          path: |
+            artifacts/DungeonRunnersLauncher.exe
+            artifacts/DungeonRunnersLauncher-linux-*
+            artifacts/DungeonRunnersLauncher-osx-*
+            artifacts/Dungeon-Runners-Launcher-Mac.dmg
+            artifacts/Dungeon-Runners-Launcher-Linux*.AppImage
+          retention-days: 14

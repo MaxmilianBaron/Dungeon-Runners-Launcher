@@ -1,0 +1,48 @@
+<Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="DungeonRunners.Launcher.App" RequestedThemeVariant="Dark">
+  <Application.Resources>
+    <FontFamily x:Key="GameFont">avares://DungeonRunnersLauncher/Assets/Fonts#Source Serif 4</FontFamily>
+    <SolidColorBrush x:Key="Muted" Color="#C1B49D" />
+    <SolidColorBrush x:Key="Accent" Color="#E9C369" />
+    <LinearGradientBrush x:Key="GoldFrame" StartPoint="0%,0%" EndPoint="100%,100%"><GradientStop Color="#D4AD67" /><GradientStop Color="#59412A" Offset="0.35" /><GradientStop Color="#B48E50" Offset="0.65" /><GradientStop Color="#48331E" Offset="1" /></LinearGradientBrush>
+    <LinearGradientBrush x:Key="RedButton" StartPoint="0%,0%" EndPoint="0%,100%"><GradientStop Color="#8A170C" /><GradientStop Color="#4B0503" Offset="0.25" /><GradientStop Color="#210302" Offset="0.8" /><GradientStop Color="#630B04" Offset="1" /></LinearGradientBrush>
+    <LinearGradientBrush x:Key="UpdateButton" StartPoint="0%,0%" EndPoint="0%,100%"><GradientStop Color="#416F20" /><GradientStop Color="#25420D" Offset="0.3" /><GradientStop Color="#122108" Offset="0.8" /><GradientStop Color="#365518" Offset="1" /></LinearGradientBrush>
+    <ControlTheme x:Key="GameButton" TargetType="Button">
+      <Setter Property="Foreground" Value="{StaticResource Accent}" />
+      <Setter Property="Background" Value="{StaticResource RedButton}" />
+      <Setter Property="BorderBrush" Value="{StaticResource GoldFrame}" />
+      <Setter Property="BorderThickness" Value="2" />
+      <Setter Property="Padding" Value="18,7" />
+      <Setter Property="FontFamily" Value="{StaticResource GameFont}" />
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="MinHeight" Value="40" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="Frame" Background="#090806" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="3">
+            <Border Name="Fill" BorderBrush="#732114" BorderThickness="1" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+              <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:pointerover /template/ Border#Fill"><Setter Property="BorderBrush" Value="#EBA953" /></Style>
+      <Style Selector="^:pointerover"><Setter Property="Foreground" Value="#FFF3B0" /></Style>
+      <Style Selector="^:pressed /template/ Border#Fill"><Setter Property="Opacity" Value="0.65" /></Style>
+      <Style Selector="^:disabled /template/ Border#Frame"><Setter Property="Opacity" Value="0.45" /></Style>
+      <Style Selector="^:focus-visible /template/ Border#Frame"><Setter Property="BorderBrush" Value="#FFEAAF" /></Style>
+    </ControlTheme>
+    <ControlTheme x:Key="GameCheckBox" TargetType="CheckBox">
+      <Setter Property="Foreground" Value="#DED2B8" /><Setter Property="FontSize" Value="13" /><Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template"><ControlTemplate><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Border Name="Box" Width="18" Height="18" Margin="0,0,9,0" BorderBrush="#AA8956" BorderThickness="1" Background="#190F09"><TextBlock Name="Tick" Text="✓" FontSize="13" Foreground="#F0C45E" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="False" /></Border><ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" VerticalAlignment="Center" /></StackPanel></ControlTemplate></Setter>
+      <Style Selector="^:checked /template/ TextBlock#Tick"><Setter Property="IsVisible" Value="True" /></Style>
+      <Style Selector="^:focus-visible /template/ Border#Box"><Setter Property="BorderBrush" Value="#FFF2BF" /></Style>
+      <Style Selector="^:disabled"><Setter Property="Opacity" Value="0.5" /></Style>
+    </ControlTheme>
+  </Application.Resources>
+  <Application.Styles>
+    <SimpleTheme />
+    <Style Selector="Button"><Setter Property="Theme" Value="{StaticResource GameButton}" /></Style>
+    <Style Selector="CheckBox"><Setter Property="Theme" Value="{StaticResource GameCheckBox}" /></Style>
+    <Style Selector="TextBox"><Setter Property="Background" Value="#BB090806" /><Setter Property="Foreground" Value="#EFE6CF" /><Setter Property="BorderBrush" Value="#6D5638" /><Setter Property="BorderThickness" Value="1" /><Setter Property="Padding" Value="8,5" /><Setter Property="FontFamily" Value="{StaticResource GameFont}" /><Setter Property="FontSize" Value="13" /><Setter Property="VerticalContentAlignment" Value="Center" /><Setter Property="SelectionBrush" Value="#8E713E" /></Style>
+  </Application.Styles>
+</Application>

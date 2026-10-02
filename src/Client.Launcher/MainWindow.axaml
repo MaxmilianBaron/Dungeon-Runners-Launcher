@@ -1,0 +1,65 @@
+<Window x:Class="DungeonRunners.Launcher.MainWindow" xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Dungeon Runners · Reborn" Icon="/Assets/DungeonRunners.ico" Width="960" Height="800" MinWidth="320" MinHeight="240" WindowStartupLocation="CenterScreen" Background="#100E0C" Foreground="#EFE6CF" FontFamily="{StaticResource GameFont}" FontSize="16" Opened="OnLoaded" Closing="OnClosing" UseLayoutRounding="True">
+  <Grid>
+  <Border BorderBrush="{StaticResource GoldFrame}" BorderThickness="4" Padding="5">
+    <Border BorderBrush="#57422D" BorderThickness="1">
+      <Border.Background><ImageBrush Source="avares://DungeonRunnersLauncher/Assets/AdBackground.png" Stretch="Fill" /></Border.Background>
+      <Grid Margin="8,0" ColumnDefinitions="11*,78*,11*">
+        <ScrollViewer x:Name="PageScroll" Grid.Column="1" Margin="0,8,0,12" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid x:Name="ContentGrid" MinHeight="{Binding Bounds.Height, ElementName=PageScroll}" RowDefinitions="Auto,*,Auto,Auto,Auto">
+          <Grid x:Name="Header" ColumnDefinitions="150,*,150" RowDefinitions="78">
+            <StackPanel x:Name="WebsiteLinks" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+              <Button x:Name="Website" Content="Website" Click="WebsiteClick" FontSize="12" MinHeight="28" Padding="6,2" />
+              <Button x:Name="Armory" Content="Armory" Click="ArmoryClick" FontSize="12" MinHeight="28" Padding="6,2" Margin="6,0,0,0" />
+            </StackPanel>
+            <Image x:Name="Logo" Grid.Column="1" Source="avares://DungeonRunnersLauncher/Assets/AdFrame_DRLogo.png" MaxWidth="312" Height="78" Stretch="Uniform" Margin="8,0" />
+            <Button x:Name="Discord" Grid.Column="2" Content="Discord" Click="DiscordClick" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="12" MinHeight="28" Padding="8,2" />
+          </Grid>
+          <Border x:Name="ArtworkFrame" Grid.Row="1" BorderBrush="{StaticResource GoldFrame}" BorderThickness="2" Background="Black" Margin="0,6,0,12" ClipToBounds="True">
+            <Grid x:Name="ArtworkHost" ClipToBounds="True" MinHeight="160">
+              <Rectangle x:Name="ArtworkRear"><Rectangle.Fill><ImageBrush SourceRect="0%,21.875%,100%,53.515625%" Stretch="Uniform" /></Rectangle.Fill></Rectangle>
+              <Rectangle x:Name="ArtworkFront"><Rectangle.Fill><ImageBrush SourceRect="0%,21.875%,100%,53.515625%" Stretch="Uniform" /></Rectangle.Fill></Rectangle>
+              <Canvas>
+              <Border x:Name="AddonsPanel" IsVisible="False" Background="#F5110F0C" Padding="22,18" Width="{Binding Bounds.Width, ElementName=ArtworkHost}" Height="{Binding Bounds.Height, ElementName=ArtworkHost}">
+                <ScrollViewer x:Name="AddonScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <Grid MinHeight="{Binding Bounds.Height, ElementName=AddonScroll}" RowDefinitions="Auto,*,Auto">
+                  <DockPanel><Button DockPanel.Dock="Right" Content="Close" Click="CloseAddonsClick" HorizontalAlignment="Right" FontSize="13" MinHeight="30" Padding="10,4" Margin="12,0,0,0" /><TextBlock Text="Dungeon Runners Addons" FontSize="22" Foreground="{StaticResource Accent}" TextWrapping="Wrap" /></DockPanel>
+                  <TextBlock Grid.Row="1" Text="Install or update the public addon collection.&#10;Your settings and history are preserved.&#10;In the game, open ESC → Addons." TextWrapping="Wrap" VerticalAlignment="Center" FontSize="16" Margin="0,12" />
+                  <Button x:Name="InstallAddons" Grid.Row="2" Content="Install addons" Click="InstallAddonsClick" HorizontalAlignment="Left" FontSize="14" Padding="10,4" />
+                </Grid>
+                </ScrollViewer>
+              </Border>
+              </Canvas>
+            </Grid>
+          </Border>
+          <StackPanel x:Name="InstallationPanel" Grid.Row="2">
+            <WrapPanel Margin="0,0,0,7"><TextBlock Text="Installation folder" Foreground="{StaticResource Accent}" FontSize="16" Margin="0,0,16,0" /><TextBlock x:Name="VersionLabel" Text="Client 666 · Release 1.0.1" Foreground="{StaticResource Muted}" FontSize="13" VerticalAlignment="Center" /></WrapPanel>
+            <Grid ColumnDefinitions="*,Auto"><TextBox x:Name="Folder" AutomationProperties.Name="Installation folder" TextChanged="FolderChanged" Padding="8,5" /><Button x:Name="Browse" Grid.Column="1" Content="Browse" Margin="10,0,0,0" Click="BrowseClick" FontSize="12" MinHeight="30" Padding="10,2" /></Grid>
+            <CheckBox x:Name="DesktopShortcut" Content="Create a desktop shortcut" IsChecked="True" Margin="0,7,0,8" />
+          </StackPanel>
+          <Border x:Name="StatusPanel" Grid.Row="3" Background="#CA090806" BorderBrush="#56422C" BorderThickness="1" Padding="12,7" Margin="0,0,0,10">
+            <Grid RowDefinitions="Auto,Auto,Auto">
+              <DockPanel><Button x:Name="Cancel" Content="Cancel" DockPanel.Dock="Right" Click="CancelClick" IsVisible="False" Padding="9,1" MinHeight="24" FontSize="12" Margin="12,0,0,0" /><TextBlock x:Name="Status" Text="Checking for updates" FontSize="17" Foreground="{StaticResource Accent}" VerticalAlignment="Center" TextWrapping="Wrap" /></DockPanel>
+              <TextBlock x:Name="Detail" Grid.Row="1" Text="Connecting to the release service…" Foreground="{StaticResource Muted}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" FontSize="14" MaxHeight="44" ToolTip.Tip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+              <DockPanel x:Name="TransferRow" Grid.Row="2" IsVisible="False" Margin="0,5,0,0"><TextBlock x:Name="Transfer" DockPanel.Dock="Right" Text="" Foreground="{StaticResource Muted}" FontSize="11" Margin="12,0,0,0" /><ProgressBar x:Name="Progress" Height="5" Foreground="{StaticResource Accent}" Background="#302619" BorderThickness="0" Minimum="0" Maximum="100" IsVisible="False" VerticalAlignment="Center" /></DockPanel>
+            </Grid>
+          </Border>
+          <WrapPanel x:Name="Actions" Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center"><Button x:Name="Primary" Content="Install game" Click="PrimaryClick" FontSize="14" MinWidth="124" MinHeight="34" Padding="10,2" Margin="0,3,10,3" /><Button x:Name="Update" Content="Update" Click="UpdateClick" FontSize="14" MinWidth="104" MinHeight="34" Padding="10,2" Margin="0,3,10,3" /><Button x:Name="Addons" Content="Addons" Click="AddonsClick" FontSize="14" MinWidth="104" MinHeight="34" Padding="10,2" Margin="0,3,18,3" /><Button x:Name="Repair" Content="Repair" Click="RepairClick" VerticalAlignment="Center" FontSize="12" MinHeight="28" Padding="8,2" Margin="0,3" ToolTip.Tip="Verify and restore game files" /></WrapPanel>
+        </Grid>
+        </ScrollViewer>
+      </Grid>
+    </Border>
+  </Border>
+    <Border x:Name="ConflictPanel" IsVisible="False" Background="#F5110F0C" BorderBrush="{StaticResource GoldFrame}" BorderThickness="2" Margin="16" Padding="14" MaxWidth="520" VerticalAlignment="Center" MaxHeight="{Binding Bounds.Height, RelativeSource={RelativeSource AncestorType=Window}}">
+      <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="12">
+          <TextBlock Text="Client conflict" FontSize="22" Foreground="{StaticResource Accent}" TextWrapping="Wrap" />
+          <TextBlock x:Name="ConflictDetail" FontSize="15" TextWrapping="Wrap" />
+          <WrapPanel>
+            <Button x:Name="KeepChanges" Content="Keep my changes" Click="KeepChangesClick" FontSize="13" Padding="8,4" Margin="0,0,8,8" />
+            <Button x:Name="RestoreRequired" Content="Restore required parts" Click="RestoreRequiredClick" FontSize="13" Padding="8,4" Margin="0,0,0,8" />
+          </WrapPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+  </Grid>
+</Window>

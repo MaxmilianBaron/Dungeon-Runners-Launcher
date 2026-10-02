@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+artifacts/
+*.user
+*.pfx
+*.key
+*.pem
+*.log

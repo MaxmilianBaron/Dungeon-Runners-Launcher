@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>CFBundleName</key><string>Dungeon Runners Launcher</string>
+  <key>CFBundleDisplayName</key><string>Dungeon Runners Launcher</string>
+  <key>CFBundleIdentifier</key><string>com.maxmilianbaron.dungeonrunners.launcher</string>
+  <key>CFBundleVersion</key><string>1.0.1</string>
+  <key>CFBundleShortVersionString</key><string>1.0.1</string>
+  <key>CFBundleExecutable</key><string>DungeonRunnersLauncher</string>
+  <key>CFBundleIconFile</key><string>DungeonRunners.icns</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>LSMinimumSystemVersion</key><string>12.0</string>
+  <key>NSHighResolutionCapable</key><true/>
+</dict></plist>
