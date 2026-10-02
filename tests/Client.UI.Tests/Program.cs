@@ -192,6 +192,7 @@ internal static class Program
             Find<Button>("Addons").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Check(Find<Border>("AddonsPanel").IsVisible, "Addons panel not opening.");
             Check(!Find<Button>("InstallAddons").IsEnabled, "Addons should require installation.");
+            Check(!Find<Button>("UninstallAddons").IsVisible, "Uninstall is offered without installed addons.");
             window.UpdateLayout(); Save((Control)window.Content!, Path.Combine(output, "launcher-addons.png"), 1);
             var close = Find<Border>("AddonsPanel").GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Close"));
             close.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -207,15 +208,25 @@ internal static class Program
                 Dispatcher.UIThread.RunJobs();
                 Check(Equals(Find<Button>("Primary").Content, "Play"), "Existing installation still displays Install.");
                 Check(Find<Button>("InstallAddons").IsEnabled && !Find<CheckBox>("DesktopShortcut").IsVisible, "Existing installation actions not ready.");
+                SafeFiles.WriteAtomic(SafeFiles.Under(existing, "Addons/Runtime/Addons.dll"), new byte[] { 1 });
+                typeof(MainWindow).GetMethod("RefreshActions", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, null);
+                Check(Find<Button>("UninstallAddons").IsVisible && Find<Button>("UninstallAddons").IsEnabled && !Find<Button>("InstallAddons").IsVisible, "Installed addons do not show only Uninstall.");
+                Find<Border>("AddonsPanel").IsVisible = true;
+                window.UpdateLayout(); Save((Control)window.Content!, Path.Combine(output, "launcher-addons-installed.png"), 1);
+                Find<Border>("AddonsPanel").IsVisible = false;
                 gameRunning = true;
                 typeof(MainWindow).GetMethod("RefreshActions", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, null);
                 Check(Equals(Find<Button>("Primary").Content, "Play") && Find<Button>("Primary").IsEnabled, "Another account cannot be launched while the game is running.");
                 Check(!Find<Button>("Update").IsEnabled && !Find<Button>("Repair").IsEnabled && !Find<Button>("InstallAddons").IsEnabled, "Running game no longer protects updates.");
+                Check(!Find<Button>("UninstallAddons").IsEnabled && Find<TextBlock>("AddonNotice").IsVisible, "Running game does not protect or explain addon uninstall.");
                 gameRunning = false;
                 typeof(MainWindow).GetMethod("RefreshActions", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, null);
                 Check(!Find<StackPanel>("InstallationPanel").IsVisible && !Find<Button>("Browse").IsEffectivelyVisible && !folder.IsEffectivelyVisible, "Installed game still exposes its folder controls.");
                 Check(!Find<Border>("StatusPanel").IsVisible && string.IsNullOrEmpty(Find<TextBlock>("Status").Text), "Installed game shows an idle status panel.");
                 CheckResponsive(window, output, "play");
+                File.Delete(SafeFiles.Under(existing, "Addons/Runtime/Addons.dll"));
+                typeof(MainWindow).GetMethod("RefreshActions", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, null);
+                Check(!Find<Button>("UninstallAddons").IsVisible && Find<Button>("InstallAddons").IsVisible && Find<Button>("InstallAddons").IsEnabled, "Uninstalled addons do not show only Install.");
                 window.Width = 800; window.Height = 650;
                 Find<ScrollViewer>("PageScroll").Offset = default;
                 Dispatcher.UIThread.RunJobs(); window.UpdateLayout();
@@ -307,9 +318,14 @@ internal static class Program
             Find<Border>("AddonsPanel").IsVisible = true; Layout();
             Check(Math.Abs(Find<Grid>("ArtworkHost").Bounds.Height - artworkHeight) <= 1, "Opening Addons changed the artwork layout.");
             var addonScroll = Find<ScrollViewer>("AddonScroll");
-            Find<Button>("InstallAddons").BringIntoView(); Layout();
-            var addonAction = Bounds(Find<Button>("InstallAddons"), addonScroll);
-            Check(addonAction.Left >= -1 && addonAction.Right <= addonScroll.Bounds.Width + 1 && addonAction.Top >= -1 && addonAction.Bottom <= addonScroll.Bounds.Height + 1, $"Addon action unreachable at {width}x{height}.");
+            foreach (var name in new[] { "InstallAddons", "UninstallAddons" })
+            {
+                var button = Find<Button>(name);
+                if (!button.IsVisible) continue;
+                button.BringIntoView(); Layout();
+                var addonAction = Bounds(button, addonScroll);
+                Check(addonAction.Left >= -1 && addonAction.Right <= addonScroll.Bounds.Width + 1 && addonAction.Top >= -1 && addonAction.Bottom <= addonScroll.Bounds.Height + 1, $"Addon action {name} unreachable at {width}x{height}.");
+            }
             Find<Border>("AddonsPanel").IsVisible = false;
             scroll.Offset = default; Layout();
             if (width is 320 or 640 or 1280)
@@ -362,10 +378,10 @@ internal static class Program
             Check(window.IsVisible && window.FindControl<TextBlock>("Status")!.Text == "Everything is up to date", "Operation completion erased the no-update confirmation.");
             await Run(_ =>
             {
-                typeof(MainWindow).GetMethod("SetAddonResult", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, new object[] { true, "8.4.2" });
+                typeof(MainWindow).GetMethod("SetAddonResult", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, new object[] { "8.4.2" });
                 return Task.CompletedTask;
             }, false);
-            Check(window.IsVisible && window.FindControl<TextBlock>("Status")!.Text == "Addons are up to date", "Addon check completion erased its confirmation.");
+            Check(window.IsVisible && window.FindControl<TextBlock>("Status")!.Text == "Addons installed", "Addon installation completion erased its confirmation.");
             await Run(_ => Task.CompletedTask);
             Check(!window.IsVisible, "Successful Play operation did not close the launcher.");
         }

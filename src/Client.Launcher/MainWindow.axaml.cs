@@ -280,11 +280,15 @@ public partial class MainWindow : Window
         var installed = false;
         var gamePresent = false;
         var running = false;
+        var addonsPresent = false;
+        var removalPending = false;
         string? installedVersion = null;
         try
         {
             var root = SafeFiles.Root(Folder.Text ?? "");
             gamePresent = File.Exists(SafeFiles.Under(root, "DungeonRunners.exe"));
+            addonsPresent = File.Exists(SafeFiles.Under(root, "Addons/Runtime/Addons.dll"));
+            removalPending = AddonRemoval.Pending(root);
             installed = Catalog.Managed.Where(p => !Catalog.Seeds.Contains(p)).All(p =>
             {
                 var file = new FileInfo(SafeFiles.Under(root, p));
@@ -303,12 +307,14 @@ public partial class MainWindow : Window
         Update.IsEnabled = !busy && !running;
         Repair.IsEnabled = !busy && !running && gamePresent;
         Addons.IsEnabled = !busy;
-        InstallAddons.IsEnabled = !busy && !running && installed;
+        InstallAddons.IsVisible = !addonsPresent && !removalPending;
+        InstallAddons.IsEnabled = !busy && !running && installed && !addonsPresent && !removalPending;
+        UninstallAddons.IsVisible = addonsPresent || removalPending;
+        UninstallAddons.IsEnabled = !busy && !running && (addonsPresent || removalPending);
+        AddonNotice.IsVisible = running;
         DesktopShortcut.IsEnabled = !busy;
         DesktopShortcut.IsVisible = Mode == "install";
         InstallationPanel.IsVisible = !gamePresent;
-        try { InstallAddons.Content = File.Exists(SafeFiles.Under(SafeFiles.Root(Folder.Text ?? ""), "Addons/Runtime/Addons.dll")) ? "Update addons" : "Install addons"; }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException) { InstallAddons.Content = "Install addons"; }
         Folder.IsEnabled = !busy;
         Browse.IsEnabled = !busy;
         RefreshStatusVisibility();
@@ -533,6 +539,7 @@ public partial class MainWindow : Window
     {
         await FetchAsync(token);
         var result = await InstallAsync(token);
+        await CheckAddonsAsync(token);
         var addonsChanged = addonUpdate is { Available: true };
         if (addonsChanged) await UpdateAddonsAsync(token);
         if (addonCheckError is not null || addonUpdate is { Available: true }) throw new IOException(addonCheckError ?? "Addon verification did not finish. Select Addons to retry.");
@@ -600,17 +607,34 @@ public partial class MainWindow : Window
         Status.Text = "Checking addons";
         await CheckAddonsAsync(token);
         if (addonCheckError is not null) throw new IOException(addonCheckError);
-        var current = addonUpdate is { Available: false };
-        if (!current) await UpdateAddonsAsync(token);
+        if (addonUpdate is not null)
+        {
+            updateMessage = "Addons already installed";
+            updateDetail = "Select Update to check for a newer version.";
+            return;
+        }
+        await UpdateAddonsAsync(token);
         if (addonCheckError is not null || addonUpdate is not { Available: false }) throw new IOException(addonCheckError ?? "Addon verification did not finish. Select Addons to retry.");
-        SetAddonResult(current, addonUpdate.Version);
+        SetAddonResult(addonUpdate.Version);
     });
 
-    private void SetAddonResult(bool current, string version)
+    private void SetAddonResult(string version)
     {
-        updateMessage = current ? "Addons are up to date" : "Addons updated";
+        updateMessage = "Addons installed";
         updateDetail = "Latest GitHub release: " + version;
     }
+
+    private async void UninstallAddonsClick(object sender, RoutedEventArgs e) => await RunAsync(async token =>
+    {
+        var root = SafeFiles.Root(Folder.Text ?? "");
+        var progress = new Progress<ProgressInfo>(p => { Status.Text = p.Phase; Detail.Text = p.Detail; });
+        await Task.Run(() => new AddonRemoval(EnsureClosed).RunAsync(root, downloads,
+            () => Dispatcher.UIThread.Invoke(() => { committing = true; Cancel.IsEnabled = false; }), progress, token), token);
+        addonRoot = Folder.Text; addonUpdate = null; addonCheckError = null;
+        updateMessage = "Addons uninstalled";
+        updateDetail = "Game files, settings and history were kept. Select Install addons to use them again.";
+    });
+
     private async Task UpdateAddonsAsync(CancellationToken token)
     {
         var root = SafeFiles.Root(Folder.Text ?? "");
@@ -640,7 +664,7 @@ public partial class MainWindow : Window
 
     private static void EnsureClosed(string root)
     {
-        if (IsRunning(root)) throw new IOException("Close Dungeon Runners before installing or updating this folder.");
+        if (IsRunning(root)) throw new IOException("Close Dungeon Runners before changing this installation.");
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)

@@ -37,6 +37,9 @@ internal static partial class Program
             await Test("malformed archives cannot escape or replace duplicate entries", BadArchives);
             await Test("addons use verified release assets and structured arguments", Addons);
             await Test("addon updates detect changed files and preserve custom settings", AddonUpdates);
+            await Test("addon uninstall preserves game data and graphics, and updates leave it uninstalled", AddonUninstall);
+            await Test("addon uninstall rejects unknown files, locks, cancellation and invalid downloads", AddonUninstallFailures);
+            await Test("addon uninstall rolls back each boundary and recovers interruptions without overwriting edits", AddonUninstallRecovery);
             await Test("launcher feeds verify platform, origin, digest and same-version changes", LauncherFeeds);
             await Test("launcher replacement preserves other files, rejects conflicts and rolls back", LauncherReplacementTests);
             await Test("game launch keeps structured paths and existing Wine overrides", Launch);

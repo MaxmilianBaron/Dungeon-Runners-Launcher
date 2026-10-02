@@ -50,10 +50,7 @@ public static partial class AddonBridge
     public static async Task<AddonUpdate?> CheckAsync(string root, Downloads downloads, CancellationToken token)
     {
         if (!File.Exists(SafeFiles.Under(root, "Addons/Runtime/Addons.dll"))) return null;
-        var metadata = await downloads.ReadAsync(Api, 1024 * 1024, ValidateUrl, token);
-        var asset = ReadAsset(metadata, ManifestName);
-        var bytes = await downloads.ReadAsync(asset.Url, Math.Min(asset.Size, 128 * 1024), ValidateUrl, token);
-        VerifyAsset(asset, bytes);
+        var bytes = await ReadManifestAsync(downloads, token);
         using var document = JsonDocument.Parse(bytes);
         var manifest = document.RootElement;
         var version = manifest.GetProperty("version").GetString() ?? "";
@@ -71,6 +68,15 @@ public static partial class AddonBridge
             if (new FileInfo(path).Length > MaximumArchive || await Catalog.HashAsync(path, token) != hash) return new(version, true);
         }
         return new(version, false);
+    }
+
+    internal static async Task<byte[]> ReadManifestAsync(Downloads downloads, CancellationToken token)
+    {
+        var metadata = await downloads.ReadAsync(Api, 1024 * 1024, ValidateUrl, token);
+        var asset = ReadAsset(metadata, ManifestName);
+        var bytes = await downloads.ReadAsync(asset.Url, Math.Min(asset.Size, 128 * 1024), ValidateUrl, token);
+        VerifyAsset(asset, bytes);
+        return bytes;
     }
 
     private static void VerifyAsset(AddonAsset asset, byte[] bytes)
@@ -155,6 +161,7 @@ public static partial class AddonBridge
         gameGuard(root);
         if (!File.Exists(SafeFiles.Under(root, "DungeonRunners.exe"))) throw new IOException("Install the game first.");
         using var installLock = Installer.Lock(root);
+        await AddonRemoval.RecoverAsync(root);
         var work = SafeFiles.Under(root, ".dr-client");
         var stage = SafeFiles.Under(work, "addons-" + Guid.NewGuid().ToString("N"));
         var update = File.Exists(SafeFiles.Under(root, "Addons/Runtime/Addons.dll"));

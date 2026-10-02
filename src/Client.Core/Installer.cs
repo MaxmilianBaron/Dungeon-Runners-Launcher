@@ -208,14 +208,15 @@ public sealed class Installer
 
     public static async Task<bool> RecoverAsync(string root)
     {
+        var addonsRecovered = await AddonRemoval.RecoverAsync(root);
         var work = SafeFiles.Under(root, ".dr-client");
         var transaction = SafeFiles.Under(work, "transaction");
         var path = SafeFiles.Under(transaction, "journal.json");
-        if (!Directory.Exists(transaction)) return false;
+        if (!Directory.Exists(transaction)) return addonsRecovered;
         if (!File.Exists(path))
         {
             SafeFiles.DeleteOwnedTree(work, transaction);
-            return false;
+            return addonsRecovered;
         }
         if (new FileInfo(path).Length > 65536) throw new IOException("Invalid recovery journal. Keep the launcher data folder for recovery.");
         var journal = JsonSerializer.Deserialize<Transaction>(File.ReadAllBytes(path), Catalog.Json) ?? throw new IOException("Empty recovery journal.");
@@ -263,7 +264,7 @@ public sealed class Installer
         var manifest = Catalog.Verify(signedManifest, publicKey);
         var root = SafeFiles.Root(directory);
         using var installLock = Lock(root);
-        if (Directory.Exists(SafeFiles.Under(root, ".dr-client/transaction")))
+        if (Directory.Exists(SafeFiles.Under(root, ".dr-client/transaction")) || AddonRemoval.Pending(root))
         {
             gameGuard(root);
             await RecoverAsync(root);

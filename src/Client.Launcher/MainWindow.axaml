@@ -23,8 +23,14 @@
                 <ScrollViewer x:Name="AddonScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <Grid MinHeight="{Binding Bounds.Height, ElementName=AddonScroll}" RowDefinitions="Auto,*,Auto">
                   <DockPanel><Button DockPanel.Dock="Right" Content="Close" Click="CloseAddonsClick" HorizontalAlignment="Right" FontSize="13" MinHeight="30" Padding="10,4" Margin="12,0,0,0" /><TextBlock Text="Dungeon Runners Addons" FontSize="22" Foreground="{StaticResource Accent}" TextWrapping="Wrap" /></DockPanel>
-                  <TextBlock Grid.Row="1" Text="Install or update the public addon collection.&#10;Your settings and history are preserved.&#10;In the game, open ESC → Addons." TextWrapping="Wrap" VerticalAlignment="Center" FontSize="16" Margin="0,12" />
-                  <Button x:Name="InstallAddons" Grid.Row="2" Content="Install addons" Click="InstallAddonsClick" HorizontalAlignment="Left" FontSize="14" Padding="10,4" />
+                  <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,12" Spacing="8">
+                    <TextBlock Text="Install or uninstall the addon collection.&#10;Settings and history are kept.&#10;In the game, open ESC → Addons." TextWrapping="Wrap" FontSize="16" />
+                    <TextBlock x:Name="AddonNotice" Text="Close Dungeon Runners to manage addons." TextWrapping="Wrap" FontSize="14" Foreground="{StaticResource Muted}" IsVisible="False" />
+                  </StackPanel>
+                  <WrapPanel Grid.Row="2">
+                    <Button x:Name="InstallAddons" Content="Install addons" Click="InstallAddonsClick" FontSize="14" Padding="10,4" Margin="0,4,0,0" />
+                    <Button x:Name="UninstallAddons" Content="Uninstall addons" Click="UninstallAddonsClick" FontSize="14" Padding="10,4" Margin="0,4,0,0" IsVisible="False" ToolTip.Tip="Remove the addon runtime and keep settings and history" />
+                  </WrapPanel>
                 </Grid>
                 </ScrollViewer>
               </Border>
