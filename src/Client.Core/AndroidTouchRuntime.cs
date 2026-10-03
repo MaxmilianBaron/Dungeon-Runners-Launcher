@@ -3,6 +3,25 @@ namespace DungeonRunners.Client;
 public static class AndroidTouchRuntime
 {
     public const string Activity = "com.termux.x11.GameRuntimeActivity";
+    public static readonly ClientPackage Data = ReadDataPackage();
+
+    private static ClientPackage ReadDataPackage()
+    {
+        using var input = typeof(AndroidTouchRuntime).Assembly.GetManifestResourceStream("android-runtime.json") ?? throw new InvalidDataException("The Android runtime package is missing.");
+        return System.Text.Json.JsonSerializer.Deserialize<ClientPackage>(input, Catalog.Json) ?? throw new InvalidDataException("Invalid Android runtime package.");
+    }
+
+    public static async Task PrepareDataAsync(string files, string profile, Downloads downloads, IProgress<ProgressInfo>? progress, CancellationToken token)
+    {
+        if (profile == "armeabi-v7a") return;
+        if (profile is not ("arm64-v8a" or "x86_64")) throw new IOException("Unsupported Android runtime profile.");
+        token.ThrowIfCancellationRequested();
+        var runtime = SafeFiles.Under(files, "game-runtime");
+        var ready = SafeFiles.Under(runtime, "wow64-" + profile + "-ready");
+        if (File.Exists(ready) && new FileInfo(ready).Length <= 128 && File.ReadAllText(ready).Trim() == Data.Sha256) return;
+        await downloads.VerifiedFileAsync(Data, SafeFiles.Under(runtime, "downloads"), progress, token, AndroidUpdates.ValidateUrl);
+    }
+
     public static string? Profile(int api, IEnumerable<string> abis)
     {
         if (api < 28) return null;

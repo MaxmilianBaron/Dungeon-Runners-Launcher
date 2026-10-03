@@ -4,6 +4,8 @@ JDK 21, Android SDK 36, Python 3.11+, Pillow and an i686 MinGW C compiler.
 
 `python tools/Build-AndroidRuntime.py` verifies the pinned runtime payload, checks out the display source revision, applies the integration patches and builds the AAR. Then build `src/Client.Android` with .NET 10 and the Android workload. `tools/Verify-AndroidRuntime.py` verifies the packaged native files and runtime data.
 
+The build exports `artifacts/android-runtime/distribution/Android-WoW64-r2.zip` separately. Publish it with the APK at the pinned release URL. ARM64 and x86-64 setup download and verify this package automatically; ARMv7 uses its bundled data. Keeping shared Wine data outside the APK preserves the 512 MiB update limit of existing launchers.
+
 `dependencies` records the original package versions, source archives and notices. The runtime source download contains the exact upstream display revision with its submodules, Ubuntu source packages, Termux package recipes, Wine, Box86 and Box64 sources. Ubuntu libraries are unmodified armhf, arm64 and amd64 distribution binaries. Build their `.dsc` packages with the matching Ubuntu toolchain; Termux components use the included Termux recipes.
 
 To rebuild Box86, apply `box86-guest-memory.patch` to 0.3.8 and run CMake with `-DARM_DYNAREC=ON -DCMAKE_BUILD_TYPE=Release` on ARMv7, then build the `box86` target. The patch translates guest executable pages as data while keeping native code allocation unchanged. `tests/guest-memory.S` checks guest execution, protection changes and read-only file mappings.

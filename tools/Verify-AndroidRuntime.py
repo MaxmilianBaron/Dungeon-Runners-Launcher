@@ -7,7 +7,14 @@ import struct
 import zipfile
 
 
-def verify(apk):
+def verify(apk, runtime_data=None):
+    if apk.stat().st_size > 512 * 1024 * 1024:
+        raise ValueError('The APK exceeds the update limit of existing launchers.')
+    root = Path(__file__).resolve().parent.parent
+    external = json.loads((root / 'runtime/android-controls/wow64.json').read_text())
+    runtime_data = runtime_data or root / 'artifacts/android-runtime/distribution' / external['name']
+    if runtime_data.stat().st_size != external['size'] or hashlib.file_digest(runtime_data.open('rb'), 'sha256').hexdigest() != external['sha256']:
+        raise ValueError('The separate runtime download differs from its pinned identity.')
     with zipfile.ZipFile(apk) as archive:
         entries = archive.namelist()
         if len(entries) != len(set(entries)):
@@ -54,11 +61,13 @@ def verify(apk):
         for folder in ('', 'wow64/', 'arm64-v8a/', 'x86_64/'):
             prefix = 'assets/dungeon-runtime/' + folder
             expected = json.loads(archive.read(prefix + 'data.json'))
-            with archive.open(prefix + 'data.zip') as stream:
+            if folder == 'wow64/' and (prefix + 'data.zip' in entries or expected['sha256'] != external['sha256']):
+                raise ValueError('Shared runtime data must use the verified separate download.')
+            with (runtime_data.open('rb') if folder == 'wow64/' else archive.open(prefix + 'data.zip')) as stream:
                 checksum = hashlib.file_digest(stream, 'sha256').hexdigest()
             if checksum != expected['sha256']:
                 raise ValueError('Packaged runtime data differs: ' + folder)
-            with zipfile.ZipFile(io.BytesIO(archive.read(prefix + 'data.zip'))) as data:
+            with zipfile.ZipFile(runtime_data if folder == 'wow64/' else io.BytesIO(archive.read(prefix + 'data.zip'))) as data:
                 names = data.namelist()
                 if len(names) != len(set(names)) or sum(item.file_size for item in data.infolist()) != expected['unpackedSize']:
                     raise ValueError('Runtime archive inventory differs: ' + folder)
@@ -73,5 +82,6 @@ def verify(apk):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('apk', type=Path)
+    parser.add_argument('--runtime-data', type=Path)
     args = parser.parse_args()
-    verify(args.apk)
+    verify(args.apk, args.runtime_data)

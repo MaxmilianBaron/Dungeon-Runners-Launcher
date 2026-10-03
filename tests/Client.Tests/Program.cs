@@ -51,6 +51,7 @@ internal static partial class Program
             await Test("addon UI extraction verifies package identity, hashes, bounds and decompression before writing", AddonSkinResources);
             await Test("Android APK feeds reject substituted releases and detect same-version updates", AndroidFeeds);
             await Test("Android storage checks use the game volume before downloading", AndroidStorage);
+            await Test("Android runtime downloads select modern profiles, reuse installed data and respect cancellation", AndroidRuntimeData);
             await Test("launcher feeds verify platform, origin, digest and same-version changes", LauncherFeeds);
             await Test("launcher replacement preserves other files, rejects conflicts and rolls back", LauncherReplacementTests);
             await Test("game launch keeps structured paths and existing Wine overrides", Launch);

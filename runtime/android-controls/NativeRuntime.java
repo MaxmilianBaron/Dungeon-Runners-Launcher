@@ -127,7 +127,7 @@ final class NativeRuntime {
         File ready = new File(base, marker + "-ready");
         if (ready.isFile() && ready.length() <= 128 && new String(Files.readAllBytes(ready.toPath()), java.nio.charset.StandardCharsets.UTF_8).trim().equals(revision)) return;
         if (base.getUsableSpace() < expected + 128L * 1024 * 1024) throw new IOException("Game requirements need more free internal storage.");
-        try (InputStream input = context.getAssets().open(assets + "/data.zip")) {
+        try (InputStream input = dataInput(assets, revision)) {
             java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
             byte[] block = new byte[131072]; int count;
             while ((count = input.read(block)) != -1) digest.update(block, 0, count);
@@ -137,7 +137,7 @@ final class NativeRuntime {
         }
         long total = 0;
         Set<String> names = new HashSet<>();
-        try (ZipInputStream zip = new ZipInputStream(context.getAssets().open(assets + "/data.zip"))) {
+        try (ZipInputStream zip = new ZipInputStream(dataInput(assets, revision))) {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
                 if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException();
@@ -165,6 +165,15 @@ final class NativeRuntime {
         }
         if (total != expected) throw new IOException("The runtime archive is incomplete.");
         write(ready, revision + "\n");
+    }
+
+    private InputStream dataInput(String assets, String revision) throws IOException {
+        if (assets.equals("dungeon-runtime/wow64")) {
+            File archive = new File(base, "downloads/" + revision + ".zip");
+            if (!archive.getCanonicalFile().equals(new File(base.getCanonicalFile(), "downloads/" + revision + ".zip"))) throw new IOException("Invalid runtime download path.");
+            return new FileInputStream(archive);
+        }
+        return context.getAssets().open(assets + "/data.zip");
     }
 
     ProcessBuilder wine(String... arguments) {

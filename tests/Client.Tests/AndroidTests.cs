@@ -8,9 +8,9 @@ internal static partial class Program
     private static async Task AndroidFeeds()
     {
         var bytes = Encoding.UTF8.GetBytes("APK fixture");
-        byte[] Metadata(string? url = null, string? digest = null, bool draft = false, bool duplicate = false, string tag = "v1.0.1", bool prerelease = false)
+        byte[] Metadata(string? url = null, string? digest = null, bool draft = false, bool duplicate = false, string tag = "v1.0.1", bool prerelease = false, long? size = null)
         {
-            var asset = new { name = AndroidUpdates.AssetName, browser_download_url = url ?? $"https://github.com/MaxmilianBaron/Dungeon-Runners-Launcher/releases/download/{tag}/{AndroidUpdates.AssetName}", size = bytes.Length, digest = digest ?? "sha256:" + Hash(bytes) };
+            var asset = new { name = AndroidUpdates.AssetName, browser_download_url = url ?? $"https://github.com/MaxmilianBaron/Dungeon-Runners-Launcher/releases/download/{tag}/{AndroidUpdates.AssetName}", size = size ?? bytes.Length, digest = digest ?? "sha256:" + Hash(bytes) };
             return JsonSerializer.SerializeToUtf8Bytes(new { tag_name = tag, draft, prerelease, assets = duplicate ? new[] { asset, asset } : new[] { asset } });
         }
         byte[] Feed(params byte[][] releases) => Encoding.UTF8.GetBytes("[" + string.Join(",", releases.Select(Encoding.UTF8.GetString)) + "]");
@@ -33,6 +33,8 @@ internal static partial class Program
         Check(AndroidUpdates.ReadFeed(Feed(preview, Metadata()))?.Url.Contains("/v1.0.1/", StringComparison.Ordinal) == true, "An old preview hid the stable Android installer.");
         await Reject(() => AndroidUpdates.ReadFeed(Feed(Metadata(duplicate: true))));
         await Reject(() => AndroidUpdates.ReadFeed(Metadata()));
+        Check(AndroidUpdates.Read(Metadata(size: AndroidUpdates.MaximumApk)).Size == AndroidUpdates.MaximumApk, "Android update limit boundary changed.");
+        await Reject(() => AndroidUpdates.Read(Metadata(size: AndroidUpdates.MaximumApk + 1L)));
         await Reject(() => AndroidUpdates.ReadFeed(Feed(Enumerable.Repeat(desktop, 21).ToArray())));
         foreach (var url in new[] { "http://github.com/file.apk", AndroidUpdates.Api + "&key=secret", "https://github.com/other/repo/releases/download/v1/game.apk", "https://github.com/MaxmilianBaron/Dungeon-Runners-Android/releases/download/v1/file.apk", "https://user@github.com/MaxmilianBaron/Dungeon-Runners-Launcher/releases/download/v1/file.apk" })
             await Reject(() => AndroidUpdates.ValidateUrl(url));
@@ -59,6 +61,32 @@ internal static partial class Program
         var enough = new Installer(fixture.PublicKey, _ => { }, availableSpace: _ => long.MaxValue);
         await fixture.Apply(enough);
         Check(File.Exists(Path.Combine(fixture.Root, "DungeonRunners.exe")), "Installation ignored available target volume space.");
+    }
+
+    private static async Task AndroidRuntimeData()
+    {
+        var files = NewRoot();
+        var requests = 0;
+        using var downloads = new Downloads(new Handler(_ => { requests++; return new HttpResponseMessage(HttpStatusCode.Forbidden); }));
+        Check(AndroidUpdates.ValidateUrl(AndroidTouchRuntime.Data.Url).Scheme == "https" && Catalog.IsHash(AndroidTouchRuntime.Data.Sha256)
+            && AndroidTouchRuntime.Data.Size > 0 && AndroidTouchRuntime.Data.Size < AndroidUpdates.MaximumApk, "Invalid Android runtime download identity.");
+        await AndroidTouchRuntime.PrepareDataAsync(files, "armeabi-v7a", downloads, null, CancellationToken.None);
+        Check(requests == 0, "Legacy runtime requested 64-bit data.");
+        await Reject(() => AndroidTouchRuntime.PrepareDataAsync(files, "x86", downloads, null, CancellationToken.None));
+        foreach (var profile in new[] { "arm64-v8a", "x86_64" })
+        {
+            var before = requests;
+            await Reject(() => AndroidTouchRuntime.PrepareDataAsync(files, profile, downloads, null, CancellationToken.None));
+            Check(requests == before + 1, "A missing modern runtime did not request its data.");
+            var ready = SafeFiles.Under(files, "game-runtime/wow64-" + profile + "-ready");
+            SafeFiles.WriteAtomic(ready, Encoding.UTF8.GetBytes(AndroidTouchRuntime.Data.Sha256 + "\n"));
+            await AndroidTouchRuntime.PrepareDataAsync(files, profile, downloads, null, CancellationToken.None);
+            Check(requests == before + 1, "Installed runtime data was downloaded again.");
+            await Reject(() => AndroidTouchRuntime.PrepareDataAsync(files, profile, downloads, null, new CancellationToken(true)));
+            SafeFiles.WriteAtomic(ready, Encoding.UTF8.GetBytes(new string('0', 64)));
+            await Reject(() => AndroidTouchRuntime.PrepareDataAsync(files, profile, downloads, null, CancellationToken.None));
+            Check(requests == before + 2, "Outdated runtime data was not refreshed.");
+        }
     }
 
     private static async Task AndroidAddonTransactions()

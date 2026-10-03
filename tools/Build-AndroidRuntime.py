@@ -103,6 +103,14 @@ def main():
     subprocess.run([sys.executable, str(runtime / 'prepare.py'), '--source', str(source)], check=True)
     assets = source / 'lorie/src/main/assets/dungeon-runtime'
     shutil.copytree(cache / 'payload/assets', assets, dirs_exist_ok=True)
+    shared_data = json.loads((runtime / 'wow64.json').read_text())
+    bundled_data = assets / 'wow64/data.zip'
+    if bundled_data.stat().st_size != shared_data['size'] or hashlib.file_digest(bundled_data.open('rb'), 'sha256').hexdigest() != shared_data['sha256']:
+        raise ValueError('Shared runtime data differs from its download identity.')
+    distribution = root / 'artifacts/android-runtime/distribution'
+    distribution.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(bundled_data, distribution / shared_data['name'])
+    bundled_data.unlink()
     native = cache / 'payload/native'
     args.library.mkdir(parents=True, exist_ok=True)
     gradle = source / ('gradlew.bat' if os.name == 'nt' else 'gradlew')

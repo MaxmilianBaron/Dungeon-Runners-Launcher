@@ -1,3 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup><EmbeddedResource Include="client-compatibility.json" LogicalName="client-compatibility.json" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="../../runtime/android-controls/wow64.json" LogicalName="android-runtime.json" /></ItemGroup>
 </Project>

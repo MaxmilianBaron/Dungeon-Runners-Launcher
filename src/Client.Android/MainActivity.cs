@@ -410,6 +410,7 @@ public sealed class MainActivity : Activity
     {
         var profile = AndroidTouchRuntime.Profile((int)Build.VERSION.SdkInt, Build.SupportedAbis ?? Array.Empty<string>())
             ?? throw new IOException("This device has no compatible game runtime.");
+        await AndroidTouchRuntime.PrepareDataAsync(FilesDir!.CanonicalPath, profile, downloads, ProgressSink(), token);
         if (!AndroidTouchRuntime.RequirementsReady(FilesDir!.CanonicalPath, root, profile))
             await downloads.VerifiedFileAsync(Dependencies.DirectX, Path.Combine(FilesDir.CanonicalPath, "game-runtime/downloads"), ProgressSink(), token, Dependencies.ValidateUrl);
         token.ThrowIfCancellationRequested();
