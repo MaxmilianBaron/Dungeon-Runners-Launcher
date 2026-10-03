@@ -12,3 +12,4 @@ artifacts/
 *.keystore
 local.properties
 Temp/
+**/__pycache__/

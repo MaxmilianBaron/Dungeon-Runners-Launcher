@@ -30,7 +30,7 @@ internal static partial class Program
         var preview = Metadata(tag: "android-v1.0.1-preview.1", prerelease: true);
         Check(AndroidUpdates.ReadFeed(Feed(desktop, Metadata(draft: true), preview))?.Url.Contains("/android-v1.0.1-preview.1/", StringComparison.Ordinal) == true, "Desktop releases or drafts hid the Android preview.");
         Check(AndroidUpdates.ReadFeed(Feed(desktop)) is null, "Desktop-only release reported an Android update.");
-        Check(AndroidUpdates.ReadFeed(Feed(preview, Metadata()))?.Url.Contains("/android-v1.0.1-preview.1/", StringComparison.Ordinal) == true, "Release ordering was ignored.");
+        Check(AndroidUpdates.ReadFeed(Feed(preview, Metadata()))?.Url.Contains("/v1.0.1/", StringComparison.Ordinal) == true, "An old preview hid the stable Android installer.");
         await Reject(() => AndroidUpdates.ReadFeed(Feed(Metadata(duplicate: true))));
         await Reject(() => AndroidUpdates.ReadFeed(Metadata()));
         await Reject(() => AndroidUpdates.ReadFeed(Feed(Enumerable.Repeat(desktop, 21).ToArray())));
@@ -42,6 +42,11 @@ internal static partial class Program
         Check(!AndroidRuntime.CanInstall(27, new[] { "arm64-v8a" }), "Unsupported Android version accepted the runtime.");
         Check(!AndroidRuntime.CanInstall(36, new[] { "x86_64", "x86" }), "x86 without an ARM64 bridge accepted the runtime.");
         Check(AndroidRuntime.CanInstall(36, new[] { "x86_64", "arm64-v8a" }), "ARM64 native bridge was ignored.");
+        Check(AndroidTouchRuntime.Supported(28, new[] { "armeabi-v7a" }), "ARMv7 touch runtime rejected.");
+        Check(AndroidTouchRuntime.Supported(36, new[] { "arm64-v8a", "armeabi-v7a" }), "Compatible ARM64 device rejected.");
+        Check(!AndroidTouchRuntime.Supported(36, new[] { "arm64-v8a" }), "ARM64-only device accepted 32-bit native requirements.");
+        Check(!AndroidTouchRuntime.Supported(27, new[] { "armeabi-v7a" }), "Unsupported Android API accepted.");
+        Check(!AndroidTouchRuntime.Supported(36, new[] { "x86_64", "x86" }), "x86 device accepted ARM runtime.");
         foreach (var url in new[] { AndroidRuntime.Package.Url.Replace("brunodev85", "other"), AndroidRuntime.Package.Url + "#fragment", AndroidRuntime.Package.Url.Replace("https:", "http:") })
             await Reject(() => AndroidRuntime.ValidateUrl(url));
         using var tampered = new Downloads(new Handler(_ => Reply(new byte[bytes.Length])));

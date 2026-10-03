@@ -136,7 +136,7 @@ public sealed class MainActivity : Activity
         body.AddView(addonPanel, new LinearLayout.LayoutParams(-1, -2) { BottomMargin = Dp(18) });
         path = Text(root, 12);
         body.AddView(path);
-        status = Text("Android preview", 20);
+        status = Text("Android Installer", 20);
         detail = Text("Install the game to begin.", 14);
         body.AddView(status, new LinearLayout.LayoutParams(-1, -2) { TopMargin = Dp(10) });
         body.AddView(detail, new LinearLayout.LayoutParams(-1, -2) { TopMargin = Dp(5), BottomMargin = Dp(10) });
@@ -254,6 +254,7 @@ public sealed class MainActivity : Activity
         remove.Visibility = hasAddons ? ViewStates.Visible : ViewStates.Gone;
         installAddon.Enabled = remove.Enabled = !busy && installed;
         runtimeButton.Enabled = !busy;
+        runtimeButton.Visibility = TouchRuntimeSupported ? ViewStates.Gone : ViewStates.Visible;
         foreach (var button in new[] { primary, update, addon, installAddon, remove, runtimeButton }) button.Alpha = button.Enabled ? 1f : .45f;
         path.Visibility = installed ? ViewStates.Gone : ViewStates.Visible;
         cancel.Visibility = busy ? ViewStates.Visible : ViewStates.Gone;
@@ -286,7 +287,7 @@ public sealed class MainActivity : Activity
         if (!GetPreferences(FileCreationMode.Private)!.GetBoolean("runtimeOpened", false)) return true;
         var answer = new TaskCompletionSource<bool>();
         var dialog = new AlertDialog.Builder(this)!.SetTitle("Close the game first")!
-            .SetMessage("Exit the game in Winlator before changing its files. Android prevents the launcher from checking another app's processes.")!
+            .SetMessage("Exit the game before changing its files. Android prevents the launcher from checking another app's processes.")!
             .SetPositiveButton("Game is closed", (_, _) => answer.TrySetResult(true))!
             .SetNegativeButton("Cancel", (_, _) => answer.TrySetResult(false))!.Create()!;
         dialog.DismissEvent += (_, _) => answer.TrySetResult(false);
@@ -325,7 +326,8 @@ public sealed class MainActivity : Activity
         var sink = ProgressSink();
         var result = await Task.Run(() => installer.ApplyAsync(root, bytes, downloads.PackageAsync, sink, token), token);
         WriteGameEntry();
-        Say("Game installed", $"Client {result.Version}. Configure a compatible game runtime before playing.");
+        Say("Game installed", TouchRuntimeSupported ? $"Client {result.Version}. Preparing game requirements…" : $"Client {result.Version}. Configure a compatible game runtime before playing.");
+        if (TouchRuntimeSupported) await PrepareTouchRuntime(token, false);
     }
 
     private void WriteGameEntry()
@@ -371,11 +373,13 @@ public sealed class MainActivity : Activity
         var bytes = manifest ?? (installer.InstalledManifest(root) is not null ? File.ReadAllBytes(saved) : await Latest(token));
         await Task.Run(() => installer.PreparePlayAsync(root, bytes, token), token);
         WriteGameEntry();
-        await Runtime();
+        if (TouchRuntimeSupported) await PrepareTouchRuntime(token, true);
+        else await Runtime();
     }
 
     private Task Runtime()
     {
+        if (TouchRuntimeSupported) return Run(token => PrepareTouchRuntime(token, true), false);
         var abis = string.Join(", ", Build.SupportedAbis ?? Array.Empty<string>());
         var launch = PackageManager!.GetLaunchIntentForPackage("com.winlator");
         if (launch is null && !CanInstallRuntime)
@@ -399,7 +403,22 @@ public sealed class MainActivity : Activity
         return Task.CompletedTask;
     }
 
-    private bool CanInstallRuntime => AndroidRuntime.CanInstall((int)Build.VERSION.SdkInt, Build.SupportedAbis ?? Array.Empty<string>());
+    private bool TouchRuntimeSupported => AndroidTouchRuntime.Supported((int)Build.VERSION.SdkInt, Build.SupportedAbis ?? Array.Empty<string>());
+    private bool CanInstallRuntime => TouchRuntimeSupported || AndroidRuntime.CanInstall((int)Build.VERSION.SdkInt, Build.SupportedAbis ?? Array.Empty<string>());
+
+    private async Task PrepareTouchRuntime(CancellationToken token, bool play)
+    {
+        if (!AndroidTouchRuntime.RequirementsReady(FilesDir!.CanonicalPath, root))
+            await downloads.VerifiedFileAsync(Dependencies.DirectX, Path.Combine(FilesDir.CanonicalPath, "game-runtime/downloads"), ProgressSink(), token, Dependencies.ValidateUrl);
+        token.ThrowIfCancellationRequested();
+        GetPreferences(FileCreationMode.Private)!.Edit()!.PutBoolean("runtimeOpened", play)!.Apply();
+        var start = new Intent().SetComponent(new ComponentName(PackageName!, AndroidTouchRuntime.Activity));
+        start.AddFlags(ActivityFlags.NewTask);
+        start.PutExtra("play", play);
+        start.PutExtra("root", root);
+        StartActivity(start);
+        if (play) FinishAndRemoveTask();
+    }
 
     private async Task InstallRuntime(CancellationToken token)
     {

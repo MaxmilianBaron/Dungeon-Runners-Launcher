@@ -29,22 +29,23 @@ DirectX setup uses the [minimal redistributable layout](https://learn.microsoft.
 
 On Windows 11 ARM64, Install, Update, Repair and Play configure per-user game emulation settings. Existing profiles are preserved. A single distinct profile from another verified client installation is copied; otherwise Windows' Safe emulation profile is used. Only ARM emulation flags are transferred. Changes are backed up under `.dr-client/backups`, read back after writing and restored on write failure. The game executable is not modified by this step. ARM64 game stability still requires testing on the target device.
 
-## Android preview
+## Android
 
-.NET 10 SDK, Android workload, JDK 21 and Android SDK 36:
+.NET 10 SDK, Android workload, JDK 21, Android SDK 36, Python 3.11+, Pillow and an i686 MinGW C compiler:
 
 ```sh
 dotnet workload install android
+python tools/Build-AndroidRuntime.py
 dotnet build src/Client.Android -c Release
 ```
 
 Set `AndroidSdkDirectory` and `JavaSdkDirectory` for nonstandard SDK locations. The APK contains ARM64, ARMv7, x86_64 and x86 runtimes. Android 8+ is required; automatic runtime/APK installation requires Android 9+. Bundled runtime notices cover .NET 10.0.11 and Android workload 36.1.2; refresh them when changing runtime versions. Distribution builds require a persistent private keystore. Android updates verify the package ID, signing certificate and version code.
 
-The game folder is `Download/Dungeon Runners`. Grant file access, install the game, then use Game runtime to install the verified upstream Winlator APK. Create a compatible Winlator container, map Download and open `Dungeon Runners/DungeonRunners-Android.cmd`. Winlator requires ARM64 or a working ARM64 native bridge. Close the game before updating or removing addons. Main Update only updates already installed addons; removal preserves settings and history.
+The game folder is `Download/Dungeon Runners`. Android 9+ devices exposing the ARMv7 ABI use the integrated runtime and touch controls. ARM64-only devices use the upstream Winlator fallback; compatibility depends on the device and its graphics driver. Microsoft DirectX requirements are downloaded from Microsoft, verified and installed in the isolated Wine prefix. Main Update only updates already installed addons; removal preserves settings and history.
 
-Android APK updates read this repository's releases and select the newest release containing `DungeonRunners-Android.apk`, including Android previews. Downloads are bounded and checked against the release asset SHA-256. Publish Android previews as prereleases without changing the desktop latest release. Keep the APK signing key outside the repository.
+Android APK updates prefer stable releases containing `DungeonRunners-Android.apk`, falling back to Android prereleases. Downloads are bounded and checked against the release asset SHA-256. Keep the APK signing key outside the repository.
 
-Game installation, updates and addon installation/removal passed on an Android 16 x86_64 emulator and an Android 12 ARMv7 phone. The physical-device test also verified APK replacement and preservation of addon settings. CI checks APK installation and startup on Android 15. Winlator crashes during Vulkan initialization on the local emulator before the game starts; no game patches were applied. ARM32-only phones cannot use the verified Winlator runtime. Physical-device gameplay remains unverified.
+Touch item actions run on the game UI thread and use the game's own potion and scroll selection. They preserve the cursor and reject unsupported executable code, loading screens, menus and text entry. Runtime logs retain a bounded 256 KiB tail per component. Exiting the game stops its runtime and display. See `runtime/android-controls/BUILDING.md` for dependency sources and the input adapter tests. CI checks APK installation and launcher startup; device gameplay requires a separate runtime test.
 
 ## Game packages
 

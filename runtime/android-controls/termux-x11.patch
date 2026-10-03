@@ -1,0 +1,91 @@
+diff --git a/lorie/build.gradle b/lorie/build.gradle
+index 4580acb..ae053d1 100644
+--- a/lorie/build.gradle
++++ b/lorie/build.gradle
+@@ -38,7 +38,8 @@ android {
+ 
+     compileOptions.sourceCompatibility JavaVersion.VERSION_1_9
+     compileOptions.targetCompatibility JavaVersion.VERSION_1_9
+-    externalNativeBuild.cmake.path "src/main/cpp/CMakeLists.txt"
++    if (project.hasProperty("prebuiltNativeDir")) sourceSets.main.jniLibs.srcDirs = [project.property("prebuiltNativeDir")]
++    else externalNativeBuild.cmake.path "src/main/cpp/CMakeLists.txt"
+     packagingOptions.jniLibs.useLegacyPackaging false
+     buildFeatures.aidl true
+     buildFeatures.buildConfig true
+diff --git a/lorie/src/main/java/com/termux/x11/MainActivity.java b/lorie/src/main/java/com/termux/x11/MainActivity.java
+index 5d60a7c..d186cc2 100644
+--- a/lorie/src/main/java/com/termux/x11/MainActivity.java
++++ b/lorie/src/main/java/com/termux/x11/MainActivity.java
+@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
+     private static final float MIN_PIP_ASPECT_RATIO = getSystemDimenFloat("config_pictureInPictureMinAspectRatio", 1.f / 2.39f);
+     private static final float MAX_PIP_ASPECT_RATIO = getSystemDimenFloat("config_pictureInPictureMaxAspectRatio", 2.39f);
+ 
++    private GameControls gameControls;
+     public Prefs prefs;
+     LorieApp app;
+ 
+@@ -225,6 +227,7 @@ public class MainActivity extends AppCompatActivity {
+             }
+         });
+ 
++        gameControls = new GameControls(this);
+         ImeHeightProvider.assistActivity(this);
+ 
+         if (app.pendingConnection != null) {
+@@ -660,6 +663,7 @@ public class MainActivity extends AppCompatActivity {
+ 
+     @Override
+     public void onPause() {
++        if (gameControls != null) gameControls.releaseAll();
+         getLorieView().setKeyboardVisible(false);
+ 
+         orientationListener.disable();
+@@ -668,6 +672,13 @@ public class MainActivity extends AppCompatActivity {
+         app.onActivityPaused();
+     }
+ 
++    @Override
++    protected void onNewIntent(Intent intent) {
++        super.onNewIntent(intent);
++        setIntent(intent);
++        if (gameControls != null) { gameControls.applyIntent(); applyContentInsets(); gameControls.refresh(); }
++    }
++
+     public LorieView getLorieView() {
+         return findViewById(R.id.lorieView);
+     }
+@@ -770,13 +781,15 @@ public class MainActivity extends AppCompatActivity {
+         // A bottom bar reserving its own space always sits right above the keyboard via bottomMargin,
+         // so content must stop there too, regardless of Reseed.
+         boolean barReservesKeyboardSpace = pos == PAGER_POSITION_BOTTOM && ekbarContentInset > 0;
+-        int imeContentInset = barReservesKeyboardSpace ? bottomMargin : (prefs.Reseed.get() ? imeHeight : 0);
++        int imeContentInset = barReservesKeyboardSpace ? bottomMargin : ((prefs.Reseed.get() || (gameControls != null && gameControls.enabled())) ? imeHeight : 0);
++        int gameGutter = gameControls == null ? 0 : gameControls.gutter();
+ 
+-        getLorieView().setContentInsets(pos == PAGER_POSITION_LEFT ? ekbarContentInset : 0,
++        getLorieView().setContentInsets(gameGutter + (pos == PAGER_POSITION_LEFT ? ekbarContentInset : 0),
+                 pos == PAGER_POSITION_TOP ? ekbarContentInset : 0,
+-                pos == PAGER_POSITION_RIGHT ? ekbarContentInset : 0,
++                gameGutter + (pos == PAGER_POSITION_RIGHT ? ekbarContentInset : 0),
+                 imeContentInset + (pos == PAGER_POSITION_BOTTOM ? ekbarContentInset : 0));
+         getLorieView().setObscuredBottom(imeHeight - imeContentInset);
++        if (gameControls != null) gameControls.setKeyboardHeight(imeHeight);
+ 
+         ViewPager pager = getTerminalToolbarViewPager();
+         ViewGroup.MarginLayoutParams pagerParams = (ViewGroup.MarginLayoutParams) pager.getLayoutParams();
+@@ -835,6 +848,7 @@ public class MainActivity extends AppCompatActivity {
+     @SuppressLint("WrongConstant")
+     @Override
+     public void onWindowFocusChanged(boolean hasFocus) {
++        if (!hasFocus && gameControls != null) gameControls.releaseAll();
+         super.onWindowFocusChanged(hasFocus);
+         KeyInterceptor.recheck();
+ 
+@@ -1073,6 +1087,7 @@ public class MainActivity extends AppCompatActivity {
+             findViewById(R.id.mouse_buttons).setVisibility(prefs.showMouseHelper.get() && "1".equals(prefs.touchMode.get()) && connected ? View.VISIBLE : View.GONE);
+             findViewById(R.id.stub).setVisibility(connected?View.INVISIBLE:View.VISIBLE);
+             getLorieView().setVisibility(connected?View.VISIBLE:View.INVISIBLE);
++            if (gameControls != null) gameControls.refresh();
+ 
+             // We should recover connection in the case if file descriptor for some reason was broken...
+             if (!connected)

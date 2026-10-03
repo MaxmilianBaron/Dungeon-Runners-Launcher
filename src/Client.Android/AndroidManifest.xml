@@ -8,5 +8,5 @@
     <package android:name="com.winlator" />
     <package android:name="org.winehq.wine" />
   </queries>
-  <application android:allowBackup="false" android:usesCleartextTraffic="false" android:label="Dungeon Runners" android:icon="@drawable/game_icon" android:theme="@android:style/Theme.Material.NoActionBar" />
+  <application android:name="com.termux.x11.LorieApp" android:multiArch="true" android:extractNativeLibs="true" android:allowBackup="false" android:usesCleartextTraffic="false" android:label="Dungeon Runners" android:icon="@drawable/game_icon" android:theme="@android:style/Theme.Material.NoActionBar" />
 </manifest>

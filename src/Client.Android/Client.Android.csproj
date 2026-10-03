@@ -7,7 +7,9 @@
     <ApplicationId>com.aardvarkland.dungeonrunners</ApplicationId>
     <ApplicationTitle>Dungeon Runners</ApplicationTitle>
     <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
-    <ApplicationVersion>10001</ApplicationVersion>
+    <ApplicationVersion>10003</ApplicationVersion>
+    <AndroidRuntimeLibrary Condition="'$(AndroidRuntimeLibrary)' == ''">../../artifacts/android-runtime/library</AndroidRuntimeLibrary>
+    <AndroidStripNativeLibraries>false</AndroidStripNativeLibraries>
     <RuntimeIdentifiers>android-arm64;android-x64;android-arm;android-x86</RuntimeIdentifiers>
     <AndroidPackageFormats>apk</AndroidPackageFormats>
     <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
@@ -25,5 +27,9 @@
     <AndroidAsset Include="Licenses/*.txt" Link="Licenses/%(Filename)%(Extension)" />
     <AndroidAsset Include="../Client.Launcher/Assets/Fonts/LICENSE.md" Link="Licenses/SourceSerif4.txt" />
     <AndroidResource Include="../Client.Launcher/Assets/DungeonRunners.png" Link="Resources/drawable/game_icon.png" />
+    <AndroidLibrary Include="$(AndroidRuntimeLibrary)/*.aar;$(AndroidRuntimeLibrary)/*.jar" Bind="false" />
   </ItemGroup>
+  <Target Name="RequireGameRuntime" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(AndroidRuntimeLibrary)/lorie-release.aar')" Text="Build the Android game runtime before building the installer." />
+  </Target>
 </Project>

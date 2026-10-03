@@ -46,7 +46,7 @@ public static class AndroidUpdates
         using var document = JsonDocument.Parse(metadata);
         var releases = document.RootElement;
         if (releases.ValueKind != JsonValueKind.Array || releases.GetArrayLength() > 20) throw new InvalidDataException("Invalid Android release list.");
-        foreach (var release in releases.EnumerateArray())
+        foreach (var release in releases.EnumerateArray().OrderBy(r => r.GetProperty("prerelease").GetBoolean()))
         {
             if (release.GetProperty("draft").GetBoolean()) continue;
             if (!release.GetProperty("assets").EnumerateArray().Any(a => a.GetProperty("name").GetString() == AssetName)) continue;

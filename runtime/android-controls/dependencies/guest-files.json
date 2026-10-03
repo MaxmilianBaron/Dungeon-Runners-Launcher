@@ -1,0 +1,536 @@
+[
+  {
+    "path": "usr/local/bin/box86",
+    "file": "libguest-f955a321b26b52e4a5f2.so",
+    "sha256": "f955a321b26b52e4a5f223c4468803a3af71f8d8c88652f7112fab53a3c4d9ff",
+    "size": 9066140
+  },
+  {
+    "path": "usr/bin/bash",
+    "file": "libguest-74fa7293506e6921e8ee.so",
+    "sha256": "74fa7293506e6921e8ee71aa5066187e7584796097cba98dbe81696869e56249",
+    "size": 842584
+  },
+  {
+    "path": "usr/bin/env",
+    "file": "libguest-3ff538a047ebe3090a13.so",
+    "sha256": "3ff538a047ebe3090a13578d812687bb42e55587b108340f36dd988d64ce052f",
+    "size": 30852
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/dri/swrast_dri.so",
+    "file": "libguest-f835975b1f9acb0a7437.so",
+    "sha256": "f835975b1f9acb0a7437a10a5baec624ff1e831c72a05d564919a0b4dc42ff3c",
+    "size": 83376
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/ld-linux-armhf.so.3",
+    "file": "libguest-539170bac17e5f336147.so",
+    "sha256": "539170bac17e5f3361473119af8eef46292788a707241598bfbc8d0a065fc550",
+    "size": 1069176
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libc.so.6",
+    "file": "libguest-f5caef8c1ff8a4b6d65f.so",
+    "sha256": "f5caef8c1ff8a4b6d65fb2434b6a535238876b02b248f968d527d5a0a88a4f85",
+    "size": 1123756
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libm.so.6",
+    "file": "libguest-9452c9edfb531924b1d4.so",
+    "sha256": "9452c9edfb531924b1d4806ac7b072ec5d6431dc9eefad56d3bf2cd3ae42aeee",
+    "size": 267696
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libdl.so.2",
+    "file": "libguest-4a2c710d1361bcd7affc.so",
+    "sha256": "4a2c710d1361bcd7affca5ae04b661ee717e55c56bd6da219790b4d7a57701ea",
+    "size": 5492
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/librt.so.1",
+    "file": "libguest-e69a0062af5d7e676052.so",
+    "sha256": "e69a0062af5d7e6760520b76ab5980bc227189920a1cf5b027aaa0c5ce1cd1f5",
+    "size": 5544
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libpthread.so.0",
+    "file": "libguest-7df2697ecf31dd9fc6a5.so",
+    "sha256": "7df2697ecf31dd9fc6a5e90d3638c7ac8b842dc627d2271bc4ec40e398f84489",
+    "size": 5492
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libresolv.so.2",
+    "file": "libguest-ae47e871c2d12dce8dcd.so",
+    "sha256": "ae47e871c2d12dce8dcdf51dd43e1bd12182ed297ae33b9d498df51298b34df9",
+    "size": 38380
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libGL.so.1",
+    "file": "libguest-c91c97f38f9622659412.so",
+    "sha256": "c91c97f38f96226594129817c84d3bb04eda85e714e9bb3c90d078650cc0cc7c",
+    "size": 738792
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libGLX_mesa.so.0",
+    "file": "libguest-5b0cb4decd25f784762e.so",
+    "sha256": "5b0cb4decd25f784762e524ee1098728a10fdae0b8ad5d7b95151ad4f0ea66f3",
+    "size": 168780
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libEGL.so.1",
+    "file": "libguest-54d995d7e46177178f8d.so",
+    "sha256": "54d995d7e46177178f8da7f2d491b07e9ad59677bc735952a1ff982e05c91344",
+    "size": 46748
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libX11.so.6",
+    "file": "libguest-a2df19128ae87aa2f4b2.so",
+    "sha256": "a2df19128ae87aa2f4b29058fa22f630a94424730d75dfab8595c3b144cb9f87",
+    "size": 934532
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libXext.so.6",
+    "file": "libguest-af8249696970cc3277d3.so",
+    "sha256": "af8249696970cc3277d3d231dfdc8dbb78641b01331f38c465e5bb97dead8b38",
+    "size": 43144
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libXrender.so.1",
+    "file": "libguest-eae1cf3c47cd91ff3966.so",
+    "sha256": "eae1cf3c47cd91ff396666ff2f821856a71d28c464f4f68adbc9f81222821241",
+    "size": 26240
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libXrandr.so.2",
+    "file": "libguest-f8b3ef03cbfcfecfd3c6.so",
+    "sha256": "f8b3ef03cbfcfecfd3c6b888cfb56e7bd0325891c3b9f3ecd9cf2a0e4a262541",
+    "size": 26064
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libXcursor.so.1",
+    "file": "libguest-d42e76719ea26d977448.so",
+    "sha256": "d42e76719ea26d97744880475df2bbf27a8f5ac52996b22fe34c8a9684b5b05f",
+    "size": 26128
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libXi.so.6",
+    "file": "libguest-9f8d179331f99edf2c1a.so",
+    "sha256": "9f8d179331f99edf2c1ab38de80f6612380d5ce66529c5177e3d15d789837d54",
+    "size": 42524
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libXinerama.so.1",
+    "file": "libguest-8dde6dc7f1fb0d15288c.so",
+    "sha256": "8dde6dc7f1fb0d15288cbfe093256b1700a42a8c5d35954f2baa3ac1960223df",
+    "size": 5516
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libfreetype.so.6",
+    "file": "libguest-97b2d63b2e8a947bd282.so",
+    "sha256": "97b2d63b2e8a947bd28267b654d708cdaf57242ce4add1b1917c6269d73d6acc",
+    "size": 484844
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libfontconfig.so.1",
+    "file": "libguest-0417700ab2615812330c.so",
+    "sha256": "0417700ab2615812330cd6b4593abc664e9f791636ed0def692ae46d2f2cbdfd",
+    "size": 202052
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libasound.so.2",
+    "file": "libguest-369b03ca4370e620ae11.so",
+    "sha256": "369b03ca4370e620ae11550a1915ead771b0a6150f9d0d8b4a04cb5b93612ef7",
+    "size": 673480
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libpulse.so.0",
+    "file": "libguest-838e07ac7225238c21db.so",
+    "sha256": "838e07ac7225238c21db89988ffa2acbb91eea051c66de3c4c78889d75b6574d",
+    "size": 223540
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libnss_files.so.2",
+    "file": "libguest-abeed38638ec519d93c6.so",
+    "sha256": "abeed38638ec519d93c66a4e75d545f98b4fbb1f54f57f82f1a65bb84b550c37",
+    "size": 5492
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libnss_dns.so.2",
+    "file": "libguest-bb46b974bcc12670c025.so",
+    "sha256": "bb46b974bcc12670c025c78ae5fceaa81a32f159b5702175c9881f905b9fa31d",
+    "size": 5492
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libgcc_s.so.1",
+    "file": "libguest-93443a582444d1f16318.so",
+    "sha256": "93443a582444d1f16318ec9d35ad33cb5e95366a85db032e70b073c16a5c186a",
+    "size": 100052
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libtinfo.so.6",
+    "file": "libguest-ce0d0cc31cc99d8dd684.so",
+    "sha256": "ce0d0cc31cc99d8dd68418849dacd91ce02ec2dcf99d3e392956aabafa3ad132",
+    "size": 133264
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libgbm.so.1",
+    "file": "libguest-6dadc713940be5aacf46.so",
+    "sha256": "6dadc713940be5aacf46d14a933d7cc377d8df7dba7020e86cffeb31f813a335",
+    "size": 9768
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libGLdispatch.so.0",
+    "file": "libguest-472571fb5798013c1fe8.so",
+    "sha256": "472571fb5798013c1fe8c03a63ec34452998b0880a31113e1794f94f5ef9a96b",
+    "size": 1193544
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libGLX.so.0",
+    "file": "libguest-550f39895f1304c2db33.so",
+    "sha256": "550f39895f1304c2db3341a8440424149e7a4cfe20addc42fb75537da4310023",
+    "size": 304736
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libgallium-25.2.8-0ubuntu0.24.04.4.so",
+    "file": "libguest-018ee321e219d4a87863.so",
+    "sha256": "018ee321e219d4a87863992f32aaaf89114c50b1897db0801108c9486ecc0e49",
+    "size": 26399928
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libdrm.so.2",
+    "file": "libguest-497d5c157ca248a0ae20.so",
+    "sha256": "497d5c157ca248a0ae20069ab2cac7320f03220fc6303fb4fb59596539742b12",
+    "size": 54916
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libxcb-glx.so.0",
+    "file": "libguest-27f465c812f1c86b0d55.so",
+    "sha256": "27f465c812f1c86b0d557dd1dd47bd561e2dc150db359ab4838b30bb61d40a91",
+    "size": 66936
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libxcb.so.1",
+    "file": "libguest-c343100d244dd9ec5a0a.so",
+    "sha256": "c343100d244dd9ec5a0a7099a208af64409bd7953d1234a50133f2f645bc92c8",
+    "size": 104028
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libX11-xcb.so.1",
+    "file": "libguest-bf112ea1b49783c2c104.so",
+    "sha256": "bf112ea1b49783c2c104400be61de6443cb2d9c42de8abe8040313b8d228e669",
+    "size": 5312
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libXxf86vm.so.1",
+    "file": "libguest-6ea20633888093546226.so",
+    "sha256": "6ea2063388809354622675754417e922c17deafd0fa34d2fa193c7ab780a42f9",
+    "size": 13728
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libxcb-shm.so.0",
+    "file": "libguest-726314634b2f90357ad5.so",
+    "sha256": "726314634b2f90357ad5f6457e314c17c617d5e4c80e8fd8ffdc70f64264b6b2",
+    "size": 9600
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libexpat.so.1",
+    "file": "libguest-cd47bd3debb50c5829e5.so",
+    "sha256": "cd47bd3debb50c5829e5c2841cd027d91d623d067273a731fe5f266a48b017c0",
+    "size": 112176
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libxcb-dri3.so.0",
+    "file": "libguest-cc31f6c78ce1dab29a92.so",
+    "sha256": "cc31f6c78ce1dab29a92cf340a7c3ce4d9940a31c3bfbd26e9ba911a3d7da5d3",
+    "size": 13700
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libxcb-present.so.0",
+    "file": "libguest-731b98f346ed6c1fcc29.so",
+    "sha256": "731b98f346ed6c1fcc2973b4990542a7596f2f6f5578abf3b699e6af46395bc8",
+    "size": 9592
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libxcb-xfixes.so.0",
+    "file": "libguest-9b1ca384f41793f224a4.so",
+    "sha256": "9b1ca384f41793f224a4683886f16338f43c9c43ad7de62b49b7de5106d25c6b",
+    "size": 21880
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libXfixes.so.3",
+    "file": "libguest-9cc1c912729fddc9c55e.so",
+    "sha256": "9cc1c912729fddc9c55e0838985a9c7d59e8ae642b945c68f9157aebe7e4b7cf",
+    "size": 13720
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libz.so.1",
+    "file": "libguest-cc28bf14562af3ef44c1.so",
+    "sha256": "cc28bf14562af3ef44c154cdb931a17736ce1c8d2539e6c0659ecd7e09832b80",
+    "size": 67100
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libbz2.so.1.0",
+    "file": "libguest-57ba492c9db5b19c2764.so",
+    "sha256": "57ba492c9db5b19c27642a17a75c81a04c5a18a71c1a92ddf82fdb3732291293",
+    "size": 49468
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libpng16.so.16",
+    "file": "libguest-a4b424995e969073ad34.so",
+    "sha256": "a4b424995e969073ad342ed15326bce54c49fd3f9aaafbda20b7d7c9c47c2367",
+    "size": 136508
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libbrotlidec.so.1",
+    "file": "libguest-9d9cd498649d5f4e379d.so",
+    "sha256": "9d9cd498649d5f4e379de5e0863f8dff5908605422ed1a53f5d73b0b7fde7ec7",
+    "size": 34288
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/pulseaudio/libpulsecommon-16.1.so",
+    "file": "libguest-00287f64e93827e9392e.so",
+    "sha256": "00287f64e93827e9392e7cddf6f60b2a12b6628083558c88e6bd2034c7381784",
+    "size": 353872
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libdbus-1.so.3",
+    "file": "libguest-435f9255b1d063bd9cf3.so",
+    "sha256": "435f9255b1d063bd9cf3e180d329444fafc3aa12486cb6da1990d79e77cd58cc",
+    "size": 198100
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libLLVM.so.20.1",
+    "file": "libguest-8fdda7d1fde2bedf64eb.so",
+    "sha256": "8fdda7d1fde2bedf64eb37802f9badb0a039f27f22a1fd74b4f61efe7e0c14e8",
+    "size": 129254796
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libzstd.so.1",
+    "file": "libguest-95e7a71b59dd198abd07.so",
+    "sha256": "95e7a71b59dd198abd079b83566916fc6ca025d8eea5320ea8c3b4cbf2ce1ee8",
+    "size": 480720
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libsensors.so.5",
+    "file": "libguest-5e4aacc5d14e1dbaf357.so",
+    "sha256": "5e4aacc5d14e1dbaf3577160058f91522c624790d67a22df60ef61842e47a0bd",
+    "size": 42680
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libxcb-randr.so.0",
+    "file": "libguest-3d70c0584ea266fadaa1.so",
+    "sha256": "3d70c0584ea266fadaa1c2872e6ad441e7b1078185e287003b31fb2f7bcc184c",
+    "size": 42364
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libxcb-sync.so.1",
+    "file": "libguest-8515a618954bc3993337.so",
+    "sha256": "8515a618954bc3993337953b78ca6b69a2e9510f478c5ab9e17f33920568d58f",
+    "size": 17796
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libxshmfence.so.1",
+    "file": "libguest-e96d1bad13842fc5fead.so",
+    "sha256": "e96d1bad13842fc5feadc0e9c87df3740c247b781f56c0f6f418eba31e2edfc0",
+    "size": 5464
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libdrm_amdgpu.so.1",
+    "file": "libguest-4082421234472f3c33f6.so",
+    "sha256": "4082421234472f3c33f673e247d7094cb9bc94ed43293aca1fab833cd8f1406a",
+    "size": 30320
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libelf.so.1",
+    "file": "libguest-a25af6767ae3b44aa48a.so",
+    "sha256": "a25af6767ae3b44aa48adac80bc63af253144f514fb0e7ec6e792159bb4ab1f4",
+    "size": 71400
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libstdc++.so.6",
+    "file": "libguest-e6d99b333d87c1da3ecc.so",
+    "sha256": "e6d99b333d87c1da3eccf6fbc5a85661b5352a39a632b16950d6e708f3a75775",
+    "size": 1758044
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libXau.so.6",
+    "file": "libguest-837afa3952d9a8d3fe7f.so",
+    "sha256": "837afa3952d9a8d3fe7f570e49f3bfdccde645e20aae204c208d27079003dbc5",
+    "size": 9620
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libXdmcp.so.6",
+    "file": "libguest-6302075dbffe4e531357.so",
+    "sha256": "6302075dbffe4e531357a278468480c35aa638c4042fb9c6c6d8ff3ad7838a11",
+    "size": 13660
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libbrotlicommon.so.1",
+    "file": "libguest-21ad2f40261cabf1d636.so",
+    "sha256": "21ad2f40261cabf1d636d68ce9c8fafa90284cdf30db04b3c7e77d87e6138484",
+    "size": 132608
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libsndfile.so.1",
+    "file": "libguest-24c150c4527f16a9483e.so",
+    "sha256": "24c150c4527f16a9483e364f63ba13714893645f4ce7d4dca91f63683b0fd37f",
+    "size": 384236
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libsystemd.so.0",
+    "file": "libguest-429beef55be87021fb4a.so",
+    "sha256": "429beef55be87021fb4ac74f192362c88ed32c467508cb9f37b72e34c0f395f7",
+    "size": 597712
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libasyncns.so.0",
+    "file": "libguest-0a84842adcdb7d37dfd7.so",
+    "sha256": "0a84842adcdb7d37dfd750019226f74b4a174174273a22b1261771c296b47335",
+    "size": 17672
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libapparmor.so.1",
+    "file": "libguest-8156ad10be6ddbfa0dc3.so",
+    "sha256": "8156ad10be6ddbfa0dc3729cef78e7409ee8a0baca3e7fb1a0de6f50755350eb",
+    "size": 55052
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libffi.so.8",
+    "file": "libguest-d9f21ab43fb7e36596fa.so",
+    "sha256": "d9f21ab43fb7e36596fa17108f2e7a8f60452f11a49bd177bda1676ce9b6440d",
+    "size": 26288
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libedit.so.2",
+    "file": "libguest-36c996081f388509c075.so",
+    "sha256": "36c996081f388509c0753e7f112b98c84c0790a13c9375544a54406eb299f080",
+    "size": 125084
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libxml2.so.2",
+    "file": "libguest-15910a5aad377ef43965.so",
+    "sha256": "15910a5aad377ef43965b1798e09b3fa2e664c778ca9cd06405ac68157e5afff",
+    "size": 1076180
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libbsd.so.0",
+    "file": "libguest-d59521d0f07872eea0d1.so",
+    "sha256": "d59521d0f07872eea0d1ea1a23feb340cc173eb5560a0b326a857fedc885af50",
+    "size": 51244
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libFLAC.so.12",
+    "file": "libguest-7917b19a1e2c73bbb42d.so",
+    "sha256": "7917b19a1e2c73bbb42d6e7bb90f4ec0cb7ef946ed108f37ab8c12f3e7abc084",
+    "size": 218492
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libvorbis.so.0",
+    "file": "libguest-277ff8eade7ad6245c07.so",
+    "sha256": "277ff8eade7ad6245c072d91797eb524e27ee3ca89136a1caa6a698206212fc3",
+    "size": 132412
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libvorbisenc.so.2",
+    "file": "libguest-f5b2f2b137c3f0f20936.so",
+    "sha256": "f5b2f2b137c3f0f20936478857a7fbd3b5e4bd547908b91c711cd414c80486d0",
+    "size": 529752
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libopus.so.0",
+    "file": "libguest-1e3436945ed67fb35e31.so",
+    "sha256": "1e3436945ed67fb35e31b2a2d5a1b09d172ae88ecc9b5299e275d3c9b8308630",
+    "size": 264044
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libogg.so.0",
+    "file": "libguest-41fbc7d662e55d3417f1.so",
+    "sha256": "41fbc7d662e55d3417f1ee05bf65dc14ff7a657c29b3a5eb7c70b56d3e764846",
+    "size": 21768
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libmpg123.so.0",
+    "file": "libguest-512ceefa55d2388d6ab4.so",
+    "sha256": "512ceefa55d2388d6ab423936a53f94f2772c08b7422a2821d85660f1d16e301",
+    "size": 248232
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libmp3lame.so.0",
+    "file": "libguest-f382c1389a85e11b9fda.so",
+    "sha256": "f382c1389a85e11b9fdadae727f4088a1bc491381ffc64ca8d3664a3be15a6a4",
+    "size": 202064
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libcap.so.2",
+    "file": "libguest-95eb058409bde14bd289.so",
+    "sha256": "95eb058409bde14bd289ed960273d796baea8c3d16e6c3e839f2c423d329c9be",
+    "size": 30084
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libgcrypt.so.20",
+    "file": "libguest-9f7974804898c48e914c.so",
+    "sha256": "9f7974804898c48e914c0c1601d1cf8c7e37de3bbfb89d1fbf42c91b9f77162b",
+    "size": 770964
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/liblz4.so.1",
+    "file": "libguest-20a1c0674a37bd119890.so",
+    "sha256": "20a1c0674a37bd119890157e0492d2b111692bd1163ae24a1898be9b63d3dacd",
+    "size": 91536
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/liblzma.so.5",
+    "file": "libguest-99297e8e922a748b0d05.so",
+    "sha256": "99297e8e922a748b0d054877884b31717a604d4d57be8603846250fd91f80ed0",
+    "size": 120180
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libicuuc.so.74",
+    "file": "libguest-411567e97252c43dd3ac.so",
+    "sha256": "411567e97252c43dd3aca16fecd15382ae1692b266cb163c1a27937f7a990a58",
+    "size": 1414592
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libmd.so.0",
+    "file": "libguest-d1623605a9b72a7bffcd.so",
+    "sha256": "d1623605a9b72a7bffcd833580ce1f7b9bbeeb08cd80d9d11acc352e8889b240",
+    "size": 34228
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libgpg-error.so.0",
+    "file": "libguest-f95b87ba3dc26bbef9ed.so",
+    "sha256": "f95b87ba3dc26bbef9ed60a08d4f34c8436140690b2fe9a17f3aece559b6aa20",
+    "size": 95636
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libicudata.so.74",
+    "file": "libguest-828cd764a1bfab771b8c.so",
+    "sha256": "828cd764a1bfab771b8c45137554d0d9a04a561a2b9dc4d44e8fbbbbb95b7904",
+    "size": 30786712
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libXcomposite.so.1",
+    "file": "libguest-128221e514c7915e3557.so",
+    "sha256": "128221e514c7915e35574e5a61e8b5045a18f1a2924686b28f4b9fbdb3e8aca1",
+    "size": 9572
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libvulkan.so.1",
+    "file": "libguest-0c0ee8348470c980214d.so",
+    "sha256": "0c0ee8348470c980214d516a1f063433c87f01a76fbcd7081e1d020d417286f9",
+    "size": 398956
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libudev.so.1",
+    "file": "libguest-c493ab0c570705c6e097.so",
+    "sha256": "c493ab0c570705c6e097c4c5fe5d527fde16d496cb15cbbaf618e8bcc060a94b",
+    "size": 136952
+  },
+  {
+    "path": "usr/lib/arm-linux-gnueabihf/libusb-1.0.so.0",
+    "file": "libguest-e45ffe6c0df6c42b4edd.so",
+    "sha256": "e45ffe6c0df6c42b4eddff5e481bb86de44774826def3ccfa31f3c3f0a917e52",
+    "size": 79688
+  }
+]
