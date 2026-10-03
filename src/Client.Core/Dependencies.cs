@@ -34,6 +34,7 @@ public static class Dependencies
             "fedora" => pythonOnly ? "set -eu; /usr/bin/dnf -y install python3" : "set -eu; /usr/bin/dnf -y install wine python3",
             "arch" or "manjaro" => pythonOnly ? "set -eu; /usr/bin/pacman -S --needed --noconfirm python" : "set -eu; /usr/bin/pacman -S --needed --noconfirm wine python",
             "opensuse-leap" or "opensuse-tumbleweed" => pythonOnly ? "set -eu; /usr/bin/zypper --non-interactive install python3" : "set -eu; /usr/bin/zypper --non-interactive install wine wine-32bit python3",
+            "steamos" => throw new IOException(pythonOnly ? "Python is missing from SteamOS. Update SteamOS and try again." : "Install Proton in Steam (Library > Tools), let its Steam Linux Runtime download finish, then select Play again."),
             _ => throw new IOException("Automatic runtime setup is unavailable for this Linux distribution. Install Wine with 32-bit game support through its package manager.")
         };
         return Command("/usr/bin/pkexec", "/bin/sh", "-c", script);
@@ -45,7 +46,7 @@ public static class Dependencies
     {
         var configured = GameLaunch.ConfiguredWine();
         if (configured is not null) return configured;
-        if (!macOS) return GameLaunch.FindWine();
+        if (!macOS) return GameLaunch.FindWine() ?? (OperatingSystem.IsLinux() ? ProtonRuntime.Find()?.Executable : null);
         var local = GameLaunch.ManagedWinePath(root);
         return File.Exists(local) ? local : null;
     }
@@ -88,6 +89,7 @@ public static class Dependencies
             else throw new PlatformNotSupportedException();
         }
         var marker = SafeFiles.Under(root, ".dr-client/directx-runtime.txt");
+        if (ProtonRuntime.IsProton(wine)) Directory.CreateDirectory(SafeFiles.Under(root, ".dr-client/proton"));
         var initialize = WineCommand(root, wine, "wineboot", "-u");
         initialize.Environment.TryGetValue("WINEPREFIX", out var prefix);
         prefix ??= "";

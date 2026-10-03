@@ -83,10 +83,15 @@ public static class GameLaunch
 
     private static bool IsCrossOver(string wine) => wine.Replace('\\', '/').Contains("CrossOver.app/", StringComparison.OrdinalIgnoreCase);
 
-    public static string DefaultWinePrefix(string root, string wine) => IsCrossOver(wine) ? "" : SafeFiles.Under(root, ".dr-client/wine-prefix");
+    public static string DefaultWinePrefix(string root, string wine) => ProtonRuntime.IsProton(wine) ? ProtonRuntime.Prefix(root) : IsCrossOver(wine) ? "" : SafeFiles.Under(root, ".dr-client/wine-prefix");
 
     public static void ConfigureWine(ProcessStartInfo start, string root, string wine)
     {
+        if (ProtonRuntime.IsProton(wine))
+        {
+            var proton = ProtonRuntime.Resolve(wine) ?? throw new IOException("Proton or its Steam Linux Runtime is incomplete. Finish the download in Steam and try again.");
+            ProtonRuntime.Configure(start, root, proton);
+        }
         if (IsCrossOver(wine) && (!start.Environment.TryGetValue("CX_BOTTLE", out var bottle) || string.IsNullOrWhiteSpace(bottle)))
             throw new IOException("CrossOver requires an explicitly selected CX_BOTTLE. Remove DR_WINE to use the launcher's automatic Wine setup, or configure an existing CrossOver bottle.");
         if (Path.GetFullPath(wine).Equals(ManagedWinePath(root), OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))

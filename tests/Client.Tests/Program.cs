@@ -56,6 +56,8 @@ internal static partial class Program
             if (OperatingSystem.IsWindows()) await Test("taskbar relaunch belongs to the matching installation", Taskbar);
             await Test("runtime setup validates downloads, package plans, libraries and failures", RuntimeRequirements);
             await Test("Mac runtime discovery ignores unrelated installations and isolates its game prefix", MacRuntimeSelection);
+            await Test("Steam runtime discovery selects complete Proton installations across libraries", ProtonSelection);
+            await Test("Proton launch preserves Steam Input and isolates the game prefix", ProtonLaunch);
             await Test("Mac display setup skips automatic benchmarking and preserves user settings", MacDisplayProfile);
             await Test("runtime failures retain both streams and the final diagnostic", RuntimeOutput);
             await Test("game startup captures early exits and keeps bounded independent logs", GameSessions);
