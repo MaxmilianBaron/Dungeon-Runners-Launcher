@@ -59,6 +59,7 @@ internal static partial class Program
             await Test("Mac display setup skips automatic benchmarking and preserves user settings", MacDisplayProfile);
             await Test("runtime failures retain both streams and the final diagnostic", RuntimeOutput);
             await Test("game startup captures early exits and keeps bounded independent logs", GameSessions);
+            await Test("game logs prune ended and abandoned sessions while preserving active processes", GameSessionRetention);
             await Test("Windows ARM setup migrates game profiles and preserves custom settings", ArmProfiles);
             await Test("Windows ARM setup backs up, verifies, rolls back and respects cancellation", ArmProfileFailures);
             if (OperatingSystem.IsWindows()) await Test("Windows game compatibility values round-trip without changing the client", ArmRegistry);

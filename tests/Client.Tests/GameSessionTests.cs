@@ -4,6 +4,48 @@ using DungeonRunners.Client;
 
 internal static partial class Program
 {
+    private static Task GameSessionRetention()
+    {
+        var root = NewRoot();
+        var current = Guid.NewGuid().ToString("N");
+        var parent = SafeFiles.Under(root, ".dr-client/game-sessions");
+        Directory.CreateDirectory(Path.Combine(parent, current));
+        using var process = Process.GetCurrentProcess();
+        var stamp = LauncherReplacement.ProcessStamp(process);
+        var inactive = new List<string>();
+        string Session()
+        {
+            var path = Path.Combine(parent, Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(path);
+            return path;
+        }
+        void Owner(string folder, int id, long started) => File.WriteAllText(Path.Combine(folder, "owner.json"),
+            System.Text.Json.JsonSerializer.Serialize(new { Id = id, Started = started }));
+        for (var i = 0; i < 12; i++)
+        {
+            var path = Session();
+            inactive.Add(path);
+            if (i % 3 == 0) File.WriteAllText(Path.Combine(path, "exit-code"), "0");
+            else if (i % 3 == 1) Owner(path, int.MaxValue, 1);
+            else Owner(path, process.Id, stamp + 1);
+        }
+        var live = Session();
+        Owner(live, process.Id, stamp);
+        var unknown = Session();
+        var malformed = Session();
+        File.WriteAllText(Path.Combine(malformed, "owner.json"), "{");
+        var unrelated = Path.Combine(parent, "user-files");
+        Directory.CreateDirectory(unrelated);
+        File.WriteAllText(Path.Combine(unrelated, "exit-code"), "0");
+        GameSession.Prune(root, current);
+        Check(inactive.Count(Directory.Exists) == 4, "Finished or abandoned game logs accumulate.");
+        Check(new[] { Path.Combine(parent, current), live, unknown, malformed, unrelated }.All(Directory.Exists),
+            "Game log cleanup removed an active, unknown or unrelated directory.");
+        GameSession.Prune(root, current);
+        Check(inactive.Count(Directory.Exists) == 4, "Repeated game log cleanup changed retained sessions.");
+        return Task.CompletedTask;
+    }
+
     private static async Task GameSessions()
     {
         var root = NewRoot();
