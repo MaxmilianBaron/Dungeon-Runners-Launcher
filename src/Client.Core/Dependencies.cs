@@ -13,7 +13,6 @@ public static class Dependencies
     public static readonly ClientPackage MacWine = new("Wine runtime", "https://github.com/Gcenx/macOS_Wine_builds/releases/download/11.0_1/wine-stable-11.0_1-osx64.tar.xz", 185303032, "b50dc50ec7f41d58b115a6b685d4d1315ba3c797bd3aa0f49213f2703cb82388", Array.Empty<ClientFile>());
     public static readonly ClientPackage GStreamer = new("GStreamer runtime", "https://gstreamer.freedesktop.org/data/pkg/osx/1.28.6/gstreamer-1.0-1.28.6-universal.pkg", 153477832, "a8eb366c59b7e9e5dc049848fed6bcd203a8878aa7517c051639fda78797c6ad", Array.Empty<ClientFile>());
     private static readonly string[] DirectXLibraries = { "d3dx9_31.dll", "d3dx9_40.dll" };
-    private const string WineEntry = ".dr-client/wine/Wine Stable.app/Contents/Resources/wine/bin/wine";
 
     public static Uri ValidateUrl(string value)
     {
@@ -40,12 +39,15 @@ public static class Dependencies
         return Command("/usr/bin/pkexec", "/bin/sh", "-c", script);
     }
 
-    public static string? FindWine(string root)
+    public static string? FindWine(string root) => FindWine(root, OperatingSystem.IsMacOS());
+
+    public static string? FindWine(string root, bool macOS)
     {
-        var configured = GameLaunch.FindWine();
+        var configured = GameLaunch.ConfiguredWine();
         if (configured is not null) return configured;
-        var local = Path.Combine(root, WineEntry.Replace('/', Path.DirectorySeparatorChar));
-        return OperatingSystem.IsMacOS() && File.Exists(local) ? local : null;
+        if (!macOS) return GameLaunch.FindWine();
+        var local = GameLaunch.ManagedWinePath(root);
+        return File.Exists(local) ? local : null;
     }
 
     public static async Task<RuntimeSetup> EnsureAsync(string root, Downloads downloads, IProgress<ProgressInfo>? progress, Action committing, CancellationToken token, Func<ProcessStartInfo, CancellationToken, Task>? execute = null, Func<bool>? configureCompatibility = null)
@@ -86,9 +88,11 @@ public static class Dependencies
             else throw new PlatformNotSupportedException();
         }
         var marker = SafeFiles.Under(root, ".dr-client/directx-runtime.txt");
-        var prefix = Environment.GetEnvironmentVariable("WINEPREFIX");
-        if (string.IsNullOrWhiteSpace(prefix)) prefix = GameLaunch.DefaultWinePrefix(root, wine);
-        var identity = wine + "\n" + prefix + "\n" + DirectX.Sha256;
+        var initialize = WineCommand(root, wine, "wineboot", "-u");
+        initialize.Environment.TryGetValue("WINEPREFIX", out var prefix);
+        prefix ??= "";
+        initialize.Environment.TryGetValue("CX_BOTTLE", out var bottle);
+        var identity = wine + "\n" + prefix + "\n" + DirectX.Sha256 + (string.IsNullOrWhiteSpace(bottle) ? "" : "\n" + bottle);
         var librariesPresent = prefix.Length == 0 || HasDirectXLibraries(Path.Combine(prefix, "drive_c/windows/syswow64")) || HasDirectXLibraries(Path.Combine(prefix, "drive_c/windows/system32"));
         if (!librariesPresent || !File.Exists(marker) || new FileInfo(marker).Length > 32768 || File.ReadAllText(marker) != identity)
         {
@@ -96,7 +100,7 @@ public static class Dependencies
             GameLaunch.EnsureClosed(root);
             progress?.Report(new("Preparing requirements", "Initializing the game runtime…"));
             token.ThrowIfCancellationRequested(); committing();
-            await run(WineCommand(root, wine, "wineboot", "-u"), CancellationToken.None);
+            await run(initialize, CancellationToken.None);
             await InstallDirectXAsync(root, wine, downloads, progress, committing, token, run);
             var check = WineCommand(root, wine, "cmd", "/c", "if exist %WINDIR%\\syswow64\\d3dx9_31.dll (if exist %WINDIR%\\syswow64\\d3dx9_40.dll (exit /b 0)) & if exist %WINDIR%\\system32\\d3dx9_31.dll (if exist %WINDIR%\\system32\\d3dx9_40.dll (exit /b 0)) & exit /b 1");
             await run(check, CancellationToken.None);
@@ -259,7 +263,11 @@ public static class Dependencies
         await process.WaitForExitAsync(token);
         var text = await output; var failure = await error;
         if (process.ExitCode == 3010) throw new IOException("Runtime installation succeeded. Restart the computer before playing.");
-        if (process.ExitCode != 0) throw new IOException("Runtime setup failed (" + process.ExitCode + "). " + (string.IsNullOrWhiteSpace(failure) ? text : failure));
+        if (process.ExitCode != 0)
+        {
+            var details = string.Join("\n", new[] { failure, text }.Where(value => !string.IsNullOrWhiteSpace(value)).Distinct());
+            throw new IOException("Runtime setup failed (" + process.ExitCode + "). " + details);
+        }
     }
 
     private static async Task<string> DrainAsync(StreamReader reader)
@@ -268,7 +276,10 @@ public static class Dependencies
         var buffer = new char[1024];
         int read;
         while ((read = await reader.ReadAsync(buffer)) != 0)
-            if (result.Length < 2048) result.Append(buffer, 0, Math.Min(read, 2048 - result.Length));
+        {
+            result.Append(buffer, 0, read);
+            if (result.Length > 8192) result.Remove(0, result.Length - 8192);
+        }
         return result.ToString().Trim();
     }
 }

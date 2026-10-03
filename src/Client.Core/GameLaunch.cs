@@ -32,7 +32,7 @@ public static class GameLaunch
         return file.Exists && file.Length > 0;
     });
 
-    public static string? FindWine()
+    public static string? ConfiguredWine()
     {
         var configured = Environment.GetEnvironmentVariable("DR_WINE");
         if (!string.IsNullOrEmpty(configured))
@@ -40,6 +40,13 @@ public static class GameLaunch
             if (!Path.IsPathFullyQualified(configured) || !File.Exists(configured)) throw new IOException("DR_WINE must be the full path to the Wine executable.");
             return configured;
         }
+        return null;
+    }
+
+    public static string? FindWine()
+    {
+        var configured = ConfiguredWine();
+        if (configured is not null) return configured;
         foreach (var name in new[] { "wine", "wine64" })
             foreach (var directory in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator).Where(Path.IsPathFullyQualified))
             {
@@ -48,7 +55,7 @@ public static class GameLaunch
             }
         foreach (var root in new[] { "/Applications", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Applications") })
         {
-            foreach (var entry in new[] { "CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine", "Wine Stable.app/Contents/Resources/wine/bin/wine" })
+            foreach (var entry in new[] { "Wine Stable.app/Contents/Resources/wine/bin/wine" })
             {
                 var candidate = Path.Combine(root, entry);
                 if (File.Exists(candidate)) return candidate;
@@ -72,10 +79,22 @@ public static class GameLaunch
         return start;
     }
 
-    public static string DefaultWinePrefix(string root, string wine) => wine.Contains("CrossOver.app/", StringComparison.Ordinal) ? "" : SafeFiles.Under(root, ".dr-client/wine-prefix");
+    public static string ManagedWinePath(string root) => SafeFiles.Under(root, ".dr-client/wine/Wine Stable.app/Contents/Resources/wine/bin/wine");
+
+    private static bool IsCrossOver(string wine) => wine.Replace('\\', '/').Contains("CrossOver.app/", StringComparison.OrdinalIgnoreCase);
+
+    public static string DefaultWinePrefix(string root, string wine) => IsCrossOver(wine) ? "" : SafeFiles.Under(root, ".dr-client/wine-prefix");
 
     public static void ConfigureWine(ProcessStartInfo start, string root, string wine)
     {
+        if (IsCrossOver(wine) && (!start.Environment.TryGetValue("CX_BOTTLE", out var bottle) || string.IsNullOrWhiteSpace(bottle)))
+            throw new IOException("CrossOver requires an explicitly selected CX_BOTTLE. Remove DR_WINE to use the launcher's automatic Wine setup, or configure an existing CrossOver bottle.");
+        if (Path.GetFullPath(wine).Equals(ManagedWinePath(root), OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+        {
+            start.Environment["WINEPREFIX"] = SafeFiles.Under(root, ".dr-client/wine-prefix");
+            foreach (var name in new[] { "WINEARCH", "WINELOADER", "WINESERVER", "WINEDLLPATH", "CX_BOTTLE", "CX_BOTTLE_PATH", "CX_ROOT" })
+                start.Environment.Remove(name);
+        }
         if (!start.Environment.TryGetValue("WINEPREFIX", out var prefix) || string.IsNullOrWhiteSpace(prefix))
         {
             var folder = DefaultWinePrefix(root, wine);

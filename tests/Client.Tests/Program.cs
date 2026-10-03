@@ -17,6 +17,13 @@ internal static partial class Program
         Directory.CreateDirectory(Sandbox);
         try
         {
+            if (args.SequenceEqual(new[] { "--runtime-output-fixture" }))
+            {
+                Console.Error.WriteLine("cxmessage standin was called.\nArguments:");
+                Console.Write(new string('x', 10000));
+                Console.WriteLine("\nfixture runtime cause at the end");
+                return 7;
+            }
             if (OperatingSystem.IsWindows() && args.Length == 2 && args[0] == "--taskbar-fixture") return TaskbarFixture(args[1]);
             if (OperatingSystem.IsWindows() && args.Length == 2 && args[0] == "--taskbar-configure") { GameTaskbar.ConfigureExisting(args[1]); return 0; }
             if (args.Length == 3 && args[0] == "--integration") { await Integration(args[1], args[2]); return 0; }
@@ -48,6 +55,8 @@ internal static partial class Program
             await Test("game launch keeps structured paths and existing Wine overrides", Launch);
             if (OperatingSystem.IsWindows()) await Test("taskbar relaunch belongs to the matching installation", Taskbar);
             await Test("runtime setup validates downloads, package plans, libraries and failures", RuntimeRequirements);
+            await Test("Mac runtime discovery ignores unrelated installations and isolates its game prefix", MacRuntimeSelection);
+            await Test("runtime failures retain both streams and the final diagnostic", RuntimeOutput);
             await Test("Windows ARM setup migrates game profiles and preserves custom settings", ArmProfiles);
             await Test("Windows ARM setup backs up, verifies, rolls back and respects cancellation", ArmProfileFailures);
             if (OperatingSystem.IsWindows()) await Test("Windows game compatibility values round-trip without changing the client", ArmRegistry);
