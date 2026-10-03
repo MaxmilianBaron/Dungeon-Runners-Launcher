@@ -106,6 +106,8 @@ public static class Dependencies
             await run(check, CancellationToken.None);
             SafeFiles.WriteAtomic(marker, Encoding.UTF8.GetBytes(identity));
         }
+        if (OperatingSystem.IsMacOS())
+            changed |= MacGraphics.Configure(root, () => GameLaunch.EnsureClosed(root), committing, token);
         return new(wine, changed);
     }
 

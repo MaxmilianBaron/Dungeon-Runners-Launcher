@@ -522,6 +522,15 @@ public partial class MainWindow : Window
             Detail.Text = "Checking the client and connection settings…";
             if (!IsRunning(root)) await InstallEntryPointsAsync(root, false);
             InstallationLocation.Save(root); rememberedFolder = true;
+            if (requirements.Wine is not null)
+            {
+                await Task.Run(() => installer.PreparePlayAsync(root, manifest, token), token);
+                token.ThrowIfCancellationRequested();
+                committing = true; Cancel.IsEnabled = false;
+                try { await GameSession.StartAsync(root, requirements.Wine); }
+                finally { OpenGameLog.IsVisible = GameSession.LatestLog(root) is not null; }
+                return;
+            }
             Process? process = null;
             try
             {
@@ -533,6 +542,19 @@ public partial class MainWindow : Window
             }
             finally { process?.Dispose(); }
         }, mode == "play");
+    }
+
+    private void OpenGameLogClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (GameSession.LatestLog(SafeFiles.Root(Folder.Text ?? "")) is { } path)
+                using (Process.Start(new ProcessStartInfo(path) { UseShellExecute = true })) { }
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or Win32Exception)
+        {
+            Detail.Text = error.Message;
+        }
     }
 
     private async void UpdateClick(object sender, RoutedEventArgs e) => await RunAsync(async token =>

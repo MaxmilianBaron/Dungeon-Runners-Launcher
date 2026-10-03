@@ -2,6 +2,33 @@ using DungeonRunners.Client;
 
 internal static partial class Program
 {
+    private static async Task MacDisplayProfile()
+    {
+        var fresh = System.Text.Encoding.UTF8.GetString(MacGraphics.Profile(null));
+        Check(fresh.Contains("[Display]\nBenchmarked = true") && fresh.Contains("Fullscreen = false"), "The initial Mac profile still requires the automatic benchmark.");
+        var before = System.Text.Encoding.UTF8.GetBytes("[Display]\r\nBenchmarked = false\r\nWindowedWidth = 1440\r\nFullscreen = false\r\nLightBloom = 4\r\n[General]\r\nSound = true\r\n[display]\r\nBenchmarked = false\r\n");
+        var applied = MacGraphics.Profile(before);
+        var text = System.Text.Encoding.UTF8.GetString(applied);
+        Check(!text.Contains("Benchmarked = false") && text.Contains("WindowedWidth = 1440") && text.Contains("LightBloom = 4") && text.Contains("[General]\r\nSound = true"), "The Mac profile changes unrelated settings or leaves a duplicate benchmark enabled.");
+        Check(MacGraphics.Profile(applied).SequenceEqual(applied), "The Mac profile is not idempotent.");
+        var complete = "[Display]\nBenchmarked = true\nFullscreen = true\nCustom = value\n"u8.ToArray();
+        Check(MacGraphics.Profile(complete).SequenceEqual(complete), "An existing completed display profile changed.");
+        await Reject(() => MacGraphics.Profile(new byte[1024 * 1024 + 1]));
+        var root = NewRoot();
+        var path = SafeFiles.Under(root, "config/User.cfg");
+        SafeFiles.WriteAtomic(path, before);
+        var guarded = 0;
+        Check(MacGraphics.Configure(root, () => guarded++, () => { }, default) && guarded == 1, "Mac settings did not check for a running game.");
+        var backup = Directory.GetFiles(SafeFiles.Under(root, ".dr-client/backups")).Single();
+        Check(File.ReadAllBytes(backup).SequenceEqual(before) && File.ReadAllBytes(path).SequenceEqual(applied), "The original display profile was not preserved.");
+        Check(!MacGraphics.Configure(root, () => throw new Exception("No-op invoked guard."), () => { }, default), "An installed profile was changed again.");
+        SafeFiles.WriteAtomic(path, before);
+        await Reject(() => MacGraphics.Configure(root, () => { }, () => { }, new CancellationToken(true)));
+        Check(File.ReadAllBytes(path).SequenceEqual(before), "Cancelled display configuration changed the file.");
+        await Reject(() => MacGraphics.Configure(root, () => File.AppendAllText(path, "changed"), () => { }, default));
+        Check(File.ReadAllText(path).EndsWith("changed"), "A concurrent settings change was overwritten.");
+    }
+
     private static async Task MacRuntimeSelection()
     {
         var names = new[] { "DR_WINE", "PATH", "WINEPREFIX", "WINEARCH", "WINELOADER", "WINESERVER", "WINEDLLPATH", "CX_BOTTLE", "CX_BOTTLE_PATH", "CX_ROOT" };
