@@ -16,4 +16,6 @@ The 64-bit profiles use Wine 11.0 in WoW64 mode; ARM64 adds Box64 0.4.4. `build-
 
 `RuntimeProfileTest.java` checks API and ABI selection, native-bridge ordering and prefix isolation. `AardvarkRuntimeCheck.exe` verifies 32-bit guest execution and executable memory before game setup. Setup commands wait for Wine to save the prefix before their process group closes. Linux and emulator checks do not establish compatibility with every physical Android device.
 
+Setup errors identify the failing step and exit code. Copy details includes device architecture, memory page size and bounded setup logs with local paths removed; game-session logs are excluded. `RuntimeDiagnosticsTest.java` and `tests/command_test.py` cover report limits and Wine shutdown ordering.
+
 `input/build.py` builds the Windows x86 action adapter. It dispatches one UI-thread item action per request, uses the game's item selection, and rejects unsupported client code and inactive gameplay. It does not move the pointer or modify the executable. `input/test_profile.c` exercises control selection and input guards.

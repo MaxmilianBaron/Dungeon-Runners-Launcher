@@ -74,9 +74,10 @@ final class NativeRuntime {
         write(child(root, "etc/resolv.conf"), "nameserver 1.1.1.1\nnameserver 8.8.8.8\n");
         File scripts = new File(base, "scripts");
         scripts.mkdirs();
-        try (InputStream input = context.getAssets().open("dungeon-runtime/play.sh")) {
-            Files.copy(input, new File(scripts, "play.sh").toPath(), StandardCopyOption.REPLACE_EXISTING);
-        }
+        for (String name : new String[]{"play.sh", "command.sh"})
+            try (InputStream input = context.getAssets().open("dungeon-runtime/" + name)) {
+                Files.copy(input, new File(scripts, name).toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
         for (String name : new String[]{"guest-memory", "guest-code.bin", "AardvarkInput.exe", "AardvarkTouch.dll", "AardvarkRuntimeCheck.exe"}) {
             File target = new File(scripts, name);
             try (InputStream input = context.getAssets().open("dungeon-runtime/" + name)) {
@@ -87,7 +88,6 @@ final class NativeRuntime {
         for (String command : new String[]{"wine", "wineserver"})
             write(child(root, "usr/local/bin/aardvark-" + command), "#!/bin/bash\nexec " + profile.command(command) + " \"$@\"\n");
         for (String command : new String[]{"aardvark-wine", "aardvark-wineserver"}) Os.chmod(child(root, "usr/local/bin/" + command).getPath(), 0700);
-        write(new File(scripts, "command.sh"), "#!/bin/bash\ntrap '/usr/local/bin/aardvark-wineserver -k >/dev/null 2>&1 || true; /usr/local/bin/aardvark-wineserver -w >/dev/null 2>&1 || true' EXIT\n/usr/local/bin/aardvark-wine \"$@\"\n");
         preparePackages();
         new File(game, "logs").mkdirs();
         File user = new File(game, "config/User.cfg");

@@ -24,6 +24,8 @@ public final class GameRuntimeService extends Service {
     private volatile Process display;
     private volatile boolean closing;
     private NativeRuntime runtime;
+    private String stage = "Preparing runtime";
+    private String component = "";
     public static boolean isActive() { return running; }
 
     @Override public IBinder onBind(Intent intent) { return null; }
@@ -55,6 +57,8 @@ public final class GameRuntimeService extends Service {
                 if (lock == null) throw new IOException("A game session is already running.");
                 runtime.prepare();
                 if (closing) return;
+                stage = "Starting display";
+                component = "display.log";
                 display = xserver();
                 displayLog = capture(display, new File(logFolder(), "display.log"));
                 File socket = new File(runtime.root, "tmp/.X11-unix/X7");
@@ -62,9 +66,11 @@ public final class GameRuntimeService extends Service {
                 if (closing) return;
                 if (!socket.exists() || !display.isAlive()) throw new IOException("Game display could not start.");
                 if (!runtime.profile.legacy() && !runtime.prefixReady()) {
-                    requirement("wineboot", "-u");
+                    requirement("Initializing Wine", "wineboot", "-u");
                     if (!runtime.prefixReady()) throw new IOException("Game settings could not be saved. Reopen the launcher to retry.");
                 }
+                stage = "Checking game compatibility";
+                component = "memory.log";
                 game = runtime.preflight().start();
                 File memoryFile = new File(logFolder(), "memory.log");
                 Thread memoryLog = capture(game, memoryFile);
@@ -73,19 +79,24 @@ public final class GameRuntimeService extends Service {
                 if (closing) return;
                 String expected = runtime.profile.legacy() ? "Guest memory checks passed" : "AARDVARK_RUNTIME_READY";
                 String checked = new String(java.nio.file.Files.readAllBytes(memoryFile.toPath()), java.nio.charset.StandardCharsets.UTF_8);
-                if (game.exitValue() != 0 || !checked.contains(expected)) throw new IOException("The game runtime is not compatible with this device.");
+                if (game.exitValue() != 0) throw new IOException(RuntimeDiagnostics.failed(stage, game.exitValue()));
+                if (!checked.contains(expected)) throw new IOException("The game compatibility check did not complete. Copy details to report the problem.");
                 if (!runtime.requirementsReady()) {
+                    stage = "Preparing DirectX";
+                    component = "";
                     GameRuntimeActivity.message("Installing game requirements…");
                     File setup = runtime.requirementInstaller();
-                    requirement("/runtime/downloads/directx.exe", "/Q", "/T:C:\\AardvarkRequirements");
+                    requirement("Extracting DirectX", "/runtime/downloads/directx.exe", "/Q", "/T:C:\\AardvarkRequirements");
                     if (closing) return;
                     runtime.selectRequirements(setup);
-                    requirement("C:\\AardvarkRequirements\\required\\DXSETUP.exe", "/silent");
+                    requirement("Installing DirectX", "C:\\AardvarkRequirements\\required\\DXSETUP.exe", "/silent");
                     if (closing) return;
                     if (!runtime.requirementsReady()) throw new IOException("Game requirements did not finish installing.");
                     runtime.cleanRequirements(setup);
                 }
                 if (play && !closing) {
+                    stage = "Running game";
+                    component = "";
                     GameRuntimeActivity.message("Starting Dungeon Runners…");
                     android.preference.PreferenceManager.getDefaultSharedPreferences(this).edit()
                         .putString("displayResolutionMode", "custom").putString("displayResolutionCustom", "800x640")
@@ -107,9 +118,20 @@ public final class GameRuntimeService extends Service {
                 java.nio.file.Files.deleteIfExists(new File(logFolder(), "error.log").toPath());
             }
         } catch (Exception error) {
-            GameRuntimeActivity.error(error.getMessage() == null ? "Game runtime could not start." : error.getMessage());
+            String message = error.getMessage() == null ? "Game runtime could not start." : error.getMessage();
+            String platform = "Android API " + android.os.Build.VERSION.SDK_INT + " / " + android.os.Build.MODEL
+                + "\nABI: " + String.join(", ", android.os.Build.SUPPORTED_ABIS)
+                + "\nProfile: " + (runtime == null ? "unavailable" : runtime.profile.id);
+            try {
+                android.content.pm.PackageInfo app = getPackageManager().getPackageInfo(getPackageName(), 0);
+                platform += "\nLauncher: " + app.versionName + " (" + app.getLongVersionCode() + ")"
+                    + "\nPage size: " + android.system.Os.sysconf(android.system.OsConstants._SC_PAGESIZE);
+            } catch (Exception ignored) { }
+            String details = RuntimeDiagnostics.report(message, platform, stage, logFolder(), component,
+                root, getFilesDir().getPath(), getApplicationInfo().nativeLibraryDir);
+            GameRuntimeActivity.error(message, details);
             android.util.Log.e("DungeonRuntime", "Runtime stopped", error);
-            try (PrintWriter output = new PrintWriter(new File(logFolder(), "error.log"))) { error.printStackTrace(output); } catch (IOException ignored) { }
+            try (PrintWriter output = new PrintWriter(new File(logFolder(), "error.log"))) { output.print(details); } catch (IOException ignored) { }
         } finally {
             closeProcesses();
             if (displayLog != null) try { displayLog.join(3000); } catch (InterruptedException ignored) { }
@@ -121,13 +143,16 @@ public final class GameRuntimeService extends Service {
         }
     }
 
-    private void requirement(String... arguments) throws Exception {
+    private void requirement(String name, String... arguments) throws Exception {
         if (closing) return;
+        stage = name;
+        component = "requirements.log";
+        GameRuntimeActivity.message(name + "…");
         game = runtime.wine(arguments).start();
         Thread output = capture(game, new File(logFolder(), "requirements.log"));
-        if (!game.waitFor(600, TimeUnit.SECONDS)) { game.destroyForcibly(); throw new IOException("Game requirement setup timed out."); }
+        if (!game.waitFor(600, TimeUnit.SECONDS)) { game.destroyForcibly(); output.join(3000); throw new IOException(stage + " timed out. Copy details to report the problem."); }
         output.join(3000);
-        if (game.exitValue() != 0 && !closing) throw new IOException("Game requirement setup failed. Reopen the launcher to retry.");
+        if (game.exitValue() != 0 && !closing) throw new IOException(RuntimeDiagnostics.failed(stage, game.exitValue()));
     }
 
     private synchronized void closeProcesses() {
