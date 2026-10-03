@@ -63,6 +63,12 @@ def unpack(archive, destination, manifest):
                 pending.replace(target)
             finally:
                 pending.unlink(missing_ok=True)
+    root = destination.resolve()
+    stale = [path for path in destination.rglob('*') if path.is_file() and path.relative_to(destination).as_posix() not in expected]
+    if any(not path.resolve().is_relative_to(root) for path in stale):
+        raise ValueError('Runtime cache contains an external link.')
+    for path in stale:
+        path.unlink()
 
 
 def main():

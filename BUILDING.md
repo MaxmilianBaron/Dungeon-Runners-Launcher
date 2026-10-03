@@ -13,6 +13,8 @@ Use `-Platform Mac` on macOS or `-Platform Linux` on Linux. Windows produces a s
 
 The Linux installer detects the kernel architecture and 64-bit userspace, extracts and verifies the selected AppImage, then opens the launcher using extract-and-run mode without FUSE. Enable execution in the file manager or run `sh Dungeon-Runners-Launcher-Linux.run`. `--detect` prints the selected architecture; `--verify` checks the embedded payload without starting it. `tools/Package-LinuxInstaller.ps1` can package existing AppImages. `tools/Test-LinuxInstaller.sh` checks both payloads, unsupported platforms, damaged downloads and temporary-file cleanup.
 
+The same packaging command produces `Dungeon-Runners-Launcher-SteamDeck.run` with the x64 payload only. Open it in SteamOS Desktop Mode. It uses the shared launcher and update feed; Proton and Steam Linux Runtime detection do not require changes to the SteamOS system partition.
+
 ## Platforms
 
 Windows 10/11 x64; macOS 12 or later; desktop Linux with glibc 2.31 or later and X11/XWayland. The Linux desktop must provide `libx11`, `libice`, `libsm`, `libfontconfig` and OpenSSL. Mac uses its built-in shell and JavaScript for Automation.
@@ -41,7 +43,7 @@ dotnet build src/Client.Android -c Release
 
 Set `AndroidSdkDirectory` and `JavaSdkDirectory` for nonstandard SDK locations. The APK contains ARM64, ARMv7, x86_64 and x86 runtimes. Android 8+ is required; automatic runtime/APK installation requires Android 9+. Bundled runtime notices cover .NET 10.0.11 and Android workload 36.1.2; refresh them when changing runtime versions. Distribution builds require a persistent private keystore. Android updates verify the package ID, signing certificate and version code.
 
-The game folder is `Download/Dungeon Runners`. Android 9+ devices exposing the ARMv7 ABI use the integrated runtime and touch controls. ARM64-only devices use the upstream Winlator fallback; compatibility depends on the device and its graphics driver. Microsoft DirectX requirements are downloaded from Microsoft, verified and installed in the isolated Wine prefix. Main Update only updates already installed addons; removal preserves settings and history.
+The game folder is `Download/Dungeon Runners`. Android 9+ selects an integrated ARMv7, ARM64 or x86-64 runtime and touch controls. Native x86-64 takes precedence over an emulated ARM ABI. ARMv7 retains its existing Wine prefix; 64-bit profiles use separate WoW64 prefixes. Install, Update and Play prepare missing game requirements automatically. Microsoft DirectX requirements are downloaded from Microsoft, verified and installed in the selected prefix. Main Update only updates already installed addons; removal preserves settings and history. Device graphics and gameplay require separate validation.
 
 Android APK updates prefer stable releases containing `DungeonRunners-Android.apk`, falling back to Android prereleases. Downloads are bounded and checked against the release asset SHA-256. Keep the APK signing key outside the repository.
 

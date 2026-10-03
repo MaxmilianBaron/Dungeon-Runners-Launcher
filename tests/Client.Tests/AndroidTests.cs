@@ -36,19 +36,15 @@ internal static partial class Program
         await Reject(() => AndroidUpdates.ReadFeed(Feed(Enumerable.Repeat(desktop, 21).ToArray())));
         foreach (var url in new[] { "http://github.com/file.apk", AndroidUpdates.Api + "&key=secret", "https://github.com/other/repo/releases/download/v1/game.apk", "https://github.com/MaxmilianBaron/Dungeon-Runners-Android/releases/download/v1/file.apk", "https://user@github.com/MaxmilianBaron/Dungeon-Runners-Launcher/releases/download/v1/file.apk" })
             await Reject(() => AndroidUpdates.ValidateUrl(url));
-        Check(AndroidRuntime.ValidateUrl(AndroidRuntime.Package.Url).Scheme == "https", "Official runtime source rejected.");
-        Check(AndroidRuntime.CanInstall(28, new[] { "arm64-v8a", "armeabi-v7a" }), "Supported runtime platform rejected.");
-        Check(!AndroidRuntime.CanInstall(31, new[] { "armeabi-v7a", "armeabi" }), "32-bit Android accepted an ARM64 runtime.");
-        Check(!AndroidRuntime.CanInstall(27, new[] { "arm64-v8a" }), "Unsupported Android version accepted the runtime.");
-        Check(!AndroidRuntime.CanInstall(36, new[] { "x86_64", "x86" }), "x86 without an ARM64 bridge accepted the runtime.");
-        Check(AndroidRuntime.CanInstall(36, new[] { "x86_64", "arm64-v8a" }), "ARM64 native bridge was ignored.");
         Check(AndroidTouchRuntime.Supported(28, new[] { "armeabi-v7a" }), "ARMv7 touch runtime rejected.");
         Check(AndroidTouchRuntime.Supported(36, new[] { "arm64-v8a", "armeabi-v7a" }), "Compatible ARM64 device rejected.");
-        Check(!AndroidTouchRuntime.Supported(36, new[] { "arm64-v8a" }), "ARM64-only device accepted 32-bit native requirements.");
+        Check(AndroidTouchRuntime.Profile(36, new[] { "arm64-v8a" }) == "arm64-v8a", "ARM64-only device did not select its native runtime.");
         Check(!AndroidTouchRuntime.Supported(27, new[] { "armeabi-v7a" }), "Unsupported Android API accepted.");
-        Check(!AndroidTouchRuntime.Supported(36, new[] { "x86_64", "x86" }), "x86 device accepted ARM runtime.");
-        foreach (var url in new[] { AndroidRuntime.Package.Url.Replace("brunodev85", "other"), AndroidRuntime.Package.Url + "#fragment", AndroidRuntime.Package.Url.Replace("https:", "http:") })
-            await Reject(() => AndroidRuntime.ValidateUrl(url));
+        Check(AndroidTouchRuntime.Profile(36, new[] { "x86_64", "x86" }) == "x86_64", "x86-64 device did not select its native runtime.");
+        Check(AndroidTouchRuntime.Profile(36, new[] { "arm64-v8a", "x86_64" }) == "x86_64", "An emulated ARM ABI took priority over native x86-64.");
+        Check(AndroidTouchRuntime.Profile(36, new[] { "arm64-v8a", "armeabi-v7a" }) == "armeabi-v7a", "The working ARMv7 runtime changed on an existing device.");
+        Check(!AndroidTouchRuntime.Supported(36, new[] { "x86" }), "32-bit x86 accepted a 64-bit runtime.");
+        Check(!AndroidTouchRuntime.Supported(36, Array.Empty<string>()), "An unknown architecture accepted a runtime.");
         using var tampered = new Downloads(new Handler(_ => Reply(new byte[bytes.Length])));
         await Reject(() => tampered.VerifiedFileAsync(AndroidUpdates.Read(Metadata()), NewRoot(), null, CancellationToken.None, AndroidUpdates.ValidateUrl));
     }
@@ -67,7 +63,7 @@ internal static partial class Program
 
     private static async Task AndroidAddonTransactions()
     {
-        foreach (var boundary in new[] { "journal", "write:d3d9.dll", "write:Addons/Runtime/Addons.dll", "write:Addons/Runtime/ui-resources.json" })
+        foreach (var boundary in new[] { "journal", "write:d3d9.dll", "write:Addons/Runtime/Addons.dll", "write:Addons/Runtime/ui-resources.json", "write:Addons/Runtime/ui.bin" })
         {
             var root = Path.Combine(Sandbox, "android-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
@@ -77,17 +73,19 @@ internal static partial class Program
             var files = new Dictionary<string, byte[]> {
                 ["d3d9.dll"] = Encoding.UTF8.GetBytes("new loader"),
                 ["Addons/Runtime/Addons.dll"] = Encoding.UTF8.GetBytes("new runtime"),
-                ["Addons/Runtime/ui-resources.json"] = Encoding.UTF8.GetBytes("new data")
+                ["Addons/Runtime/ui-resources.json"] = Encoding.UTF8.GetBytes("new data"),
+                ["Addons/Runtime/ui.bin"] = Encoding.UTF8.GetBytes("new UI bundle")
             };
             var manager = new AndroidAddons(_ => { }, stage => { if (stage == boundary) throw new IOException("interrupted"); });
             using var installLock = Installer.Lock(root);
             await Reject(() => Task.FromResult(manager.Apply(root, files, CancellationToken.None)));
             Check(File.ReadAllBytes(SafeFiles.Under(root, "d3d9.dll")).SequenceEqual(old), "Android rollback lost original loader.");
             Check(!File.Exists(SafeFiles.Under(root, "Addons/Runtime/Addons.dll")), "Android rollback left new runtime.");
+            Check(!File.Exists(SafeFiles.Under(root, "Addons/Runtime/ui.bin")), "Android rollback left new UI data.");
             Check(!AndroidAddons.Pending(root), "Android journal remained after rollback.");
             Check(File.ReadAllBytes(SafeFiles.Under(root, "keep.txt")).SequenceEqual(old), "Android transaction changed unrelated data.");
             var committed = new AndroidAddons(_ => { }).Apply(root, files, CancellationToken.None);
-            Check(committed == 3 && !AndroidAddons.Pending(root), "Android transaction did not commit.");
+            Check(committed == 4 && !AndroidAddons.Pending(root), "Android transaction did not commit.");
             foreach (var file in files) Check(File.ReadAllBytes(SafeFiles.Under(root, file.Key)).SequenceEqual(file.Value), "Android install bytes differ.");
             await Reject(() => Task.FromResult(manager.Apply(root, new Dictionary<string, byte[]> { ["DungeonRunners.exe"] = old }, CancellationToken.None)));
             await Reject(() => Task.FromResult(manager.Apply(root, new Dictionary<string, byte[]> { ["Addons/../addon.ini"] = old }, CancellationToken.None)));

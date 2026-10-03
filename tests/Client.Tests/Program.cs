@@ -48,6 +48,7 @@ internal static partial class Program
             await Test("addon uninstall rejects unknown files, locks, cancellation and invalid downloads", AddonUninstallFailures);
             await Test("addon uninstall rolls back each boundary and recovers interruptions without overwriting edits", AddonUninstallRecovery);
             await Test("Android addon transactions roll back interrupted writes and preserve unrelated files", AndroidAddonTransactions);
+            await Test("addon UI extraction verifies package identity, hashes, bounds and decompression before writing", AddonSkinResources);
             await Test("Android APK feeds reject substituted releases and detect same-version updates", AndroidFeeds);
             await Test("Android storage checks use the game volume before downloading", AndroidStorage);
             await Test("launcher feeds verify platform, origin, digest and same-version changes", LauncherFeeds);

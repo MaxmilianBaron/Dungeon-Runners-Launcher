@@ -10,7 +10,6 @@ using global::Android.Views;
 using global::Android.Widget;
 using DungeonRunners.Client;
 using DungeonRunners.Launcher;
-using System.Text;
 using Path = System.IO.Path;
 using OperationCanceledException = System.OperationCanceledException;
 
@@ -40,7 +39,6 @@ public sealed class MainActivity : Activity
     private Button remove = null!;
     private Button installAddon = null!;
     private Button cancel = null!;
-    private Button runtimeButton = null!;
     private Typeface? font;
     private Bitmap? artBitmap;
     private Handler? handler;
@@ -51,6 +49,8 @@ public sealed class MainActivity : Activity
     private string root = "";
     private bool installed;
     private bool destroyed;
+    private Func<CancellationToken, Task>? pendingStorage;
+    private bool pendingStorageChanges;
     private readonly Color gold = Color.Rgb(235, 195, 108);
 
     protected override void OnCreate(Bundle? state)
@@ -64,8 +64,8 @@ public sealed class MainActivity : Activity
         advance = () => { if (!destroyed) { ShowArt(); handler.PostDelayed(advance!, 5000); } };
         ShowArt();
         Refresh();
-        if (installed) Say("Dungeon Runners", "Use Play to open the game runtime, or Update to check installed components.");
-        else if (!CanInstallRuntime) Say("Game runtime unavailable", "This device cannot use the verified ARM64 runtime. Game files and addons can still be installed and updated.");
+        if (installed) Say("Dungeon Runners", "Use Play to start the game, or Update to check installed components.");
+        else if (!TouchRuntimeSupported) Say("Game runtime unavailable", "Playing requires Android 9 or later with ARMv7, ARM64 or x86-64 support.");
     }
 
     private int Dp(float value) => (int)(value * Resources!.DisplayMetrics!.Density + .5f);
@@ -151,8 +151,6 @@ public sealed class MainActivity : Activity
         cancel = Button("Cancel", () => { operation?.Cancel(); return Task.CompletedTask; });
         cancel.Visibility = ViewStates.Gone;
         body.AddView(cancel, new LinearLayout.LayoutParams(-1, Dp(44)) { TopMargin = Dp(8) });
-        runtimeButton = Button("Game runtime", Runtime);
-        body.AddView(runtimeButton, new LinearLayout.LayoutParams(-1, Dp(44)) { TopMargin = Dp(12) });
         SetContentView(screen);
         FitLayout();
     }
@@ -178,7 +176,6 @@ public sealed class MainActivity : Activity
             links.GetChildAt(index)!.LayoutParameters = new LinearLayout.LayoutParams(0, Dp(landscape ? 32 : 42), 1) { MarginEnd = Dp(4) };
         for (var index = 0; index < actions.ChildCount; index++)
             actions.GetChildAt(index)!.LayoutParameters = new LinearLayout.LayoutParams(0, Dp(landscape ? 40 : 48), 1) { MarginEnd = Dp(5) };
-        runtimeButton.LayoutParameters = new LinearLayout.LayoutParams(-1, Dp(landscape ? 36 : 44)) { TopMargin = Dp(landscape ? 6 : 12) };
     }
 
     private void ShowArt()
@@ -198,8 +195,7 @@ public sealed class MainActivity : Activity
         handler?.RemoveCallbacks(advance!);
         if (advance is not null) handler?.PostDelayed(advance, 5000);
         if (primary is not null) Refresh();
-        if (StorageReady && status?.Text == "Storage access required")
-            Say("Dungeon Runners", installed ? "Existing installation detected. Use Play or Update." : "File access granted. Select Install to download the game.");
+        ResumeStorage();
         try { ApkUpdates.Resume(this); }
         catch (Exception error) { Say("Package installation stopped", error.Message); }
     }
@@ -232,6 +228,22 @@ public sealed class MainActivity : Activity
         return false;
     }
 
+    private async void ResumeStorage()
+    {
+        if (!StorageReady || pendingStorage is null || destroyed) return;
+        var action = pendingStorage;
+        var changes = pendingStorageChanges;
+        pendingStorage = null;
+        try { await Run(action, changes); }
+        catch (Exception error) { Say("Operation could not finish", error.Message); }
+    }
+
+    public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
+    {
+        base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1) ResumeStorage();
+    }
+
     private void Guard(string directory)
     {
         if (!StorageReady || SafeFiles.Root(directory) != SafeFiles.Root(root)) throw new IOException("Game folder access is unavailable.");
@@ -253,9 +265,7 @@ public sealed class MainActivity : Activity
         installAddon.Visibility = hasAddons ? ViewStates.Gone : ViewStates.Visible;
         remove.Visibility = hasAddons ? ViewStates.Visible : ViewStates.Gone;
         installAddon.Enabled = remove.Enabled = !busy && installed;
-        runtimeButton.Enabled = !busy;
-        runtimeButton.Visibility = TouchRuntimeSupported ? ViewStates.Gone : ViewStates.Visible;
-        foreach (var button in new[] { primary, update, addon, installAddon, remove, runtimeButton }) button.Alpha = button.Enabled ? 1f : .45f;
+        foreach (var button in new[] { primary, update, addon, installAddon, remove }) button.Alpha = button.Enabled ? 1f : .45f;
         path.Visibility = installed ? ViewStates.Gone : ViewStates.Visible;
         cancel.Visibility = busy ? ViewStates.Visible : ViewStates.Gone;
     }
@@ -284,7 +294,13 @@ public sealed class MainActivity : Activity
 
     private async Task<bool> ConfirmRuntimeClosed()
     {
-        if (!GetPreferences(FileCreationMode.Private)!.GetBoolean("runtimeOpened", false)) return true;
+        using var type = Java.Lang.Class.ForName("com.termux.x11.GameRuntimeService");
+        using var method = type.GetMethod("isActive");
+        using var active = method.Invoke(null);
+        if (active is Java.Lang.Boolean value && value.BooleanValue())
+            throw new IOException("Exit the game before changing its files.");
+        var preferences = GetPreferences(FileCreationMode.Private)!;
+        if (!preferences.GetBoolean("runtimeOpened", false) || preferences.GetBoolean("runtimeManaged", false)) return true;
         var answer = new TaskCompletionSource<bool>();
         var dialog = new AlertDialog.Builder(this)!.SetTitle("Close the game first")!
             .SetMessage("Exit the game before changing its files. Android prevents the launcher from checking another app's processes.")!
@@ -292,12 +308,21 @@ public sealed class MainActivity : Activity
             .SetNegativeButton("Cancel", (_, _) => answer.TrySetResult(false))!.Create()!;
         dialog.DismissEvent += (_, _) => answer.TrySetResult(false);
         dialog.Show();
-        return await answer.Task;
+        var result = await answer.Task;
+        if (result) preferences.Edit()!.PutBoolean("runtimeOpened", false)!.Apply();
+        return result;
     }
 
     private async Task Run(Func<CancellationToken, Task> action, bool changesFiles = true)
     {
-        if (!RequestStorage() || !await gate.WaitAsync(0)) return;
+        if (!StorageReady)
+        {
+            pendingStorage = action;
+            pendingStorageChanges = changesFiles;
+            RequestStorage();
+            return;
+        }
+        if (!await gate.WaitAsync(0)) return;
         try { if (changesFiles && !await ConfirmRuntimeClosed()) { gate.Release(); return; } }
         catch { gate.Release(); throw; }
         busy = true;
@@ -321,19 +346,18 @@ public sealed class MainActivity : Activity
 
     private async Task InstallGame(CancellationToken token)
     {
+        RequireRuntime();
         Say("Checking game release", "Verifying the signed installation manifest…");
         var bytes = await Latest(token);
         var sink = ProgressSink();
         var result = await Task.Run(() => installer.ApplyAsync(root, bytes, downloads.PackageAsync, sink, token), token);
-        WriteGameEntry();
-        Say("Game installed", TouchRuntimeSupported ? $"Client {result.Version}. Preparing game requirements…" : $"Client {result.Version}. Configure a compatible game runtime before playing.");
-        if (TouchRuntimeSupported) await PrepareTouchRuntime(token, false);
+        Say("Game installed", $"Client {result.Version}. Preparing game requirements…");
+        await PrepareTouchRuntime(token, false);
     }
 
-    private void WriteGameEntry()
+    private void RequireRuntime()
     {
-        var target = SafeFiles.Under(root, "DungeonRunners-Android.cmd");
-        if (!File.Exists(target)) SafeFiles.WriteAtomic(target, Encoding.ASCII.GetBytes("@echo off\r\ncd /d \"%~dp0\"\r\nDungeonRunners.exe ran_from_launcher\r\n"));
+        if (!TouchRuntimeSupported) throw new IOException("Playing requires Android 9 or later with ARMv7, ARM64 or x86-64 support. This device has no compatible game runtime.");
     }
 
     private async Task UpdateAll(CancellationToken token)
@@ -350,7 +374,11 @@ public sealed class MainActivity : Activity
             ApkUpdates.Install(this, downloaded);
             Say("Launcher update ready", "Allow installation if requested, then confirm the Android installation dialog.");
         }
-        else Say("Up to date", $"Game and installed addons checked. Updated files: {result.ChangedFiles + count}." + (apk is null ? " No Android APK release is published yet." : ""));
+        else
+        {
+            Say("Up to date", $"Game and installed addons checked. Updated files: {result.ChangedFiles + count}." + (apk is null ? " No Android APK release is published yet." : ""));
+            if (TouchRuntimeSupported) await PrepareTouchRuntime(token, false);
+        }
     }
 
     private async Task InstallAddons(CancellationToken token)
@@ -369,64 +397,30 @@ public sealed class MainActivity : Activity
 
     private async Task Play(CancellationToken token)
     {
+        RequireRuntime();
         var saved = SafeFiles.Under(root, ".dr-client/manifest.json");
         var bytes = manifest ?? (installer.InstalledManifest(root) is not null ? File.ReadAllBytes(saved) : await Latest(token));
         await Task.Run(() => installer.PreparePlayAsync(root, bytes, token), token);
-        WriteGameEntry();
-        if (TouchRuntimeSupported) await PrepareTouchRuntime(token, true);
-        else await Runtime();
-    }
-
-    private Task Runtime()
-    {
-        if (TouchRuntimeSupported) return Run(token => PrepareTouchRuntime(token, true), false);
-        var abis = string.Join(", ", Build.SupportedAbis ?? Array.Empty<string>());
-        var launch = PackageManager!.GetLaunchIntentForPackage("com.winlator");
-        if (launch is null && !CanInstallRuntime)
-        {
-            new AlertDialog.Builder(this)!.SetTitle("Game runtime unavailable")!
-                .SetMessage($"This device uses {abis}. The verified Winlator runtime requires Android 9 or later and ARM64 support.\n\nThe launcher can manage game files and addons, but cannot run the game on this device.")!
-                .SetPositiveButton("Close", (_, _) => { })!.Show();
-            return Task.CompletedTask;
-        }
-        new AlertDialog.Builder(this)!.SetTitle("Game runtime")!
-            .SetMessage($"Device: {abis}\n\nThe game requires a Windows x86 runtime. In Winlator, map the game folder and open DungeonRunners-Android.cmd. Game compatibility is not yet verified.\n\n{root}")!
-            .SetPositiveButton(launch is null ? "Install Winlator" : "Open Winlator", async (_, _) => {
-                if (launch is not null)
-                {
-                    GetPreferences(FileCreationMode.Private)!.Edit()!.PutBoolean("runtimeOpened", true)!.Apply();
-                    StartActivity(launch);
-                }
-                else await Run(InstallRuntime, false);
-            })!
-            .SetNegativeButton("Close", (_, _) => { })!.Show();
-        return Task.CompletedTask;
+        await PrepareTouchRuntime(token, true);
     }
 
     private bool TouchRuntimeSupported => AndroidTouchRuntime.Supported((int)Build.VERSION.SdkInt, Build.SupportedAbis ?? Array.Empty<string>());
-    private bool CanInstallRuntime => TouchRuntimeSupported || AndroidRuntime.CanInstall((int)Build.VERSION.SdkInt, Build.SupportedAbis ?? Array.Empty<string>());
 
     private async Task PrepareTouchRuntime(CancellationToken token, bool play)
     {
-        if (!AndroidTouchRuntime.RequirementsReady(FilesDir!.CanonicalPath, root))
+        var profile = AndroidTouchRuntime.Profile((int)Build.VERSION.SdkInt, Build.SupportedAbis ?? Array.Empty<string>())
+            ?? throw new IOException("This device has no compatible game runtime.");
+        if (!AndroidTouchRuntime.RequirementsReady(FilesDir!.CanonicalPath, root, profile))
             await downloads.VerifiedFileAsync(Dependencies.DirectX, Path.Combine(FilesDir.CanonicalPath, "game-runtime/downloads"), ProgressSink(), token, Dependencies.ValidateUrl);
         token.ThrowIfCancellationRequested();
-        GetPreferences(FileCreationMode.Private)!.Edit()!.PutBoolean("runtimeOpened", play)!.Apply();
+        GetPreferences(FileCreationMode.Private)!.Edit()!.PutBoolean("runtimeOpened", play)!.PutBoolean("runtimeManaged", true)!.Apply();
         var start = new Intent().SetComponent(new ComponentName(PackageName!, AndroidTouchRuntime.Activity));
         start.AddFlags(ActivityFlags.NewTask);
         start.PutExtra("play", play);
         start.PutExtra("root", root);
+        start.PutExtra("profile", profile);
         StartActivity(start);
         if (play) FinishAndRemoveTask();
-    }
-
-    private async Task InstallRuntime(CancellationToken token)
-    {
-        if (!CanInstallRuntime)
-            throw new IOException("The verified Winlator runtime requires Android 9 or later and ARM64 support. No compatible game runtime is configured.");
-        var file = await downloads.VerifiedFileAsync(AndroidRuntime.Package, CacheDir!.CanonicalPath, ProgressSink(), token, AndroidRuntime.ValidateUrl);
-        ApkUpdates.InstallRuntime(this, file);
-        Say("Runtime installation", "Allow installation if requested, then confirm the Android installation dialog.");
     }
 
     private void OpenUrl(string url)

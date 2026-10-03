@@ -42,6 +42,7 @@ public sealed class AndroidAddons
         {
             AddonBridge.Extract(archiveBytes, stage);
             var files = ReadFiles(stage, manifestBytes);
+            files["Addons/Runtime/ui.bin"] = AddonSkin.Build(root, files["Addons/Runtime/ui-resources.json"], token);
             using var document = JsonDocument.Parse(manifestBytes);
             var manifest = document.RootElement;
             var loader = SafeFiles.Under(root, "d3d9.dll");
@@ -86,7 +87,7 @@ public sealed class AndroidAddons
             var bytes = Read(SafeFiles.Under(stage, relative));
             if (Hash(bytes) != expected || !result.TryAdd(relative, bytes)) throw new InvalidDataException("Addon file verification failed.");
         }
-        if (!result.ContainsKey("d3d9.dll") || !result.ContainsKey("Addons/Runtime/Addons.dll")) throw new InvalidDataException("Addon runtime is missing.");
+        if (!result.ContainsKey("d3d9.dll") || !result.ContainsKey("Addons/Runtime/Addons.dll") || !result.ContainsKey("Addons/Runtime/ui-resources.json")) throw new InvalidDataException("Addon runtime is missing.");
         var licenses = SafeFiles.Under(stage, "Addons/Licenses");
         if (!Directory.Exists(licenses)) throw new InvalidDataException("Addon licenses are missing.");
         foreach (var path in Directory.EnumerateFiles(licenses))
@@ -168,7 +169,7 @@ public sealed class AndroidAddons
         return true;
     }
 
-    private static bool Allowed(string? path) => path is not null && (path is "d3d9.dll" or "d3d9.previous.dll" or "Addons/Runtime/Addons.dll" or "Addons/Runtime/ui-resources.json" or "Addons/Runtime/Update.ps1" or "Addons/Update.cmd"
+    private static bool Allowed(string? path) => path is not null && (path is "d3d9.dll" or "d3d9.previous.dll" or "Addons/Runtime/Addons.dll" or "Addons/Runtime/ui.bin" or "Addons/Runtime/ui-resources.json" or "Addons/Runtime/Update.ps1" or "Addons/Update.cmd"
         || path.StartsWith("Addons/Licenses/", StringComparison.Ordinal) && path.EndsWith(".txt", StringComparison.Ordinal) && path.Count(c => c == '/') == 2
         || path.StartsWith("Addons/", StringComparison.Ordinal) && path.EndsWith("/addon.ini", StringComparison.Ordinal) && path.Count(c => c == '/') == 2);
     private static bool Preserve(string path) => path.EndsWith(".ini", StringComparison.OrdinalIgnoreCase) || path.StartsWith("Addons/Licenses/", StringComparison.Ordinal);

@@ -17,28 +17,33 @@ final class NativeRuntime {
     final File root;
     final File libraries;
     final File game;
+    final RuntimeProfile profile;
+    final List<String> executableBindings = new ArrayList<>();
 
-    NativeRuntime(Context context, String gamePath) throws Exception {
+    NativeRuntime(Context context, String gamePath, String selected) throws Exception {
         this.context = context;
+        profile = RuntimeProfile.select(android.os.Build.VERSION.SDK_INT, android.os.Build.SUPPORTED_ABIS, selected);
         if (gamePath == null) throw new IOException("The game installation folder is missing.");
         game = new File(gamePath).getCanonicalFile();
         for (String name : new String[]{"DungeonRunners.exe", "game.pki", "game.pkg"})
             if (!new File(game, name).isFile()) throw new IOException("Install the game before starting it.");
         base = new File(context.getFilesDir(), "game-runtime");
-        root = new File(base, "rootfs");
+        root = new File(base, profile.rootName());
         File preferred = new File(context.getApplicationInfo().nativeLibraryDir);
-        libraries = new File(preferred, "libproot.so").isFile() ? preferred : new File(preferred.getParentFile(), "arm");
+        libraries = profile.legacy() && android.os.Process.is64Bit() ? new File(preferred.getParentFile(), "arm") : preferred;
         if (!new File(libraries, "libproot.so").isFile()) throw new IOException("This device needs a compatible game runtime.");
     }
 
     void prepare() throws Exception {
         GameRuntimeActivity.message("Preparing game requirements…");
         root.mkdirs();
-        for (String name : new String[]{"tmp", "proc", "dev", "system", "apex", "usr/bin", "usr/lib/arm-linux-gnueabihf", "root", "root/game", "etc", "runtime"}) child(root, name).mkdirs();
+        for (String name : new String[]{"tmp", "proc", "dev", "system", "apex", "usr/bin", "usr/lib/" + profile.triplet, "root", "root/game", "etc", "runtime"}) child(root, name).mkdirs();
         link("bin", "usr/bin");
         link("lib", "usr/lib");
+        if (!profile.legacy()) prepareData("dungeon-runtime/wow64", "wow64-" + profile.id);
+        prepareData(profile.assets(), profile.legacy() ? "data" : "data-" + profile.id);
         JSONArray entries;
-        try (InputStream input = context.getAssets().open("dungeon-runtime/files.json")) {
+        try (InputStream input = context.getAssets().open(profile.assets() + "/files.json")) {
             entries = new JSONArray(new String(read(input, 1024 * 1024), java.nio.charset.StandardCharsets.UTF_8));
         }
         for (int i = 0; i < entries.length(); i++) {
@@ -47,45 +52,20 @@ final class NativeRuntime {
             if (!name.matches("lib[a-zA-Z0-9_-]+\\.so")) throw new IOException("Invalid runtime library name.");
             File library = new File(libraries, name);
             if (!library.isFile()) throw new IOException("A packaged game library is missing.");
-            link(item.getString("path"), library.getPath());
+            String path = item.getString("path");
+            if (profile.id.equals("x86_64") && path.startsWith("opt/aardvark/wine/")) {
+                File target = child(root, path);
+                target.getParentFile().mkdirs();
+                Files.deleteIfExists(target.toPath());
+                Files.createFile(target.toPath());
+                executableBindings.add(library.getPath() + ":/" + path);
+            } else link(path, library.getPath());
         }
-        link("usr/lib/ld-linux-armhf.so.3", "arm-linux-gnueabihf/ld-linux-armhf.so.3");
-        JSONObject data;
-        try (InputStream input = context.getAssets().open("dungeon-runtime/data.json")) {
-            data = new JSONObject(new String(read(input, 4096), java.nio.charset.StandardCharsets.UTF_8));
-        }
-        String revision = data.getString("sha256");
-        if (!revision.matches("[0-9a-f]{64}")) throw new IOException("Invalid runtime data revision.");
-        File ready = new File(base, "data-ready");
-        if (!ready.isFile() || ready.length() > 128 || !new String(Files.readAllBytes(ready.toPath()), java.nio.charset.StandardCharsets.UTF_8).trim().equals(revision)) {
-            if (base.getUsableSpace() < 650L * 1024 * 1024) throw new IOException("Game requirements need at least 650 MB of free internal storage.");
-            try (ZipInputStream zip = new ZipInputStream(context.getAssets().open("dungeon-runtime/data.zip"))) {
-                ZipEntry entry;
-                long total = 0;
-                while ((entry = zip.getNextEntry()) != null) {
-                    File target = child(root, entry.getName());
-                    if (entry.isDirectory()) { target.mkdirs(); continue; }
-                    target.getParentFile().mkdirs();
-                    File pending = new File(target.getPath() + ".pending");
-                    try (FileOutputStream output = new FileOutputStream(pending)) {
-                        byte[] block = new byte[32768];
-                        int count;
-                        while ((count = zip.read(block)) != -1) {
-                            total += count;
-                            if (total > 512L * 1024 * 1024) throw new IOException("The runtime archive is too large.");
-                            output.write(block, 0, count);
-                        }
-                    }
-                    if (target.isFile() && target.length() == pending.length() && Arrays.equals(checksum(target), checksum(pending))) {
-                        Files.delete(pending.toPath());
-                    } else {
-                        Files.move(pending.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                        Os.chmod(target.getPath(), 0700);
-                        if (entry.getTime() >= 0) target.setLastModified(entry.getTime());
-                    }
-                }
-            }
-            write(ready, revision + "\n");
+        link("usr/lib/" + profile.loader, profile.triplet + "/" + profile.loader);
+        if (profile.id.equals("x86_64")) {
+            child(root, "usr/lib64").mkdirs();
+            link("lib64", "usr/lib64");
+            link("usr/lib64/" + profile.loader, "../lib/" + profile.triplet + "/" + profile.loader);
         }
         write(child(root, "etc/passwd"), "root:x:0:0:Game:/root:/bin/bash\n");
         write(child(root, "etc/group"), "root:x:0:\n");
@@ -97,7 +77,7 @@ final class NativeRuntime {
         try (InputStream input = context.getAssets().open("dungeon-runtime/play.sh")) {
             Files.copy(input, new File(scripts, "play.sh").toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
-        for (String name : new String[]{"guest-memory", "guest-code.bin", "AardvarkInput.exe", "AardvarkTouch.dll"}) {
+        for (String name : new String[]{"guest-memory", "guest-code.bin", "AardvarkInput.exe", "AardvarkTouch.dll", "AardvarkRuntimeCheck.exe"}) {
             File target = new File(scripts, name);
             try (InputStream input = context.getAssets().open("dungeon-runtime/" + name)) {
                 Files.copy(input, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -105,8 +85,9 @@ final class NativeRuntime {
             Os.chmod(target.getPath(), 0700);
         }
         for (String command : new String[]{"wine", "wineserver"})
-            write(child(root, "usr/local/bin/aardvark-" + command), "#!/bin/bash\nexec /usr/local/bin/box86 /opt/aardvark/wine/bin/" + command + " \"$@\"\n");
+            write(child(root, "usr/local/bin/aardvark-" + command), "#!/bin/bash\nexec " + profile.command(command) + " \"$@\"\n");
         for (String command : new String[]{"aardvark-wine", "aardvark-wineserver"}) Os.chmod(child(root, "usr/local/bin/" + command).getPath(), 0700);
+        write(new File(scripts, "command.sh"), "#!/bin/bash\ntrap '/usr/local/bin/aardvark-wineserver -k >/dev/null 2>&1 || true; /usr/local/bin/aardvark-wineserver -w >/dev/null 2>&1 || true' EXIT\n/usr/local/bin/aardvark-wine \"$@\"\n");
         preparePackages();
         new File(game, "logs").mkdirs();
         File user = new File(game, "config/User.cfg");
@@ -134,6 +115,77 @@ final class NativeRuntime {
         }
     }
 
+    private void prepareData(String assets, String marker) throws Exception {
+        JSONObject data;
+        try (InputStream input = context.getAssets().open(assets + "/data.json")) {
+            data = new JSONObject(new String(read(input, 4096), java.nio.charset.StandardCharsets.UTF_8));
+        }
+        String revision = data.getString("sha256");
+        long expected = data.getLong("unpackedSize");
+        if (!revision.matches("[0-9a-f]{64}") || expected <= 0 || expected > 1024L * 1024 * 1024)
+            throw new IOException("Invalid runtime data revision.");
+        File ready = new File(base, marker + "-ready");
+        if (ready.isFile() && ready.length() <= 128 && new String(Files.readAllBytes(ready.toPath()), java.nio.charset.StandardCharsets.UTF_8).trim().equals(revision)) return;
+        if (base.getUsableSpace() < expected + 128L * 1024 * 1024) throw new IOException("Game requirements need more free internal storage.");
+        try (InputStream input = context.getAssets().open(assets + "/data.zip")) {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] block = new byte[131072]; int count;
+            while ((count = input.read(block)) != -1) digest.update(block, 0, count);
+            StringBuilder value = new StringBuilder();
+            for (byte part : digest.digest()) value.append(String.format(Locale.ROOT, "%02x", part & 255));
+            if (!value.toString().equals(revision)) throw new IOException("Packaged game requirements are damaged. Reinstall the launcher.");
+        }
+        long total = 0;
+        Set<String> names = new HashSet<>();
+        try (ZipInputStream zip = new ZipInputStream(context.getAssets().open(assets + "/data.zip"))) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException();
+                if (!names.add(entry.getName()) || names.size() > 20000) throw new IOException("Invalid runtime archive inventory.");
+                File target = child(root, entry.getName());
+                if (entry.isDirectory()) { target.mkdirs(); continue; }
+                target.getParentFile().mkdirs();
+                File pending = new File(target.getPath() + ".pending");
+                try {
+                    try (FileOutputStream output = new FileOutputStream(pending)) {
+                        byte[] block = new byte[131072]; int count;
+                        while ((count = zip.read(block)) != -1) {
+                            total += count;
+                            if (total > expected) throw new IOException("The runtime archive is too large.");
+                            output.write(block, 0, count);
+                        }
+                    }
+                    if (!target.isFile() || target.length() != pending.length() || !Arrays.equals(checksum(target), checksum(pending))) {
+                        Files.move(pending.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        Os.chmod(target.getPath(), 0700);
+                        if (entry.getTime() >= 0) target.setLastModified(entry.getTime());
+                    }
+                } finally { Files.deleteIfExists(pending.toPath()); }
+            }
+        }
+        if (total != expected) throw new IOException("The runtime archive is incomplete.");
+        write(ready, revision + "\n");
+    }
+
+    ProcessBuilder wine(String... arguments) {
+        ArrayList<String> values = new ArrayList<>();
+        values.add("/bin/bash");
+        values.add("/runtime/scripts/command.sh");
+        values.addAll(Arrays.asList(arguments));
+        return command(values.toArray(new String[0]));
+    }
+
+    ProcessBuilder preflight() {
+        return profile.legacy() ? command("/usr/local/bin/box86", "/runtime/scripts/guest-memory", "/runtime/scripts/guest-code.bin")
+            : wine("/runtime/scripts/AardvarkRuntimeCheck.exe");
+    }
+
+    boolean prefixReady() {
+        return childPrefix("system.reg").isFile() && childPrefix("drive_c/windows/" + profile.windowsLibraries() + "/kernel32.dll").isFile();
+    }
+
+    private File childPrefix(String name) { return new File(root, "root/.wine/" + name); }
+
     boolean requirementsReady() throws Exception {
         String[][] files = {
             {"d3dx9_31.dll", "e2065619fe6eb0034833b1dc0369deb4a6edc3110e38a1132eeafcf430c578a5"},
@@ -141,7 +193,7 @@ final class NativeRuntime {
         };
         for (String[] item : files) {
             boolean found = false;
-            for (File folder : new File[]{game, child(root, "root/.wine/drive_c/windows/system32")}) {
+            for (File folder : new File[]{game, child(root, "root/.wine/drive_c/windows/" + profile.windowsLibraries())}) {
                 File file = new File(folder, item[0]);
                 if (file.isFile() && hash(file).equals(item[1])) found = true;
             }
@@ -158,7 +210,8 @@ final class NativeRuntime {
         Files.deleteIfExists(executable.toPath());
         Os.symlink(archive.getName(), executable.getPath());
         File setup = child(root, "root/.wine/drive_c/AardvarkRequirements");
-        setup.mkdirs();
+        clearRequirementStaging(setup);
+        if (!setup.mkdirs()) throw new IOException("Cannot prepare game requirement staging.");
         return setup;
     }
 
@@ -174,13 +227,18 @@ final class NativeRuntime {
     }
 
     void cleanRequirements(File setup) throws Exception {
-        File expected = child(root, "root/.wine/drive_c/AardvarkRequirements").getCanonicalFile();
+        clearRequirementStaging(setup);
+        Files.deleteIfExists(new File(base, "downloads/directx.exe").toPath());
+        Files.deleteIfExists(new File(base, "downloads/053f76dcbb28802e23341b6a787e3b0791c0fa5c8d4d011b1044172dbf89c73b.zip").toPath());
+    }
+
+    private void clearRequirementStaging(File setup) throws Exception {
+        File expected = child(root.getCanonicalFile(), "root/.wine/drive_c/AardvarkRequirements");
         if (!setup.getCanonicalFile().equals(expected)) throw new IOException("Invalid requirement staging folder.");
+        if (!setup.exists()) return;
         try (java.util.stream.Stream<java.nio.file.Path> paths = Files.walk(setup.toPath())) {
             for (java.nio.file.Path path : paths.sorted(Comparator.reverseOrder()).toArray(java.nio.file.Path[]::new)) Files.delete(path);
         }
-        Files.deleteIfExists(new File(base, "downloads/directx.exe").toPath());
-        Files.deleteIfExists(new File(base, "downloads/053f76dcbb28802e23341b6a787e3b0791c0fa5c8d4d011b1044172dbf89c73b.zip").toPath());
     }
 
     private static String hash(File file) throws Exception {
@@ -247,10 +305,12 @@ final class NativeRuntime {
             "-b", new File(base, "package-data/game.pkg").getPath() + ":/root/game/game.pkg", "-b", new File(base, "package-data/game.pki").getPath() + ":/root/game/game.pki",
             "-b", base.getPath() + ":/runtime", "-b", new File(root, "tmp").getPath() + ":/tmp", "-w", "/root/game",
             "/system/bin/env", "-i", "HOME=/root", "PATH=/usr/local/bin:/usr/bin:/bin:/system/bin", "LANG=C.UTF-8", "TMPDIR=/tmp",
-            "DISPLAY=:7", "WINEPREFIX=/root/.wine", "WINEARCH=win32", "BOX86_LOG=0", "BOX86_DYNAREC=1", "BOX86_LD_LIBRARY_PATH=/opt/aardvark/wine/lib",
+            "DISPLAY=:7", "WINEPREFIX=/root/.wine", "WINEARCH=" + profile.wineArch(), "WINE_ANDROID_IMAGE_COPY=1", "BOX86_LOG=0", "BOX86_DYNAREC=1", "BOX86_LD_LIBRARY_PATH=/opt/aardvark/wine/lib",
+            "BOX64_LOG=0", "BOX64_DYNAREC=1", "BOX64_DYNAREC_STRONGMEM=1", "BOX64_LD_LIBRARY_PATH=/opt/aardvark/wine/lib/wine/x86_64-unix:/opt/aardvark/wine/deps",
             "LIBGL_ALWAYS_SOFTWARE=1", "GALLIUM_DRIVER=llvmpipe", "LP_NUM_THREADS=2", "WINEDLLOVERRIDES=mscoree,mshtml=;winemenubuilder.exe=d;d3d9=b;d3dx9_31,d3dx9_40=n,b",
             "WINEDEBUG=-all,err+all", "WINELOADER=/usr/local/bin/aardvark-wine", "WINESERVER=/usr/local/bin/aardvark-wineserver"));
         if (new File("/linkerconfig").isDirectory()) args.addAll(1, Arrays.asList("-b", "/linkerconfig"));
+        for (String binding : executableBindings) args.addAll(1, Arrays.asList("-b", binding));
         args.addAll(Arrays.asList(task));
         ProcessBuilder process = new ProcessBuilder(args).directory(base).redirectErrorStream(true);
         Map<String,String> env = process.environment();

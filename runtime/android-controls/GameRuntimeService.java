@@ -24,6 +24,7 @@ public final class GameRuntimeService extends Service {
     private volatile Process display;
     private volatile boolean closing;
     private NativeRuntime runtime;
+    public static boolean isActive() { return running; }
 
     @Override public IBinder onBind(Intent intent) { return null; }
 
@@ -39,32 +40,40 @@ public final class GameRuntimeService extends Service {
         current = this;
         boolean play = intent != null && intent.getBooleanExtra("play", true);
         String root = intent == null ? null : intent.getStringExtra("root");
-        new Thread(() -> runGame(root, play), "dungeon-runtime").start();
+        String profile = intent == null ? null : intent.getStringExtra("profile");
+        new Thread(() -> runGame(root, profile, play), "dungeon-runtime").start();
         return START_NOT_STICKY;
     }
 
-    private void runGame(String root, boolean play) {
+    private void runGame(String root, String profile, boolean play) {
         boolean success = false;
         Thread displayLog = null;
         try {
-            runtime = new NativeRuntime(this, root);
+            runtime = new NativeRuntime(this, root, profile);
             runtime.base.mkdirs();
             try (RandomAccessFile owner = new RandomAccessFile(new File(runtime.base, "session.lock"), "rw"); FileLock lock = owner.getChannel().tryLock()) {
                 if (lock == null) throw new IOException("A game session is already running.");
                 runtime.prepare();
                 if (closing) return;
-                game = runtime.command("/usr/local/bin/box86", "/runtime/scripts/guest-memory", "/runtime/scripts/guest-code.bin").start();
-                Thread memoryLog = capture(game, new File(logFolder(), "memory.log"));
-                if (!game.waitFor(30, TimeUnit.SECONDS)) throw new IOException("Game compatibility check timed out.");
-                memoryLog.join(3000);
-                if (closing) return;
-                if (game.exitValue() != 0) throw new IOException("The game runtime is not compatible with this device.");
                 display = xserver();
                 displayLog = capture(display, new File(logFolder(), "display.log"));
                 File socket = new File(runtime.root, "tmp/.X11-unix/X7");
                 for (int attempt = 0; attempt < 150 && !socket.exists() && display.isAlive() && !closing; attempt++) Thread.sleep(100);
                 if (closing) return;
                 if (!socket.exists() || !display.isAlive()) throw new IOException("Game display could not start.");
+                if (!runtime.profile.legacy() && !runtime.prefixReady()) {
+                    requirement("wineboot", "-u");
+                    if (!runtime.prefixReady()) throw new IOException("Game settings could not be saved. Reopen the launcher to retry.");
+                }
+                game = runtime.preflight().start();
+                File memoryFile = new File(logFolder(), "memory.log");
+                Thread memoryLog = capture(game, memoryFile);
+                if (!game.waitFor(180, TimeUnit.SECONDS)) throw new IOException("Game compatibility check timed out.");
+                memoryLog.join(3000);
+                if (closing) return;
+                String expected = runtime.profile.legacy() ? "Guest memory checks passed" : "AARDVARK_RUNTIME_READY";
+                String checked = new String(java.nio.file.Files.readAllBytes(memoryFile.toPath()), java.nio.charset.StandardCharsets.UTF_8);
+                if (game.exitValue() != 0 || !checked.contains(expected)) throw new IOException("The game runtime is not compatible with this device.");
                 if (!runtime.requirementsReady()) {
                     GameRuntimeActivity.message("Installing game requirements…");
                     File setup = runtime.requirementInstaller();
@@ -113,12 +122,8 @@ public final class GameRuntimeService extends Service {
     }
 
     private void requirement(String... arguments) throws Exception {
-        String[] command = new String[arguments.length + 2];
-        command[0] = "/usr/local/bin/box86";
-        command[1] = "/opt/aardvark/wine/bin/wine";
-        System.arraycopy(arguments, 0, command, 2, arguments.length);
         if (closing) return;
-        game = runtime.command(command).start();
+        game = runtime.wine(arguments).start();
         Thread output = capture(game, new File(logFolder(), "requirements.log"));
         if (!game.waitFor(600, TimeUnit.SECONDS)) { game.destroyForcibly(); throw new IOException("Game requirement setup timed out."); }
         output.join(3000);
@@ -132,7 +137,7 @@ public final class GameRuntimeService extends Service {
         inputs.shutdownNow();
         if (game != null) try { game.getOutputStream().close(); } catch (IOException ignored) { }
         if (runtime != null) try {
-            Process stop = runtime.command("/usr/local/bin/box86", "/opt/aardvark/wine/bin/wineserver", "-k").redirectOutput(new File("/dev/null")).start();
+            Process stop = runtime.command("/usr/local/bin/aardvark-wineserver", "-k").redirectOutput(new File("/dev/null")).start();
             if (!stop.waitFor(5, TimeUnit.SECONDS)) stop.destroyForcibly();
         } catch (Exception ignored) { }
         if (game != null && game.isAlive()) game.destroy();

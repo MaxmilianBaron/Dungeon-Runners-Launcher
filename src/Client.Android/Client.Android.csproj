@@ -7,7 +7,7 @@
     <ApplicationId>com.aardvarkland.dungeonrunners</ApplicationId>
     <ApplicationTitle>Dungeon Runners</ApplicationTitle>
     <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
-    <ApplicationVersion>10003</ApplicationVersion>
+    <ApplicationVersion>10004</ApplicationVersion>
     <AndroidRuntimeLibrary Condition="'$(AndroidRuntimeLibrary)' == ''">../../artifacts/android-runtime/library</AndroidRuntimeLibrary>
     <AndroidStripNativeLibraries>false</AndroidStripNativeLibraries>
     <RuntimeIdentifiers>android-arm64;android-x64;android-arm;android-x86</RuntimeIdentifiers>

@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
 installer=$(realpath "${1:-artifacts/Dungeon-Runners-Launcher-Linux.run}")
+target=${2:-Linux}
 directory=$(dirname "$installer")
 work=$(mktemp -d)
 cleanup() {
@@ -26,11 +27,20 @@ printf '%s\n' "${DR_TEST_BITS:-64}"
 SH
 chmod 700 "$work/bin/uname" "$work/bin/getconf"
 export PATH="$work/bin:$PATH" TMPDIR="$work/scratch"
-for pair in x86_64:x64 amd64:x64 aarch64:arm64 arm64:arm64; do
+pairs='x86_64:x64 amd64:x64'
+architectures=x64
+if [ "$target" = Linux ]; then
+    pairs="$pairs aarch64:arm64 arm64:arm64"
+    architectures="$architectures arm64"
+else
+    [ "$target" = SteamDeck ] || exit 1
+    if DR_TEST_ARCH=aarch64 sh "$installer" --detect > /dev/null 2>&1; then exit 1; fi
+fi
+for pair in $pairs; do
     DR_TEST_ARCH=${pair%:*}; export DR_TEST_ARCH
     [ "$(sh "$installer" --detect)" = "${pair#*:}" ]
 done
-for architecture in x64 arm64; do
+for architecture in $architectures; do
     if [ "$architecture" = x64 ]; then
         DR_TEST_ARCH=x86_64
         name=Dungeon-Runners-Launcher-Linux.AppImage
@@ -54,4 +64,4 @@ bytes=$(wc -c < "$installer")
 head -c "$((bytes - 4096))" "$installer" > "$work/truncated.run"
 if sh "$work/truncated.run" --verify > "$work/error.txt" 2>&1; then exit 1; fi
 [ -z "$(find "$work/scratch" -mindepth 1 -print -quit)" ]
-printf '%s\n' 'PASS Linux architecture selection, both payload hashes, platform rejection, corrupt/truncated installer and cleanup.'
+printf 'PASS %s architecture selection, payload hashes, platform rejection, corrupt/truncated installer and cleanup.\n' "$target"

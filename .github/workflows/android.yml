@@ -32,6 +32,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-i686
       - run: python3 -m pip install Pillow
       - run: python3 tools/Build-AndroidRuntime.py
+      - run: javac -d artifacts/runtime-tests runtime/android-controls/RuntimeProfile.java runtime/android-controls/tests/RuntimeProfileTest.java && java -cp artifacts/runtime-tests com.termux.x11.RuntimeProfileTest
       - run: dotnet run --project tests/Client.Tests -c Release
       - run: dotnet build src/Client.Android -c Release -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME"
       - run: python3 tools/Verify-AndroidRuntime.py src/Client.Android/bin/Release/net10.0-android36.0/com.aardvarkland.dungeonrunners-Signed.apk

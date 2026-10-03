@@ -47,6 +47,9 @@ try {
         Invoke-Checked 'sh' @((Join-Path $PSScriptRoot 'Test-LinuxInstaller.sh'), $installer)
         Invoke-Checked 'sh' @($installer, '--licenses', $notices)
         Invoke-Checked 'xvfb-run' @('-a', 'sh', $installer, '--smoke-test')
+        $deckInstaller = Join-Path $outputRoot 'Dungeon-Runners-Launcher-SteamDeck.run'
+        Invoke-Checked 'sh' @((Join-Path $PSScriptRoot 'Test-LinuxInstaller.sh'), $deckInstaller, 'SteamDeck')
+        if ($architecture -eq 'x64') { Invoke-Checked 'xvfb-run' @('-a', 'sh', $deckInstaller, '--smoke-test') }
         $name = if ($architecture -eq 'x64') { 'Dungeon-Runners-Launcher-Linux.AppImage' } else { 'Dungeon-Runners-Launcher-Linux-arm64.AppImage' }
         $executable = Join-Path $stage $name
         Copy-Item -LiteralPath (Join-Path $outputRoot $name) -Destination $executable

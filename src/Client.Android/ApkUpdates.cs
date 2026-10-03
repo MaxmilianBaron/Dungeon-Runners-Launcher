@@ -26,17 +26,6 @@ public static class ApkUpdates
         RequestInstall(activity, apk, "launcher-update.apk");
     }
 
-    public static void InstallRuntime(Activity activity, string apk)
-    {
-        if (!OperatingSystem.IsAndroidVersionAtLeast(28)) throw new IOException("The verified runtime requires Android 9 or later.");
-        var incoming = activity.PackageManager!.GetPackageArchiveInfo(apk, PackageInfoFlags.SigningCertificates) ?? throw new IOException("Invalid runtime APK.");
-        var signatures = incoming.SigningInfo?.GetApkContentsSigners();
-        if (incoming.PackageName != AndroidRuntime.PackageId || signatures is null || signatures.Length != 1
-            || Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(signatures[0].ToByteArray()!)).ToLowerInvariant() != AndroidRuntime.Certificate)
-            throw new IOException("The runtime APK identity or certificate changed.");
-        RequestInstall(activity, apk, "runtime-install.apk");
-    }
-
     private static void RequestInstall(Activity activity, string apk, string name)
     {
         var destination = System.IO.Path.Combine(activity.CacheDir!.CanonicalPath, name);
@@ -57,11 +46,11 @@ public static class ApkUpdates
     {
         var preferences = activity.GetPreferences(FileCreationMode.Private)!;
         var name = preferences.GetString("pendingApk", null);
+        if (name == "runtime-install.apk") { preferences.Edit()!.Remove("pendingApk")!.Apply(); return; }
         if (name is null || !activity.PackageManager!.CanRequestPackageInstalls()) return;
         preferences.Edit()!.Remove("pendingApk")!.Apply();
         var path = System.IO.Path.Combine(activity.CacheDir!.CanonicalPath, name);
         if (name == "launcher-update.apk") Install(activity, path);
-        else if (name == "runtime-install.apk") InstallRuntime(activity, path);
         else throw new IOException("Invalid pending package.");
     }
 }
@@ -71,7 +60,7 @@ public sealed class ApkProvider : ContentProvider
 {
     private string PathFor(global::Android.Net.Uri uri)
     {
-        if (uri.Authority != ApkUpdates.Authority || uri.Path is not ("/launcher-update.apk" or "/runtime-install.apk")) throw new FileNotFoundException();
+        if (uri.Authority != ApkUpdates.Authority || uri.Path != "/launcher-update.apk") throw new FileNotFoundException();
         return System.IO.Path.Combine(Context!.CacheDir!.CanonicalPath, uri.Path[1..]);
     }
     public override bool OnCreate() => true;

@@ -47,6 +47,7 @@ public final class GameRuntimeActivity extends Activity {
         Intent service = new Intent(this, GameRuntimeService.class);
         service.putExtra("play", getIntent().getBooleanExtra("play", true));
         service.putExtra("root", getIntent().getStringExtra("root"));
+        service.putExtra("profile", getIntent().getStringExtra("profile"));
         startForegroundService(service);
     }
 
