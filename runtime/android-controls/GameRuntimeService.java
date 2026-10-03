@@ -66,8 +66,14 @@ public final class GameRuntimeService extends Service {
                 if (closing) return;
                 if (!socket.exists() || !display.isAlive()) throw new IOException("Game display could not start.");
                 if (!runtime.profile.legacy() && !runtime.prefixReady()) {
+                    stage = "Repairing Wine libraries";
+                    component = "";
+                    GameRuntimeActivity.message(stage + "…");
+                    runtime.repairPrefix();
+                    if (closing) return;
                     requirement("Initializing Wine", "wineboot", "-u");
-                    if (!runtime.prefixReady()) throw new IOException("Game settings could not be saved. Reopen the launcher to retry.");
+                    if (closing) return;
+                    runtime.finishPrefix();
                 }
                 stage = "Checking game compatibility";
                 component = "memory.log";
@@ -150,7 +156,7 @@ public final class GameRuntimeService extends Service {
         GameRuntimeActivity.message(name + "…");
         game = runtime.wine(arguments).start();
         Thread output = capture(game, new File(logFolder(), "requirements.log"));
-        if (!game.waitFor(600, TimeUnit.SECONDS)) { game.destroyForcibly(); output.join(3000); throw new IOException(stage + " timed out. Copy details to report the problem."); }
+        if (!game.waitFor(600, TimeUnit.SECONDS)) { stop(game); output.join(3000); throw new IOException(stage + " timed out. Copy details to report the problem."); }
         output.join(3000);
         if (game.exitValue() != 0 && !closing) throw new IOException(RuntimeDiagnostics.failed(stage, game.exitValue()));
     }
@@ -163,10 +169,21 @@ public final class GameRuntimeService extends Service {
         if (game != null) try { game.getOutputStream().close(); } catch (IOException ignored) { }
         if (runtime != null) try {
             Process stop = runtime.command("/usr/local/bin/aardvark-wineserver", "-k").redirectOutput(new File("/dev/null")).start();
-            if (!stop.waitFor(5, TimeUnit.SECONDS)) stop.destroyForcibly();
+            if (!stop.waitFor(5, TimeUnit.SECONDS)) stop(stop);
         } catch (Exception ignored) { }
-        if (game != null && game.isAlive()) game.destroy();
-        if (display != null && display.isAlive()) display.destroy();
+        stop(game);
+        stop(display);
+    }
+
+    private static void stop(Process process) {
+        if (process == null || !process.isAlive()) return;
+        process.destroy();
+        try {
+            if (!process.waitFor(5, TimeUnit.SECONDS)) process.destroyForcibly();
+        } catch (InterruptedException error) {
+            process.destroyForcibly();
+            Thread.currentThread().interrupt();
+        }
     }
 
     @Override public void onDestroy() {

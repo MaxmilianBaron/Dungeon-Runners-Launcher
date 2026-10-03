@@ -74,7 +74,7 @@ final class NativeRuntime {
         write(child(root, "etc/resolv.conf"), "nameserver 1.1.1.1\nnameserver 8.8.8.8\n");
         File scripts = new File(base, "scripts");
         scripts.mkdirs();
-        for (String name : new String[]{"play.sh", "command.sh"})
+        for (String name : new String[]{"play.sh", "command.sh", "supervise.sh"})
             try (InputStream input = context.getAssets().open("dungeon-runtime/" + name)) {
                 Files.copy(input, new File(scripts, name).toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
@@ -189,11 +189,11 @@ final class NativeRuntime {
             : wine("/runtime/scripts/AardvarkRuntimeCheck.exe");
     }
 
-    boolean prefixReady() {
-        return childPrefix("system.reg").isFile() && childPrefix("drive_c/windows/" + profile.windowsLibraries() + "/kernel32.dll").isFile();
-    }
+    boolean prefixReady() throws IOException { return new WinePrefix(root).ready(); }
 
-    private File childPrefix(String name) { return new File(root, "root/.wine/" + name); }
+    void repairPrefix() throws IOException { new WinePrefix(root).repair(); }
+
+    void finishPrefix() throws IOException { new WinePrefix(root).finish(); }
 
     boolean requirementsReady() throws Exception {
         String[][] files = {
@@ -321,13 +321,16 @@ final class NativeRuntime {
         if (new File("/linkerconfig").isDirectory()) args.addAll(1, Arrays.asList("-b", "/linkerconfig"));
         for (String binding : executableBindings) args.addAll(1, Arrays.asList("-b", binding));
         args.addAll(Arrays.asList(task));
+        args.addAll(0, Arrays.asList(new File(libraries, "libtalloc.so").getPath()
+            + ":" + new File(libraries, "libandroid-shmem.so").getPath(), libraries.getPath()));
+        args.addAll(0, Arrays.asList("/system/bin/sh", new File(base, "scripts/supervise.sh").getPath()));
         ProcessBuilder process = new ProcessBuilder(args).directory(base).redirectErrorStream(true);
         Map<String,String> env = process.environment();
         env.put("PROOT_LOADER", new File(libraries, "libproot-loader.so").getPath());
         env.put("PROOT_TMP_DIR", new File(root, "tmp").getPath());
         env.put("PROOT_NO_SECCOMP", "1");
-        env.put("LD_PRELOAD", new File(libraries, "libtalloc.so").getPath() + ":" + new File(libraries, "libandroid-shmem.so").getPath());
-        env.put("LD_LIBRARY_PATH", libraries.getPath());
+        env.remove("LD_PRELOAD");
+        env.remove("LD_LIBRARY_PATH");
         return process;
     }
 

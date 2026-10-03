@@ -18,4 +18,8 @@ The 64-bit profiles use Wine 11.0 in WoW64 mode; ARM64 adds Box64 0.4.4. `build-
 
 Setup errors identify the failing step and exit code. Copy details includes device architecture, memory page size and bounded setup logs with local paths removed; game-session logs are excluded. `RuntimeDiagnosticsTest.java` and `tests/command_test.py` cover report limits and Wine shutdown ordering.
 
+Before WoW64 initialization, `WinePrefix` restores missing or invalid PE libraries from the verified runtime package. It checks both Windows architectures, preserves valid overrides and registry files, and keeps replaced files in the private prefix's `.aardvark-repair-backups` directory. A pending marker retains interrupted repairs for the next launch. `WinePrefixTest.java` covers partial prefixes, truncated files, retries and preservation.
+
+`supervise.sh` forwards cancellation to PRoot's tracee cleanup handler, preserving stdin for touch actions. Cancellation and timeout wait for the runtime to exit before releasing the session.
+
 `input/build.py` builds the Windows x86 action adapter. It dispatches one UI-thread item action per request, uses the game's item selection, and rejects unsupported client code and inactive gameplay. It does not move the pointer or modify the executable. `input/test_profile.c` exercises control selection and input guards.
