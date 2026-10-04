@@ -1,8 +1,10 @@
 # Android runtime
 
-JDK 21, Android SDK 36, Python 3.11+, Pillow and an i686 MinGW C compiler.
+JDK 21, Android SDK 36, NDK 28.2.13676358, Python 3.11+, Pillow, Meson, Ninja and an i686 MinGW C compiler.
 
 `python tools/Build-AndroidRuntime.py` verifies the pinned runtime payload, checks out the display source revision, applies the integration patches and builds the AAR. Then build `src/Client.Android` with .NET 10 and the Android workload. `tools/Verify-AndroidRuntime.py` verifies the packaged native files and runtime data.
+
+`tools/Build-AndroidGraphics.py` builds the Android VirGL host and libepoxy from pinned sources, then verifies and extracts ANGLE Vulkan libraries. `gpu` contains source identities, patches and notices. The host uses a private Unix socket; Wine uses Mesa virpipe. Setup verifies Direct3D drawing, compressed textures and pixel readback before saving the renderer selection. Failed GPU checks select software rendering automatically. App or system updates invalidate the cached checks.
 
 The build exports `artifacts/android-runtime/distribution/Android-WoW64-r2.zip` separately. Publish it with the APK at the pinned release URL. ARM64 and x86-64 setup download and verify this package automatically; ARMv7 uses its bundled data. Keeping shared Wine data outside the APK preserves the 512 MiB update limit of existing launchers.
 

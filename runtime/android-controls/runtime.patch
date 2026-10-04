@@ -39,7 +39,7 @@
  
      @Override
      protected void onDestroy() {
-+        if (isFinishing()) stopService(new Intent(this, GameRuntimeService.class));
++        if (isFinishing() && !GameRuntimeService.isStopping()) stopService(new Intent(this, GameRuntimeService.class));
          handler.removeCallbacks(screenIdleTimeoutCheck);
          if (mInputHandler != null)
              mInputHandler.onDestroy();

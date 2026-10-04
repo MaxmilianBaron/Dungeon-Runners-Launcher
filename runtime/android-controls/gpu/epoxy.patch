@@ -1,0 +1,16 @@
+--- a/src/dispatch_common.c
++++ b/src/dispatch_common.c
+@@ -179,10 +179,10 @@
+ #define GLES1_LIB "libGLESv1_CM.so"
+ #define GLES2_LIB "libGLESv2.so"
+ #elif defined(__ANDROID__)
+-#define GLX_LIB "libGLESv2.so"
+-#define EGL_LIB "libEGL.so"
++#define GLX_LIB GLES2_LIB
++#define EGL_LIB (getenv("AARDVARK_EGL") ? getenv("AARDVARK_EGL") : "libEGL.so")
+ #define GLES1_LIB "libGLESv1_CM.so"
+-#define GLES2_LIB "libGLESv2.so"
++#define GLES2_LIB (getenv("AARDVARK_GLES") ? getenv("AARDVARK_GLES") : "libGLESv2.so")
+ #elif defined(_WIN32)
+ #define EGL_LIB "libEGL.dll"
+ #define GLES1_LIB "libGLES_CM.dll"

@@ -102,7 +102,7 @@ public final class GameRuntimeActivity extends Activity {
     @Override public void onBackPressed() { finishAndRemoveTask(); }
 
     @Override public void onDestroy() {
-        if (isFinishing()) stopService(new Intent(this, GameRuntimeService.class));
+        if (isFinishing() && !GameRuntimeService.isStopping()) stopService(new Intent(this, GameRuntimeService.class));
         if (current == this) current = null;
         super.onDestroy();
     }

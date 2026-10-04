@@ -1,0 +1,305 @@
+diff --git a/meson.build b/meson.build
+index 69c1bb8..9128442 100644
+--- a/meson.build
++++ b/meson.build
+@@ -65,6 +65,8 @@ warnings = [
+    '-Werror=switch',
+    '-Wno-overlength-strings',
+    '-Wno-missing-field-initializers',
++   '-Wno-gnu-offsetof-extensions',
++   '-Wno-gnu-pointer-arith',
+    '-Werror=format',
+ ]
+ 
+@@ -80,12 +82,13 @@ add_project_arguments(cc.get_supported_arguments(flags), language : 'c')
+ prog_python = import('python').find_installation('python3')
+ 
+ with_host_windows = host_machine.system() == 'windows'
++with_host_android = host_machine.system() == 'android'
+ with_host_darwin = host_machine.system() == 'darwin'
+ 
+ not_found = dependency('', required: false)
+ gbm_dep = not_found
+ thread_dep = dependency('threads')
+-epoxy_dep = dependency('epoxy', version: '>= 1.5.4')
++epoxy_dep = subproject('epoxy', default_options: ['egl=yes', 'glx=no', 'x11=false', 'tests=false']).get_variable('libepoxy_dep')
+ m_dep = cc.find_library('m', required : false)
+ dl_dep = not_found
+ if not with_host_windows and not with_host_darwin
+@@ -294,8 +297,8 @@ have_egl = false
+ have_glx = false
+ 
+ if with_egl
+-   if cc.has_header('epoxy/egl.h', dependencies: epoxy_dep) and epoxy_dep.get_variable(pkgconfig: 'epoxy_has_egl') == '1'
+-      if with_host_windows or with_host_darwin
++   if epoxy_dep.get_variable(internal: 'epoxy_has_egl') == '1'
++      if with_host_windows or with_host_darwin or with_host_android
+          have_egl = true
+       else
+          if libdrm_dep.found()
+diff --git a/src/mesa/util/detect_os.h b/src/mesa/util/detect_os.h
+index 994a1ef..6fbdafc 100644
+--- a/src/mesa/util/detect_os.h
++++ b/src/mesa/util/detect_os.h
+@@ -24,7 +24,7 @@
+  * Android defines __linux__, so DETECT_OS_LINUX and DETECT_OS_UNIX will
+  * also be defined.
+  */
+-#if defined(__ANDROID__)
++#if 0
+ #define DETECT_OS_ANDROID 1
+ #endif
+ 
+diff --git a/src/venus/vkr_instance.c b/src/venus/vkr_instance.c
+index a5002a3..0051946 100644
+--- a/src/venus/vkr_instance.c
++++ b/src/venus/vkr_instance.c
+@@ -58,6 +58,7 @@ vkr_dispatch_vkEnumerateInstanceExtensionProperties(
+    args->ret = count == ARRAY_SIZE(private_extensions) ? VK_SUCCESS : VK_INCOMPLETE;
+ }
+ 
++VKAPI_ATTR
+ static VkBool32
+ vkr_validation_callback(UNUSED VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                         UNUSED VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+diff --git a/src/vrend/vrend_blitter.c b/src/vrend/vrend_blitter.c
+index f829115..c0a7633 100644
+--- a/src/vrend/vrend_blitter.c
++++ b/src/vrend/vrend_blitter.c
+@@ -750,9 +750,9 @@ static void vrend_set_tex_param(struct vrend_resource *src_res,
+    }
+ 
+    /* Just make sure that no stale state disabled decoding */
+-   if (has_texture_srgb_decode && util_format_is_srgb(info->src.format) &&
+-       src_res->base.nr_samples < 1)
+-      glTexParameteri(src_res->target, GL_TEXTURE_SRGB_DECODE_EXT, GL_DECODE_EXT);
++   if (has_texture_srgb_decode && src_res->base.nr_samples < 1)
++      glTexParameteri(src_res->target, GL_TEXTURE_SRGB_DECODE_EXT,
++                      util_format_is_srgb(info->src.format) ? GL_DECODE_EXT : GL_SKIP_DECODE_EXT);
+ 
+    if (src_res->base.nr_samples < 1) {
+       glTexParameteri(src_res->target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+diff --git a/src/vrend/vrend_renderer.c b/src/vrend/vrend_renderer.c
+index 4bf88e0..1d63dc3 100644
+--- a/src/vrend/vrend_renderer.c
++++ b/src/vrend/vrend_renderer.c
+@@ -418,6 +418,14 @@ static struct global_renderer_state vrend_state;
+ 
+ static inline bool has_feature(enum features_id feature_id)
+ {
++#ifdef __ANDROID__
++   // On Adreno, this feature cannot be used.
++   // Maybe related to https://gitlab.freedesktop.org/virgl/virglrenderer/-/issues/223 
++   // and https://developer.qualcomm.com/forum/qdn-forums/software/adreno-gpu-sdk/34738
++   if (feature_id == feat_dual_src_blend) {
++      return false;
++   }
++#endif
+    int slot = feature_id / 64;
+    uint64_t mask = 1ull << (feature_id & 63);
+    bool retval = vrend_state.features[slot] & mask ? true : false;
+@@ -1329,7 +1337,7 @@ static void vrend_shader_destroy(struct vrend_shader *shader)
+ 
+    if (shader->sel->sinfo.separable_program)
+        glDeleteProgram(shader->program_id);
+-   glDeleteShader(shader->id);
++   if (shader->id) glDeleteShader(shader->id);
+    strarray_free(&shader->glsl_strings, true);
+    free(shader);
+ }
+@@ -8021,7 +8029,7 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
+    grctx->shader_cfg.has_es31_compat = has_feature(feat_gles31_compatibility);
+    grctx->shader_cfg.has_conservative_depth = has_feature(feat_conservative_depth);
+    grctx->shader_cfg.use_integer = vrend_state.use_integer;
+-   grctx->shader_cfg.has_dual_src_blend = has_feature(feat_dual_src_blend);
++   grctx->shader_cfg.has_dual_src_blend = false;
+    grctx->shader_cfg.has_fbfetch_coherent = has_feature(feat_framebuffer_fetch);
+    grctx->shader_cfg.has_cull_distance = has_feature(feat_cull_distance);
+    grctx->shader_cfg.has_nopersective = has_feature(feat_shader_noperspective_interpolation);
+@@ -11176,8 +11184,8 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
+       VREND_DEBUG(dbg_blit, ctx, "BLIT_INT: use FBO blit\n");
+       vrend_renderer_blit_fbo(ctx, src_res, dst_res, &blit_info);
+    } else {
+-      blit_info.has_srgb_write_control = has_feature(feat_texture_srgb_decode);
+-      blit_info.has_texture_srgb_decode = has_feature(feat_srgb_write_control);
++      blit_info.has_srgb_write_control = has_feature(feat_srgb_write_control);
++      blit_info.has_texture_srgb_decode = has_feature(feat_texture_srgb_decode);
+ 
+       VREND_DEBUG(dbg_blit, ctx, "BLIT_INT: use GL fallback\n");
+       vrend_renderer_blit_gl(ctx, src_res, dst_res, &blit_info);
+@@ -13566,7 +13574,7 @@ static bool find_ctx0_fence_locked(struct list_head *fence_list,
+ 
+ int vrend_renderer_export_ctx0_fence(uint32_t fence_id, int* out_fd) {
+ #ifdef HAVE_EPOXY_EGL_H
+-   int ret = 0;
++   int ret = -EINVAL;
+ 
+    if (!vrend_state.use_egl_fence) {
+       return -EINVAL;
+diff --git a/src/vrend/vrend_winsys.c b/src/vrend/vrend_winsys.c
+index d4c9b9e..9aca9c9 100644
+--- a/src/vrend/vrend_winsys.c
++++ b/src/vrend/vrend_winsys.c
+@@ -76,6 +76,12 @@ int vrend_winsys_init(uint32_t flags, int preferred_fd)
+       }
+ 
+       use_context = CONTEXT_EGL;
++#elif defined(__ANDROID__)
++      egl = virgl_egl_init(NULL, flags & VIRGL_RENDERER_USE_SURFACELESS,
++                           flags & VIRGL_RENDERER_USE_GLES);
++      if (!egl)
++         return -1;
++      use_context = CONTEXT_EGL;
+ #else
+       (void)preferred_fd;
+       virgl_error("EGL is not supported on this platform\n");
+@@ -98,6 +104,13 @@ int vrend_winsys_init(uint32_t flags, int preferred_fd)
+ 
+ void vrend_winsys_cleanup(void)
+ {
++#ifdef __ANDROID__
++   if (use_context == CONTEXT_EGL) {
++      virgl_egl_destroy(egl);
++      egl = NULL;
++      use_context = CONTEXT_NONE;
++   }
++#endif
+ #ifdef ENABLE_GBM
+    if (use_context == CONTEXT_EGL) {
+       virgl_egl_destroy(egl);
+diff --git a/src/vrend/vrend_winsys_egl.c b/src/vrend/vrend_winsys_egl.c
+index 4ddcd0d..9176ef2 100644
+--- a/src/vrend/vrend_winsys_egl.c
++++ b/src/vrend/vrend_winsys_egl.c
+@@ -97,6 +97,7 @@ struct egl_funcs {
+ };
+ 
+ struct virgl_egl {
++   EGLSurface fallback_surface;
+ #ifdef ENABLE_GBM
+    struct virgl_gbm *gbm;
+ #endif
+@@ -188,7 +189,7 @@ static bool virgl_egl_add_extensions(struct virgl_egl *egl, const char *extensio
+ 
+ static bool virgl_egl_check_extensions(struct virgl_egl *egl)
+ {
+-   if (!has_bits(egl->extension_bits, EGL_KHR_SURFACELESS_CONTEXT | EGL_KHR_CREATE_CONTEXT)) {
++   if (!has_bits(egl->extension_bits, EGL_KHR_CREATE_CONTEXT)) {
+       virgl_error("Missing EGL_KHR_surfaceless_context or EGL_KHR_create_context\n");
+       return false;
+    }
+@@ -419,13 +420,21 @@ struct virgl_egl *virgl_egl_init(EGLNativeDisplayType display_id, bool surfacele
+    if (!success || num_configs != 1)
+       goto fail;
+ 
++   if (!has_bit(egl->extension_bits, EGL_KHR_SURFACELESS_CONTEXT)) {
++      const EGLint surface_attrs[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
++      egl->fallback_surface = eglCreatePbufferSurface(egl->egl_display, egl->egl_conf, surface_attrs);
++      if (egl->fallback_surface == EGL_NO_SURFACE)
++         goto fail;
++   }
++
+    egl->egl_ctx = eglCreateContext(egl->egl_display, egl->egl_conf, EGL_NO_CONTEXT,
+                                    ctx_att);
+    if (!egl->egl_ctx)
+       goto fail;
+ 
+-   eglMakeCurrent(egl->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE,
+-                  egl->egl_ctx);
++   if (!eglMakeCurrent(egl->egl_display, egl->fallback_surface, egl->fallback_surface,
++                  egl->egl_ctx))
++      goto fail;
+ 
+    if (virgl_egl_supports_fences(egl)) {
+       egl->signaled_fence = eglCreateSyncKHR(egl->egl_display,
+@@ -454,6 +463,7 @@ void virgl_egl_destroy(struct virgl_egl *egl)
+    eglMakeCurrent(egl->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE,
+                   EGL_NO_CONTEXT);
+    eglDestroyContext(egl->egl_display, egl->egl_ctx);
++   if (egl->fallback_surface) eglDestroySurface(egl->egl_display, egl->fallback_surface);
+    eglTerminate(egl->egl_display);
+    free(egl);
+ }
+@@ -649,7 +659,7 @@ int virgl_egl_make_context_current(struct virgl_egl *egl, virgl_renderer_gl_cont
+ {
+    EGLContext egl_ctx = (EGLContext)virglctx;
+ 
+-   return eglMakeCurrent(egl->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE,
++   return eglMakeCurrent(egl->egl_display, egl_ctx ? egl->fallback_surface : EGL_NO_SURFACE, egl_ctx ? egl->fallback_surface : EGL_NO_SURFACE,
+                          egl_ctx) ? 0 : -1;
+ }
+ 
+diff --git a/vtest/vtest_main.c b/vtest/vtest_main.c
+index ba53f45..b1a25ba 100644
+--- a/vtest/vtest_main.c
++++ b/vtest/vtest_main.c
+@@ -23,8 +23,10 @@
+  **************************************************************************/
+ 
+ #include "vtest_server.h"
++#include <sys/stat.h>
+ 
+ int main(int argc, char** argv) {
++    umask(0077);
+     return vtest_main(argc, argv);
+ }
+ 
+diff --git a/vtest/vtest_shm.c b/vtest/vtest_shm.c
+index efaad8a..62cfe21 100644
+--- a/vtest/vtest_shm.c
++++ b/vtest/vtest_shm.c
+@@ -44,6 +44,30 @@ static int memfd_create(const char *name, unsigned int flags)
+ #endif
+ }
+ 
++#ifdef __ANDROID__
++#include <sys/ioctl.h>
++static int vtest_new_android_ashm(size_t size)
++{
++   int fd, ret;
++   long flags;
++   fd = open("/dev/ashmem", O_RDWR | O_CLOEXEC);
++   if (fd < 0)
++      return fd;
++   ret = ioctl(fd, /* ASHMEM_SET_SIZE */ _IOW(0x77, 3, size_t), size);
++   if (ret < 0)
++      goto err;
++   flags = fcntl(fd, F_GETFD);
++   if (flags == -1)
++      goto err;
++   if (fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1)
++      goto err;
++   return fd;
++   err:
++   close(fd);
++   return -1;
++}
++#endif
++
+ int vtest_new_shm(uint32_t handle, size_t size)
+ {
+    int fd, ret;
+@@ -54,6 +78,12 @@ int vtest_new_shm(uint32_t handle, size_t size)
+    fd = memfd_create(str, MFD_ALLOW_SEALING);
+    free(str);
+    if (fd < 0) {
++#ifdef __ANDROID__
++      fd = vtest_new_android_ashm(size);
++      if (fd > 0) {
++         return fd;
++      }
++#endif
+       return report_failed_call("memfd_create", -errno);
+    }
+ 
+@@ -68,6 +98,10 @@ int vtest_new_shm(uint32_t handle, size_t size)
+ 
+ int vtest_shm_check(void)
+ {
++#ifdef __ANDROID__
++    return 1;
++#endif
++
+     int mfd = memfd_create("test", MFD_ALLOW_SEALING);
+ 
+     if (mfd >= 0) {

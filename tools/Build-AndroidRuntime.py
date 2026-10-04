@@ -112,6 +112,11 @@ def main():
     shutil.copyfile(bundled_data, distribution / shared_data['name'])
     bundled_data.unlink()
     native = cache / 'payload/native'
+    subprocess.run([sys.executable, str(root / 'tools/Build-AndroidGraphics.py'), '--cache', str(cache / 'graphics'), '--native', str(native)], check=True)
+    notices = assets / 'licenses/graphics'
+    notices.mkdir(parents=True, exist_ok=True)
+    for source_notice in (runtime / 'gpu').glob('*.txt'):
+        shutil.copyfile(source_notice, notices / source_notice.name)
     args.library.mkdir(parents=True, exist_ok=True)
     gradle = source / ('gradlew.bat' if os.name == 'nt' else 'gradlew')
     if os.name != 'nt':

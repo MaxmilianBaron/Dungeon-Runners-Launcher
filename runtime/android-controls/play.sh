@@ -1,7 +1,6 @@
 #!/bin/bash
 set -eu
 export DISPLAY=:7 WINEPREFIX=/root/.wine
-export LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe LP_NUM_THREADS=2
 loader=b
 if [ -f /root/game/d3d9.dll ] && [ -f /root/game/Addons/Runtime/Addons.dll ]; then loader=n,b; fi
 export WINEDLLOVERRIDES="mscoree,mshtml=;winemenubuilder.exe=d;d3d9=$loader;d3dx9_31,d3dx9_40=n,b"

@@ -29,6 +29,7 @@ public final class GameControls {
     private final LinearLayout right;
     private final SharedPreferences settings;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private final GameMouse mouse;
     private final Set<Integer> held = new HashSet<>();
     private final Set<Runnable> releases = new HashSet<>();
     private final Bitmap[] icons = new Bitmap[3];
@@ -36,6 +37,10 @@ public final class GameControls {
 
     public GameControls(MainActivity owner) {
         activity = owner;
+        mouse = new GameMouse((button, down, relative) -> activity.getLorieView().sendMouseEvent(0, 0, button, down, relative), new GameMouse.Scheduler() {
+            @Override public void post(Runnable action, int delay) { handler.postDelayed(action, delay); }
+            @Override public void cancel(Runnable action) { handler.removeCallbacks(action); }
+        });
         settings = owner.getSharedPreferences("dungeon-controls", 0);
         for (int i = 0; i < icons.length; i++) {
             String name = new String[]{"health", "mana", "scroll"}[i];
@@ -149,11 +154,20 @@ public final class GameControls {
     }
 
     public void releaseAll() {
+        mouse.releaseAll();
         for (Runnable action : releases) handler.removeCallbacks(action);
         releases.clear();
         for (int code : held) activity.getLorieView().sendKeyEvent(0, code, false);
         held.clear();
     }
+
+    boolean mouseClick(int button, boolean relative) {
+        if (!enabled() || !activity.hasWindowFocus() || !activity.getLorieView().connected()) return false;
+        mouse.click(button, relative);
+        return true;
+    }
+
+    void mouseEvent(int button) { mouse.event(button); }
 
     private final class Control extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);

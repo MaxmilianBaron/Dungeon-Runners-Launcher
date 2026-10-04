@@ -22,11 +22,22 @@ public final class GameRuntimeService extends Service {
     private final AtomicBoolean inputPending = new AtomicBoolean();
     private volatile Process game;
     private volatile Process display;
+    private volatile Process graphics;
+    private Thread graphicsLog;
     private volatile boolean closing;
+    private volatile boolean gameEnded;
     private NativeRuntime runtime;
+    private RuntimeCheckCache checks;
+    private volatile RuntimeSession session;
+    private volatile GameStartup startup;
+    private volatile String startupError;
     private String stage = "Preparing runtime";
     private String component = "";
     public static boolean isActive() { return running; }
+    public static boolean isStopping() {
+        GameRuntimeService service = current;
+        return running && (service == null || service.closing || service.gameEnded);
+    }
 
     @Override public IBinder onBind(Intent intent) { return null; }
 
@@ -57,6 +68,10 @@ public final class GameRuntimeService extends Service {
                 if (lock == null) throw new IOException("A game session is already running.");
                 runtime.prepare();
                 if (closing) return;
+                GraphicsChoice graphicsChoice = new GraphicsChoice(new File(runtime.base, "graphics-" + runtime.profile.id));
+                runtime.gpu = !graphicsChoice.read(runtime.checkIdentity()).equals("software");
+                if (runtime.gpu && !startGraphics()) runtime.gpu = false;
+                if (closing) return;
                 stage = "Starting display";
                 component = "display.log";
                 display = xserver();
@@ -65,103 +80,217 @@ public final class GameRuntimeService extends Service {
                 for (int attempt = 0; attempt < 150 && !socket.exists() && display.isAlive() && !closing; attempt++) Thread.sleep(100);
                 if (closing) return;
                 if (!socket.exists() || !display.isAlive()) throw new IOException("Game display could not start.");
-                if (!runtime.profile.legacy() && !runtime.prefixReady()) {
+                boolean initialize = !runtime.profile.legacy() && !runtime.prefixReady();
+                if (initialize) {
                     stage = "Repairing Wine libraries";
                     component = "";
                     GameRuntimeActivity.message(stage + "…");
                     runtime.repairPrefix();
                     if (closing) return;
-                    requirement("Initializing Wine", "wineboot", "-u");
+                }
+                startSession();
+                if (initialize) {
+                    requirement("Initializing Wine", "initialize");
                     if (closing) return;
                     runtime.finishPrefix();
                 }
-                stage = "Checking game compatibility";
-                component = "memory.log";
-                game = runtime.preflight().start();
-                File memoryFile = new File(logFolder(), "memory.log");
-                Thread memoryLog = capture(game, memoryFile);
-                if (!game.waitFor(180, TimeUnit.SECONDS)) throw new IOException("Game compatibility check timed out.");
-                memoryLog.join(3000);
-                if (closing) return;
-                String expected = runtime.profile.legacy() ? "Guest memory checks passed" : "AARDVARK_RUNTIME_READY";
-                String checked = new String(java.nio.file.Files.readAllBytes(memoryFile.toPath()), java.nio.charset.StandardCharsets.UTF_8);
-                if (game.exitValue() != 0) throw new IOException(RuntimeDiagnostics.failed(stage, game.exitValue()));
-                if (!checked.contains(expected)) throw new IOException("The game compatibility check did not complete. Copy details to report the problem.");
+                checks = new RuntimeCheckCache(new File(runtime.base, "checks-" + runtime.profile.id));
+                boolean verify = initialize || !checks.matches(runtime.graphicsIdentity());
+                if (verify) {
+                    checks.invalidate();
+                    runStep("Checking game compatibility", "check", "memory.log", 180000);
+                    if (closing) return;
+                    String expected = runtime.profile.legacy() ? "Guest memory checks passed" : "AARDVARK_RUNTIME_READY";
+                    if (!session.output().contains(expected)) throw new IOException("The game compatibility check did not complete. Copy details to report the problem.");
+                }
                 if (!runtime.requirementsReady()) {
+                    verify = true;
+                    checks.invalidate();
                     stage = "Preparing DirectX";
                     component = "";
                     GameRuntimeActivity.message("Installing game requirements…");
                     File setup = runtime.requirementInstaller();
-                    requirement("Extracting DirectX", "/runtime/downloads/directx.exe", "/Q", "/T:C:\\AardvarkRequirements");
+                    requirement("Extracting DirectX", "extract");
                     if (closing) return;
                     runtime.selectRequirements(setup);
-                    requirement("Installing DirectX", "C:\\AardvarkRequirements\\required\\DXSETUP.exe", "/silent");
+                    requirement("Installing DirectX", "install");
                     if (closing) return;
                     if (!runtime.requirementsReady()) throw new IOException("Game requirements did not finish installing.");
                     runtime.cleanRequirements(setup);
                 }
+                if (verify && !closing) {
+                    try { checkGraphics(); }
+                    catch (IOException error) {
+                        if (!runtime.gpu || closing) throw error;
+                        GameRuntimeActivity.message("Selecting compatible graphics…");
+                        stopSession();
+                        stop(graphics);
+                        graphics = null;
+                        runtime.gpu = false;
+                        if (closing) return;
+                        startSession();
+                        checkGraphics();
+                    }
+                    if (closing) return;
+                    checks.complete(runtime.graphicsIdentity());
+                }
+                try { graphicsChoice.save(runtime.checkIdentity(), runtime.gpu ? "gpu" : "software"); } catch (IOException ignored) { }
                 if (play && !closing) {
-                    stage = "Running game";
-                    component = "";
-                    GameRuntimeActivity.message("Starting Dungeon Runners…");
                     android.preference.PreferenceManager.getDefaultSharedPreferences(this).edit()
-                        .putString("displayResolutionMode", "custom").putString("displayResolutionCustom", "800x640")
+                        .putString("displayResolutionMode", "custom").putString("displayResolutionCustom", GameDisplay.RESOLUTION)
                         .putString("touchMode", "2").putBoolean("fullscreen", true).putBoolean("showAdditionalKbd", false)
                         .putBoolean("additionalKbdVisible", false).putBoolean("preferScancodes", true)
                         .putString("forceOrientation", "landscape").putBoolean("Reseed", true).apply();
                     getSharedPreferences("dungeon-controls", 0).edit().putBoolean("enabled", true).apply();
-                    Intent view = new Intent(this, MainActivity.class);
-                    view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    view.putExtra("dungeon_runners_controls", true);
-                    startActivity(view);
-                    game = runtime.command("/bin/bash", "/runtime/scripts/play.sh").start();
-                    Thread log = capture(game, new File(logFolder(), "session.log"));
-                    int result = game.waitFor();
-                    log.join(3000);
-                    if (result != 0 && !closing) throw new IOException("The game stopped unexpectedly. Reopen the launcher to retry.");
+                    component = "";
+                    startup = new GameStartup(android.os.SystemClock.elapsedRealtime());
+                    stage = startup.stage();
+                    GameRuntimeActivity.message(stage + "…");
+                    session.begin("play", new File(logFolder(), "session.log"));
+                    boolean shown = false;
+                    while (!session.await(250) && !closing) {
+                        long now = android.os.SystemClock.elapsedRealtime();
+                        if (!display.isAlive()) { component = "display.log"; throw new IOException("The game display stopped."); }
+                        if (runtime.gpu && !graphics.isAlive()) { component = "renderer.log"; throw new IOException("The graphics runtime stopped. Copy details to report the problem."); }
+                        if (!stage.equals(startup.stage())) {
+                            stage = startup.stage();
+                            GameRuntimeActivity.message(stage + "…");
+                        }
+                        if (!shown && startup.ready()) {
+                            shown = true;
+                            Intent view = new Intent(this, MainActivity.class);
+                            view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            view.putExtra("dungeon_runners_controls", true);
+                            startActivity(view);
+                        }
+                        if (startup.expired(now)) throw new IOException(stage + " timed out. Copy details to report the problem.");
+                    }
+                    if (closing) return;
+                    if (session.result() != 0) throw new IOException(RuntimeDiagnostics.failed(stage, session.result()));
+                    if (!shown) throw new IOException("The game closed before opening its window. Copy details to report the problem.");
                 }
                 success = true;
                 java.nio.file.Files.deleteIfExists(new File(logFolder(), "error.log").toPath());
             }
         } catch (Exception error) {
+            if (closing) return;
+            if (checks != null) checks.invalidate();
             String message = error.getMessage() == null ? "Game runtime could not start." : error.getMessage();
             String platform = "Android API " + android.os.Build.VERSION.SDK_INT + " / " + android.os.Build.MODEL
                 + "\nABI: " + String.join(", ", android.os.Build.SUPPORTED_ABIS)
                 + "\nProfile: " + (runtime == null ? "unavailable" : runtime.profile.id);
+            if (runtime != null) platform += "\nRenderer: " + (runtime.gpu ? "Vulkan" : "software");
             try {
                 android.content.pm.PackageInfo app = getPackageManager().getPackageInfo(getPackageName(), 0);
                 platform += "\nLauncher: " + app.versionName + " (" + app.getLongVersionCode() + ")"
                     + "\nPage size: " + android.system.Os.sysconf(android.system.OsConstants._SC_PAGESIZE);
             } catch (Exception ignored) { }
+            if (startup != null) platform += "\nStartup: " + startup.description(android.os.SystemClock.elapsedRealtime());
+            if (startupError != null) platform += "\nGame error: " + startupError;
             String details = RuntimeDiagnostics.report(message, platform, stage, logFolder(), component,
                 root, getFilesDir().getPath(), getApplicationInfo().nativeLibraryDir);
             GameRuntimeActivity.error(message, details);
             android.util.Log.e("DungeonRuntime", "Runtime stopped", error);
             try (PrintWriter output = new PrintWriter(new File(logFolder(), "error.log"))) { output.print(details); } catch (IOException ignored) { }
         } finally {
-            closeProcesses();
-            if (displayLog != null) try { displayLog.join(3000); } catch (InterruptedException ignored) { }
             sendBroadcast(new Intent(MainActivity.ACTION_STOP).setPackage(getPackageName()));
             if (success) GameRuntimeActivity.close();
+            closeProcesses();
+            if (session != null) try { session.join(); } catch (InterruptedException ignored) { }
+            if (displayLog != null) try { displayLog.join(3000); } catch (InterruptedException ignored) { }
+            if (graphicsLog != null) try { graphicsLog.join(3000); } catch (InterruptedException ignored) { }
             running = false;
             stopForeground(true);
             stopSelf();
         }
     }
 
-    private void requirement(String name, String... arguments) throws Exception {
+    private void requirement(String name, String action) throws Exception {
+        runStep(name, action, "requirements.log", 600000);
+    }
+
+    private void startSession() throws IOException {
+        game = runtime.command("/bin/bash", "/runtime/scripts/session.sh", runtime.profile.legacy() ? "legacy" : "modern").start();
+        session = new RuntimeSession(game, this::gameEvent);
+    }
+
+    private void stopSession() {
+        if (game != null) try { game.getOutputStream().close(); } catch (IOException ignored) { }
+        if (runtime != null) try {
+            Process end = runtime.command("/usr/local/bin/aardvark-wineserver", "-k").redirectOutput(new File("/dev/null")).start();
+            if (!end.waitFor(5, TimeUnit.SECONDS)) stop(end);
+        } catch (Exception ignored) { }
+        stop(game);
+        if (session != null) try { session.join(); } catch (InterruptedException error) { Thread.currentThread().interrupt(); }
+        game = null;
+        session = null;
+    }
+
+    private void checkGraphics() throws Exception {
+        runStep("Checking graphics", "graphics", "graphics.log", runtime.gpu ? 60000 : 180000);
+        if (!closing && !session.output().contains("GRAPHICS_READY"))
+            throw new IOException("The graphics check did not complete. Copy details to report the problem.");
+    }
+
+    private boolean startGraphics() throws Exception {
+        File socket = new File(runtime.root, "tmp/.aardvark-gpu");
+        java.nio.file.Files.deleteIfExists(socket.toPath());
+        ProcessBuilder command = new ProcessBuilder(new File(runtime.libraries, "libaardvark-gpu.so").getPath(),
+            "--no-fork", "--multi-clients", "--use-egl-surfaceless", "--use-gles", "--socket-path", socket.getPath());
+        Map<String,String> env = command.environment();
+        env.remove("LD_PRELOAD"); env.remove("VREND_DEBUG");
+        env.put("LD_LIBRARY_PATH", runtime.libraries.getPath());
+        env.put("AARDVARK_EGL", new File(runtime.libraries, "libEGL_angle.so").getPath());
+        env.put("AARDVARK_GLES", new File(runtime.libraries, "libGLESv2_angle.so").getPath());
+        File cache = new File(runtime.base, "graphics-cache");
+        cache.mkdirs();
+        env.put("XDG_CACHE_HOME", cache.getPath());
+        command.redirectErrorStream(true);
+        try {
+            graphics = command.start();
+            graphicsLog = capture(graphics, new File(logFolder(), "renderer.log"));
+            for (int attempt = 0; attempt < 50 && !socket.exists() && graphics.isAlive() && !closing; attempt++) Thread.sleep(100);
+            if (!closing && socket.exists() && graphics.isAlive()) return true;
+        } catch (IOException ignored) { }
+        stop(graphics);
+        graphics = null;
+        return false;
+    }
+
+    private void runStep(String name, String action, String log, long timeout) throws Exception {
         if (closing) return;
         stage = name;
-        component = "requirements.log";
+        component = log;
         GameRuntimeActivity.message(name + "…");
-        game = runtime.wine(arguments).start();
-        Thread output = capture(game, new File(logFolder(), "requirements.log"));
-        if (!game.waitFor(600, TimeUnit.SECONDS)) { stop(game); output.join(3000); throw new IOException(stage + " timed out. Copy details to report the problem."); }
-        output.join(3000);
-        if (game.exitValue() != 0 && !closing) throw new IOException(RuntimeDiagnostics.failed(stage, game.exitValue()));
+        session.begin(action, new File(logFolder(), log));
+        long deadline = android.os.SystemClock.elapsedRealtime() + timeout;
+        while (!session.await(250)) {
+            if (closing) return;
+            if (action.equals("graphics") && runtime.gpu && (graphics == null || !graphics.isAlive()))
+                throw new IOException("The graphics runtime stopped during its compatibility check.");
+            if (android.os.SystemClock.elapsedRealtime() >= deadline)
+                throw new IOException(stage + " timed out. Copy details to report the problem.");
+        }
+        if (session.result() != 0 && !closing) throw new IOException(RuntimeDiagnostics.failed(stage, session.result()));
+    }
+
+    private void gameEvent(String event) {
+        if (startup != null) startup.accept(event, android.os.SystemClock.elapsedRealtime());
+        if (event.matches("AARDVARK_GAME_EXITED [0-9]{1,10}")) {
+            gameEnded = true;
+            controlsReady = false;
+            sendBroadcast(new Intent(MainActivity.ACTION_STOP).setPackage(getPackageName()));
+            if (event.equals("AARDVARK_GAME_EXITED 0") && startup != null && startup.ready()) GameRuntimeActivity.close();
+            else GameRuntimeActivity.message("Closing game…");
+        }
+        if (event.matches("AARDVARK_GAME_ERROR [0-9]{1,10}")) startupError = event.substring("AARDVARK_GAME_ERROR ".length());
+        if (event.equals("AARDVARK_TOUCH_READY")) controlsReady = !closing;
+        if (event.equals("AARDVARK_TOUCH_UNAVAILABLE") || event.equals("AARDVARK_TOUCH_UNSUPPORTED")) controlsReady = false;
+        if (event.matches("AARDVARK_TOUCH_RESULT [1-5]")) inputPending.set(false);
     }
 
     private synchronized void closeProcesses() {
+        if (closing) return;
         closing = true;
         controlsReady = false;
         if (current == this) current = null;
@@ -172,6 +301,7 @@ public final class GameRuntimeService extends Service {
             if (!stop.waitFor(5, TimeUnit.SECONDS)) stop(stop);
         } catch (Exception ignored) { }
         stop(game);
+        stop(graphics);
         stop(display);
     }
 
@@ -220,8 +350,7 @@ public final class GameRuntimeService extends Service {
             service.inputs.execute(() -> {
                 try {
                     if (!service.closing && service.controlsReady && android.os.SystemClock.elapsedRealtime() - requested < 250) {
-                        service.game.getOutputStream().write(action);
-                        service.game.getOutputStream().flush();
+                        service.session.sendAction(action);
                     } else service.inputPending.set(false);
                 } catch (IOException error) { service.controlsReady = false; service.inputPending.set(false); }
             });
@@ -234,20 +363,10 @@ public final class GameRuntimeService extends Service {
             byte[] ring = new byte[262144];
             int position = 0; int length = 0;
             long published = 0;
-            boolean session = destination.getName().equals("session.log");
-            StringBuilder line = new StringBuilder();
+            publishLog(destination, ring, position, length);
             try (InputStream input = process.getInputStream()) {
                 byte[] block = new byte[8192]; int count;
                 while ((count = input.read(block)) != -1) {
-                    if (session) for (int i = 0; i < count; i++) {
-                        int value = block[i] & 255;
-                        if (value == '\n') {
-                            if (line.toString().equals("AARDVARK_TOUCH_READY")) controlsReady = !closing;
-                            if (line.toString().equals("AARDVARK_TOUCH_UNAVAILABLE") || line.toString().equals("AARDVARK_TOUCH_UNSUPPORTED")) controlsReady = false;
-                            if (line.toString().matches("AARDVARK_TOUCH_RESULT [1-5]")) inputPending.set(false);
-                            line.setLength(0);
-                        } else if (value != '\r' && line.length() < 128) line.append((char)value);
-                    }
                     int first = Math.min(count, ring.length - position);
                     System.arraycopy(block, 0, ring, position, first);
                     System.arraycopy(block, first, ring, 0, count - first);
@@ -260,7 +379,6 @@ public final class GameRuntimeService extends Service {
                     }
                 }
             } catch (IOException ignored) { }
-            if (session) controlsReady = false;
             publishLog(destination, ring, position, length);
         }, "dungeon-runtime-log");
         thread.start();

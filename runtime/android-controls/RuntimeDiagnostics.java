@@ -10,7 +10,7 @@ final class RuntimeDiagnostics {
         StringBuilder text = new StringBuilder("Dungeon Runners runtime\n").append(platform)
             .append("\nStage: ").append(stage).append("\n").append(summary).append('\n');
         for (String name : new String[]{component, "display.log"}) {
-            if (!name.equals("requirements.log") && !name.equals("memory.log") && !name.equals("display.log")) continue;
+            if (!name.equals("requirements.log") && !name.equals("memory.log") && !name.equals("graphics.log") && !name.equals("renderer.log") && !name.equals("display.log")) continue;
             if (name.equals("display.log") && component.equals("display.log") && text.indexOf("[display.log]") >= 0) continue;
             try {
                 File file = new File(folder, name);

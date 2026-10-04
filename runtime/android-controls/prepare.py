@@ -29,7 +29,7 @@ def prepare(source, game, native_apk):
     if check.returncode:
         subprocess.run(['git', '-C', str(source), 'apply', '--check', patch], check=True)
         subprocess.run(['git', '-C', str(source), 'apply', patch], check=True)
-    for name in ('GameControls.java', 'GameRuntimeActivity.java', 'GameRuntimeService.java', 'NativeRuntime.java', 'RuntimeProfile.java', 'RuntimeDiagnostics.java', 'WinePrefix.java'):
+    for name in ('GameControls.java', 'GameMouse.java', 'GameRuntimeActivity.java', 'GameRuntimeService.java', 'NativeRuntime.java', 'RuntimeProfile.java', 'RuntimeDiagnostics.java', 'WinePrefix.java', 'RuntimeSession.java', 'GameStartup.java', 'RuntimeCheckCache.java', 'GameDisplay.java', 'GraphicsChoice.java'):
         shutil.copyfile(here / name, source / 'lorie/src/main/java/com/termux/x11' / name)
     shutil.copyfile(here / 'AndroidManifest.xml', source / 'lorie/src/main/AndroidManifest.xml')
     shutil.copyfile(here / 'library.gradle', source / 'dungeon-runtime.gradle')
@@ -41,7 +41,7 @@ def prepare(source, game, native_apk):
     runtime_assets = source / 'lorie/src/main/assets/dungeon-runtime'
     runtime_assets.mkdir(parents=True, exist_ok=True)
     subprocess.run([sys.executable, str(here / 'input/build.py'), '--output', str(runtime_assets)], check=True)
-    for name in ('play.sh', 'command.sh', 'supervise.sh'):
+    for name in ('play.sh', 'command.sh', 'supervise.sh', 'session.sh'):
         (runtime_assets / name).write_text((here / name).read_text(), encoding='utf-8', newline='\n')
     runtime_patch = str(here / 'runtime.patch')
     applied = subprocess.run(['git', '-C', str(source), 'apply', '--reverse', '--check', runtime_patch], capture_output=True)

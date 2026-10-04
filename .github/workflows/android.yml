@@ -28,15 +28,21 @@ jobs:
           packages: platform-tools
           log-accepted-android-sdk-licenses: false
       - run: dotnet workload install android
-      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358'
       - run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-i686
-      - run: python3 -m pip install Pillow
+      - run: python3 -m pip install Pillow meson ninja
       - run: python3 tools/Build-AndroidRuntime.py
       - run: javac -d artifacts/runtime-tests runtime/android-controls/RuntimeProfile.java runtime/android-controls/tests/RuntimeProfileTest.java && java -cp artifacts/runtime-tests com.termux.x11.RuntimeProfileTest
       - run: javac -d artifacts/runtime-tests runtime/android-controls/RuntimeDiagnostics.java runtime/android-controls/tests/RuntimeDiagnosticsTest.java && java -cp artifacts/runtime-tests com.termux.x11.RuntimeDiagnosticsTest
       - run: javac -d artifacts/runtime-tests runtime/android-controls/WinePrefix.java runtime/android-controls/tests/WinePrefixTest.java && java -cp artifacts/runtime-tests com.termux.x11.WinePrefixTest
+      - run: javac -d artifacts/runtime-tests runtime/android-controls/RuntimeSession.java runtime/android-controls/tests/RuntimeSessionTest.java runtime/android-controls/GameStartup.java runtime/android-controls/tests/GameStartupTest.java && java -cp artifacts/runtime-tests com.termux.x11.RuntimeSessionTest && java -cp artifacts/runtime-tests com.termux.x11.GameStartupTest
+      - run: javac -d artifacts/runtime-tests runtime/android-controls/RuntimeCheckCache.java runtime/android-controls/tests/RuntimeCheckCacheTest.java && java -cp artifacts/runtime-tests com.termux.x11.RuntimeCheckCacheTest
+      - run: javac -d artifacts/runtime-tests runtime/android-controls/GameDisplay.java runtime/android-controls/tests/GameDisplayTest.java && java -cp artifacts/runtime-tests com.termux.x11.GameDisplayTest
+      - run: javac -d artifacts/runtime-tests runtime/android-controls/GameMouse.java runtime/android-controls/tests/GameMouseTest.java && java -cp artifacts/runtime-tests com.termux.x11.GameMouseTest
+      - run: javac -d artifacts/runtime-tests runtime/android-controls/GraphicsChoice.java runtime/android-controls/tests/GraphicsChoiceTest.java && java -cp artifacts/runtime-tests com.termux.x11.GraphicsChoiceTest
       - run: python3 runtime/android-controls/tests/command_test.py
       - run: python3 runtime/android-controls/tests/supervise_test.py
+      - run: python3 runtime/android-controls/tests/session_test.py
       - run: dotnet run --project tests/Client.Tests -c Release
       - run: dotnet build src/Client.Android -c Release -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME"
       - run: python3 tools/Verify-AndroidRuntime.py src/Client.Android/bin/Release/net10.0-android36.0/com.aardvarkland.dungeonrunners-Signed.apk

@@ -18,6 +18,7 @@ final class NativeRuntime {
     final File libraries;
     final File game;
     final RuntimeProfile profile;
+    boolean gpu;
     final List<String> executableBindings = new ArrayList<>();
 
     NativeRuntime(Context context, String gamePath, String selected) throws Exception {
@@ -74,11 +75,11 @@ final class NativeRuntime {
         write(child(root, "etc/resolv.conf"), "nameserver 1.1.1.1\nnameserver 8.8.8.8\n");
         File scripts = new File(base, "scripts");
         scripts.mkdirs();
-        for (String name : new String[]{"play.sh", "command.sh", "supervise.sh"})
+        for (String name : new String[]{"play.sh", "command.sh", "supervise.sh", "session.sh"})
             try (InputStream input = context.getAssets().open("dungeon-runtime/" + name)) {
                 Files.copy(input, new File(scripts, name).toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
-        for (String name : new String[]{"guest-memory", "guest-code.bin", "AardvarkInput.exe", "AardvarkTouch.dll", "AardvarkRuntimeCheck.exe"}) {
+        for (String name : new String[]{"guest-memory", "guest-code.bin", "AardvarkInput.exe", "AardvarkTouch.dll", "AardvarkRuntimeCheck.exe", "AardvarkGraphicsCheck.exe"}) {
             File target = new File(scripts, name);
             try (InputStream input = context.getAssets().open("dungeon-runtime/" + name)) {
                 Files.copy(input, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -95,7 +96,7 @@ final class NativeRuntime {
         String config = user.isFile() ? new String(Files.readAllBytes(user.toPath()), java.nio.charset.StandardCharsets.UTF_8) : "";
         File displayReady = new File(base, "display-ready");
         if (!displayReady.isFile() || !new String(Files.readAllBytes(displayReady.toPath()), java.nio.charset.StandardCharsets.UTF_8).trim().equals("2")) {
-            write(new File(base, "previous-display.cfg"), config);
+            if (!new File(base, "previous-display.cfg").exists()) write(new File(base, "previous-display.cfg"), config);
             String settings = "Fullscreen = false\nWindowedWidth = 800\nWindowedHeight = 600\nWindowedX = 0\nWindowedY = 0\nPipeline = VFPF\nBenchmarked = true\nAntiAlias = 0\nFoliageAmount = 0\nLightBloom = 0\nShadows = false\nSpecular = false\nVSynch = false\nUISize = 3";
             Set<String> keys = new HashSet<>();
             for (String setting : settings.split("\n")) keys.add(setting.split("=", 2)[0].trim().toLowerCase(Locale.ROOT));
@@ -113,6 +114,8 @@ final class NativeRuntime {
             write(user, config);
             write(displayReady, "2\n");
         }
+        String windowed = GameDisplay.configure(config);
+        if (!windowed.equals(config)) write(user, windowed);
     }
 
     private void prepareData(String assets, String marker) throws Exception {
@@ -194,6 +197,21 @@ final class NativeRuntime {
     void repairPrefix() throws IOException { new WinePrefix(root).repair(); }
 
     void finishPrefix() throws IOException { new WinePrefix(root).finish(); }
+
+    String checkIdentity() throws Exception {
+        android.content.pm.PackageInfo app = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+        String platform = "1:" + profile.id + ":" + android.os.Build.FINGERPRINT + ":" + app.lastUpdateTime
+            + ":" + context.getApplicationInfo().sourceDir + ":" + Os.sysconf(android.system.OsConstants._SC_PAGESIZE);
+        ArrayList<File> files = new ArrayList<>();
+        for (String folder : new String[]{"system32", "syswow64"}) {
+            File[] libraries = child(root, "root/.wine/drive_c/windows/" + folder).listFiles(
+                file -> file.isFile() && (file.getName().endsWith(".dll") || file.getName().endsWith(".exe")));
+            if (libraries != null) { Arrays.sort(libraries); files.addAll(Arrays.asList(libraries)); }
+        }
+        return RuntimeCheckCache.identity(platform, files.toArray(new File[0]));
+    }
+
+    String graphicsIdentity() throws Exception { return RuntimeCheckCache.identity(checkIdentity() + ":" + gpu); }
 
     boolean requirementsReady() throws Exception {
         String[][] files = {
@@ -316,7 +334,7 @@ final class NativeRuntime {
             "/system/bin/env", "-i", "HOME=/root", "PATH=/usr/local/bin:/usr/bin:/bin:/system/bin", "LANG=C.UTF-8", "TMPDIR=/tmp",
             "DISPLAY=:7", "WINEPREFIX=/root/.wine", "WINEARCH=" + profile.wineArch(), "WINE_ANDROID_IMAGE_COPY=1", "BOX86_LOG=0", "BOX86_DYNAREC=1", "BOX86_LD_LIBRARY_PATH=/opt/aardvark/wine/lib",
             "BOX64_LOG=0", "BOX64_DYNAREC=1", "BOX64_DYNAREC_STRONGMEM=1", "BOX64_LD_LIBRARY_PATH=/opt/aardvark/wine/lib/wine/x86_64-unix:/opt/aardvark/wine/deps",
-            "LIBGL_ALWAYS_SOFTWARE=1", "GALLIUM_DRIVER=llvmpipe", "LP_NUM_THREADS=2", "WINEDLLOVERRIDES=mscoree,mshtml=;winemenubuilder.exe=d;d3d9=b;d3dx9_31,d3dx9_40=n,b",
+            "LIBGL_ALWAYS_SOFTWARE=1", "GALLIUM_DRIVER=" + (gpu ? "virpipe" : "llvmpipe"), "VTEST_SOCKET_NAME=/tmp/.aardvark-gpu", "LP_NUM_THREADS=2", "WINEDLLOVERRIDES=mscoree,mshtml=;winemenubuilder.exe=d;d3d9=b;d3dx9_31,d3dx9_40=n,b",
             "WINEDEBUG=-all,err+all", "WINELOADER=/usr/local/bin/aardvark-wine", "WINESERVER=/usr/local/bin/aardvark-wineserver"));
         if (new File("/linkerconfig").isDirectory()) args.addAll(1, Arrays.asList("-b", "/linkerconfig"));
         for (String binding : executableBindings) args.addAll(1, Arrays.asList("-b", binding));
@@ -328,7 +346,7 @@ final class NativeRuntime {
         Map<String,String> env = process.environment();
         env.put("PROOT_LOADER", new File(libraries, "libproot-loader.so").getPath());
         env.put("PROOT_TMP_DIR", new File(root, "tmp").getPath());
-        env.put("PROOT_NO_SECCOMP", "1");
+        env.remove("PROOT_NO_SECCOMP");
         env.remove("LD_PRELOAD");
         env.remove("LD_LIBRARY_PATH");
         return process;

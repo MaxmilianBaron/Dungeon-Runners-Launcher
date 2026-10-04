@@ -33,10 +33,12 @@ On Windows 11 ARM64, Install, Update, Repair and Play configure per-user game em
 
 ## Android
 
-.NET 10 SDK, Android workload, JDK 21, Android SDK 36, Python 3.11+, Pillow and an i686 MinGW C compiler:
+.NET 10 SDK, Android workload, JDK 21, Android SDK 36, NDK 28.2.13676358, Python 3.11+, Pillow, Meson, Ninja and an i686 MinGW C compiler:
 
 ```sh
 dotnet workload install android
+sdkmanager 'ndk;28.2.13676358'
+python -m pip install Pillow meson ninja
 python tools/Build-AndroidRuntime.py
 dotnet build src/Client.Android -c Release
 ```

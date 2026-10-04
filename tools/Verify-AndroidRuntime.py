@@ -44,14 +44,25 @@ def verify(apk, runtime_data=None):
                         start = offset + segment * size
                         if struct.unpack_from('<I', content, start)[0] == 1 and struct.unpack_from('<Q', content, start + 48)[0] < 16384:
                             raise ValueError('ARM64 runtime requires 16 KiB segment alignment: ' + path)
-            for name in ('libproot.so', 'libproot-loader.so', 'libtalloc.so', 'libandroid-shmem.so', 'libXlorie.so'):
+            for name in ('libproot.so', 'libproot-loader.so', 'libtalloc.so', 'libandroid-shmem.so', 'libXlorie.so', 'libaardvark-gpu.so', 'libEGL_angle.so', 'libGLESv2_angle.so'):
                 if 'lib/' + abi + '/' + name not in entries:
                     raise ValueError('Missing packaged runtime component: ' + abi + '/' + name)
+                if name in ('libaardvark-gpu.so', 'libEGL_angle.so', 'libGLESv2_angle.so'):
+                    content = archive.read('lib/' + abi + '/' + name)
+                    if content[:5] != b'\x7fELF' + bytes([elf_class]) or int.from_bytes(content[18:20], 'little') != machine:
+                        raise ValueError('Wrong graphics component architecture: ' + abi + '/' + name)
+                    if elf_class == 2:
+                        offset = struct.unpack_from('<Q', content, 32)[0]
+                        size, segments = struct.unpack_from('<HH', content, 54)
+                        for segment in range(segments):
+                            start = offset + segment * size
+                            if struct.unpack_from('<I', content, start)[0] == 1 and struct.unpack_from('<Q', content, start + 48)[0] < 16384:
+                                raise ValueError('Graphics runtime requires 16 KiB alignment: ' + name)
             count += len(manifest)
         fixture = archive.read('assets/dungeon-runtime/guest-memory')
         if fixture[:5] != b'\x7fELF\x01' or fixture[18:20] != b'\x03\x00':
             raise ValueError('The runtime compatibility check is missing.')
-        for name in ('AardvarkInput.exe', 'AardvarkTouch.dll', 'AardvarkRuntimeCheck.exe'):
+        for name in ('AardvarkInput.exe', 'AardvarkTouch.dll', 'AardvarkRuntimeCheck.exe', 'AardvarkGraphicsCheck.exe'):
             executable = archive.read('assets/dungeon-runtime/' + name)
             if executable[:2] != b'MZ':
                 raise ValueError('The game input component is missing: ' + name)

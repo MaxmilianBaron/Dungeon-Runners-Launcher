@@ -16,4 +16,6 @@ The Android interface uses Android system widgets and the .NET Android runtime. 
 
 Linux AppImages include the unmodified AppImage type2-runtime. Its license and dependency notices are included in the image; corresponding sources are available from https://github.com/AppImage/type2-runtime/tree/20251108.
 
+Android GPU rendering uses VirGLrenderer and libepoxy (MIT), and ANGLE (BSD-3-Clause and Apache-2.0). Pinned sources, patches and license notices are in `runtime/android-controls/gpu`; the notices are included in the APK.
+
 Source Serif 4 is distributed under the SIL Open Font License 1.1. Its original license is retained beside the embedded font and in the download.

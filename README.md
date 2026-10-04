@@ -14,6 +14,6 @@ Linux: allow execution and open the installer. x64/ARM64 selection is automatic;
 
 Steam Deck: dedicated x64 installer for Desktop Mode; detects installed Proton and its Steam Linux Runtime. Controller addon includes skill bindings, sensitivity and dead-zone settings; use the Steam Input Gamepad template.
 
-Android 9+ / .NET Android / universal APK. Integrated touch controls and automatic ARMv7, ARM64 or x86-64 runtime selection. Install prepares game requirements; Update checks installed components. Incomplete Wine libraries are repaired automatically.
+Android 9+ / .NET Android / universal APK. Borderless game display, touch controls and automatic ARMv7, ARM64 or x86-64 runtime selection. Automatic Vulkan rendering with software fallback, Wine repair and cached startup checks.
 
 [Build and requirements](BUILDING.md) · [MIT](LICENSE) · [Notices](NOTICE.md)

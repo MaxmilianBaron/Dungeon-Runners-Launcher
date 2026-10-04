@@ -398,6 +398,20 @@ public sealed class MainActivity : Activity
     private async Task Play(CancellationToken token)
     {
         RequireRuntime();
+        using var runtime = Java.Lang.Class.ForName("com.termux.x11.GameRuntimeService");
+        using var active = runtime.GetMethod("isActive");
+        using var stopping = runtime.GetMethod("isStopping");
+        for (var attempt = 0; ; attempt++)
+        {
+            using var state = active.Invoke(null);
+            if (state is not Java.Lang.Boolean value || !value.BooleanValue()) break;
+            using var closing = stopping.Invoke(null);
+            if (closing is not Java.Lang.Boolean ending || !ending.BooleanValue())
+                throw new IOException("A game session is already running.");
+            if (attempt >= 150) throw new IOException("The previous game session is still closing. Please retry.");
+            Say("Closing previous game", "Starting when cleanup finishes…");
+            await Task.Delay(100, token);
+        }
         var saved = SafeFiles.Under(root, ".dr-client/manifest.json");
         var bytes = manifest ?? (installer.InstalledManifest(root) is not null ? File.ReadAllBytes(saved) : await Latest(token));
         await Task.Run(() => installer.PreparePlayAsync(root, bytes, token), token);
