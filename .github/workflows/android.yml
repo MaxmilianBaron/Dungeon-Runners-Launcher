@@ -34,6 +34,7 @@ jobs:
       - run: python3 tools/Build-AndroidRuntime.py
       - run: javac -d artifacts/runtime-tests runtime/android-controls/RuntimeProfile.java runtime/android-controls/tests/RuntimeProfileTest.java && java -cp artifacts/runtime-tests com.termux.x11.RuntimeProfileTest
       - run: javac -d artifacts/runtime-tests runtime/android-controls/RuntimeDiagnostics.java runtime/android-controls/tests/RuntimeDiagnosticsTest.java && java -cp artifacts/runtime-tests com.termux.x11.RuntimeDiagnosticsTest
+      - run: javac -d artifacts/runtime-tests runtime/android-controls/RuntimeDiagnostics.java runtime/android-controls/RuntimeStatus.java runtime/android-controls/tests/RuntimeStatusTest.java && java -cp artifacts/runtime-tests com.termux.x11.RuntimeStatusTest
       - run: javac -d artifacts/runtime-tests runtime/android-controls/WinePrefix.java runtime/android-controls/tests/WinePrefixTest.java && java -cp artifacts/runtime-tests com.termux.x11.WinePrefixTest
       - run: javac -d artifacts/runtime-tests runtime/android-controls/RuntimeSession.java runtime/android-controls/tests/RuntimeSessionTest.java runtime/android-controls/GameStartup.java runtime/android-controls/tests/GameStartupTest.java && java -cp artifacts/runtime-tests com.termux.x11.RuntimeSessionTest && java -cp artifacts/runtime-tests com.termux.x11.GameStartupTest
       - run: javac -d artifacts/runtime-tests runtime/android-controls/RuntimeCheckCache.java runtime/android-controls/tests/RuntimeCheckCacheTest.java && java -cp artifacts/runtime-tests com.termux.x11.RuntimeCheckCacheTest

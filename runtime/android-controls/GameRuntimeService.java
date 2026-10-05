@@ -33,6 +33,8 @@ public final class GameRuntimeService extends Service {
     private volatile String startupError;
     private String stage = "Preparing runtime";
     private String component = "";
+    private RuntimeStatus runtimeStatus;
+    private long observedSince;
     public static boolean isActive() { return running; }
     public static boolean isStopping() {
         GameRuntimeService service = current;
@@ -63,6 +65,8 @@ public final class GameRuntimeService extends Service {
         Thread displayLog = null;
         try {
             runtime = new NativeRuntime(this, root, profile);
+            observedSince = android.os.SystemClock.elapsedRealtime();
+            runtimeStatus = new RuntimeStatus(runtime.game, System.currentTimeMillis());
             runtime.base.mkdirs();
             try (RandomAccessFile owner = new RandomAccessFile(new File(runtime.base, "session.lock"), "rw"); FileLock lock = owner.getChannel().tryLock()) {
                 if (lock == null) throw new IOException("A game session is already running.");
@@ -135,6 +139,7 @@ public final class GameRuntimeService extends Service {
                     checks.complete(runtime.graphicsIdentity());
                 }
                 try { graphicsChoice.save(runtime.checkIdentity(), runtime.gpu ? "gpu" : "software"); } catch (IOException ignored) { }
+                publishStatus();
                 if (play && !closing) {
                     android.preference.PreferenceManager.getDefaultSharedPreferences(this).edit()
                         .putString("displayResolutionMode", "custom").putString("displayResolutionCustom", GameDisplay.RESOLUTION)
@@ -148,8 +153,13 @@ public final class GameRuntimeService extends Service {
                     GameRuntimeActivity.message(stage + "…");
                     session.begin("play", new File(logFolder(), "session.log"));
                     boolean shown = false;
+                    long nextObservation = 0;
                     while (!session.await(250) && !closing) {
                         long now = android.os.SystemClock.elapsedRealtime();
+                        if (now >= nextObservation) {
+                            publishStatus();
+                            nextObservation = now + 5000;
+                        }
                         if (!display.isAlive()) { component = "display.log"; throw new IOException("The game display stopped."); }
                         if (runtime.gpu && !graphics.isAlive()) { component = "renderer.log"; throw new IOException("The graphics runtime stopped. Copy details to report the problem."); }
                         if (!stage.equals(startup.stage())) {
@@ -193,6 +203,7 @@ public final class GameRuntimeService extends Service {
             android.util.Log.e("DungeonRuntime", "Runtime stopped", error);
             try (PrintWriter output = new PrintWriter(new File(logFolder(), "error.log"))) { output.print(details); } catch (IOException ignored) { }
         } finally {
+            publishStatus();
             sendBroadcast(new Intent(MainActivity.ACTION_STOP).setPackage(getPackageName()));
             if (success) GameRuntimeActivity.close();
             closeProcesses();
@@ -275,6 +286,7 @@ public final class GameRuntimeService extends Service {
     }
 
     private void gameEvent(String event) {
+        if (runtimeStatus != null && runtimeStatus.sample(event, (android.os.SystemClock.elapsedRealtime() - observedSince) / 1000)) return;
         if (startup != null) startup.accept(event, android.os.SystemClock.elapsedRealtime());
         if (event.matches("AARDVARK_GAME_EXITED [0-9]{1,10}")) {
             gameEnded = true;
@@ -287,6 +299,20 @@ public final class GameRuntimeService extends Service {
         if (event.equals("AARDVARK_TOUCH_READY")) controlsReady = !closing;
         if (event.equals("AARDVARK_TOUCH_UNAVAILABLE") || event.equals("AARDVARK_TOUCH_UNSUPPORTED")) controlsReady = false;
         if (event.matches("AARDVARK_TOUCH_RESULT [1-5]")) inputPending.set(false);
+    }
+
+    private void publishStatus() {
+        if (runtimeStatus == null || runtime == null) return;
+        String platform = "Android API " + android.os.Build.VERSION.SDK_INT + " / " + android.os.Build.MODEL
+            + "\nABI: " + String.join(", ", android.os.Build.SUPPORTED_ABIS)
+            + "\nProfile: " + runtime.profile.id + "\nRenderer: " + (runtime.gpu ? "Vulkan (VirGL/ANGLE)" : "software")
+            + "\nElapsed: " + ((android.os.SystemClock.elapsedRealtime() - observedSince) / 1000) + "s";
+        try {
+            android.content.pm.PackageInfo app = getPackageManager().getPackageInfo(getPackageName(), 0);
+            platform += "\nLauncher: " + app.versionName + " (" + app.getLongVersionCode() + ")"
+                + "\nPage size: " + android.system.Os.sysconf(android.system.OsConstants._SC_PAGESIZE);
+        } catch (Exception ignored) { }
+        runtimeStatus.publish(platform, stage, logFolder(), runtime.game.getPath(), getFilesDir().getPath(), getApplicationInfo().nativeLibraryDir);
     }
 
     private synchronized void closeProcesses() {

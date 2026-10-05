@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <wchar.h>
 #include "profile.h"
+#include "health.h"
 
 typedef struct { DWORD pid; HWND window; HANDLE process; UINT command; } Session;
 
@@ -125,7 +126,8 @@ int main(void) {
         WaitForMultipleObjects(2, handles, FALSE, INFINITE);
     }
 #else
-    WaitForSingleObject(session.process, INFINITE);
+    while (WaitForSingleObject(session.process, 5000) == WAIT_TIMEOUT)
+        report_health(session.process, session.window);
 #endif
     DWORD result = 0; GetExitCodeProcess(session.process, &result);
     printf("AARDVARK_GAME_EXITED %lu\n", result);

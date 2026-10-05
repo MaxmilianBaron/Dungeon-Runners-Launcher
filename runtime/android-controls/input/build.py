@@ -16,7 +16,7 @@ def build(output, compiler=None):
     if 'clang' in Path(compiler).name:
         flags += ['--target=i686-w64-windows-gnu']
     subprocess.run(flags + ['-shared', str(here / 'touch.c'), '-o', str(output / 'AardvarkTouch.dll'), '-luser32'], check=True)
-    subprocess.run(flags + [str(here / 'host.c'), '-o', str(output / 'AardvarkInput.exe'), '-luser32', '-mwindows'], check=True)
+    subprocess.run(flags + [str(here / 'host.c'), '-o', str(output / 'AardvarkInput.exe'), '-luser32', '-lpsapi', '-mwindows'], check=True)
     subprocess.run(flags + [str(here / 'runtime-check.c'), '-o', str(output / 'AardvarkRuntimeCheck.exe')], check=True)
     subprocess.run(flags + [str(here / 'graphics-check.c'), '-o', str(output / 'AardvarkGraphicsCheck.exe'), '-ld3d9', '-luser32'], check=True)
 
