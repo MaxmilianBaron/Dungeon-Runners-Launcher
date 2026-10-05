@@ -151,6 +151,11 @@ public sealed class MainActivity : Activity
         cancel = Button("Cancel", () => { operation?.Cancel(); return Task.CompletedTask; });
         cancel.Visibility = ViewStates.Gone;
         body.AddView(cancel, new LinearLayout.LayoutParams(-1, Dp(44)) { TopMargin = Dp(8) });
+        body.AddView(Button("Diagnostics", () =>
+        {
+            StartActivity(new Intent().SetComponent(new ComponentName(PackageName!, "com.termux.x11.RuntimeReportActivity")));
+            return Task.CompletedTask;
+        }), new LinearLayout.LayoutParams(-1, Dp(40)) { TopMargin = Dp(8) });
         SetContentView(screen);
         FitLayout();
     }

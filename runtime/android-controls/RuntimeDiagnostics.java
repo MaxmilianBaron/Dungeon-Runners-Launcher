@@ -9,7 +9,8 @@ final class RuntimeDiagnostics {
     static String report(String summary, String platform, String stage, File folder, String component, String... privatePaths) {
         StringBuilder text = new StringBuilder("Dungeon Runners runtime\n").append(platform)
             .append("\nStage: ").append(stage).append("\n").append(summary).append('\n');
-        for (String name : new String[]{component, "display.log"}) {
+        String[] components = component.equals("graphics.log") ? new String[]{component, "renderer.log", "display.log"} : new String[]{component, "display.log"};
+        for (String name : components) {
             if (!name.equals("requirements.log") && !name.equals("memory.log") && !name.equals("graphics.log") && !name.equals("renderer.log") && !name.equals("display.log")) continue;
             if (name.equals("display.log") && component.equals("display.log") && text.indexOf("[display.log]") >= 0) continue;
             try {
@@ -21,7 +22,7 @@ final class RuntimeDiagnostics {
                     input.readFully(tail);
                     text.append("\n[").append(name).append("]\n").append(new String(tail, StandardCharsets.UTF_8));
                 }
-            } catch (IOException ignored) { }
+            } catch (IOException | SecurityException ignored) { }
         }
         String value = text.toString();
         for (String path : privatePaths) if (path != null && !path.isEmpty()) value = value.replace(path, "<private>");

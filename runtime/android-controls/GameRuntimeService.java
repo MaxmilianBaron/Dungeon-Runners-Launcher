@@ -33,7 +33,8 @@ public final class GameRuntimeService extends Service {
     private volatile String startupError;
     private String stage = "Preparing runtime";
     private String component = "";
-    private RuntimeStatus runtimeStatus;
+    private volatile RuntimeStatus runtimeStatus;
+    private volatile String failureReport;
     private long observedSince;
     public static boolean isActive() { return running; }
     public static boolean isStopping() {
@@ -48,7 +49,10 @@ public final class GameRuntimeService extends Service {
         manager.createNotificationChannel(new NotificationChannel("game-runtime", "Dungeon Runners", NotificationManager.IMPORTANCE_LOW));
         Notification notice = new Notification.Builder(this, "game-runtime")
             .setContentTitle("Dungeon Runners").setContentText("Game runtime is active")
-            .setSmallIcon(android.R.drawable.ic_media_play).setOngoing(true).build();
+            .setSmallIcon(android.R.drawable.ic_media_play).setOngoing(true)
+            .addAction(new Notification.Action.Builder(android.R.drawable.ic_menu_info_details, "Diagnostics",
+                android.app.PendingIntent.getActivity(this, 0, new Intent(this, RuntimeReportActivity.class),
+                    android.app.PendingIntent.FLAG_IMMUTABLE | android.app.PendingIntent.FLAG_UPDATE_CURRENT)).build()).build();
         startForeground(104, notice);
         if (running) return START_NOT_STICKY;
         running = true;
@@ -66,7 +70,8 @@ public final class GameRuntimeService extends Service {
         try {
             runtime = new NativeRuntime(this, root, profile);
             observedSince = android.os.SystemClock.elapsedRealtime();
-            runtimeStatus = new RuntimeStatus(runtime.game, System.currentTimeMillis());
+            if (play) runtimeStatus = new RuntimeStatus(runtime.game, reportFolder(this), System.currentTimeMillis());
+            publishStatus();
             runtime.base.mkdirs();
             try (RandomAccessFile owner = new RandomAccessFile(new File(runtime.base, "session.lock"), "rw"); FileLock lock = owner.getChannel().tryLock()) {
                 if (lock == null) throw new IOException("A game session is already running.");
@@ -199,6 +204,8 @@ public final class GameRuntimeService extends Service {
             if (startupError != null) platform += "\nGame error: " + startupError;
             String details = RuntimeDiagnostics.report(message, platform, stage, logFolder(), component,
                 root, getFilesDir().getPath(), getApplicationInfo().nativeLibraryDir);
+            failureReport = details;
+            if (runtimeStatus == null) new RuntimeReportStore(reportFolder(this)).write(details);
             GameRuntimeActivity.error(message, details);
             android.util.Log.e("DungeonRuntime", "Runtime stopped", error);
             try (PrintWriter output = new PrintWriter(new File(logFolder(), "error.log"))) { output.print(details); } catch (IOException ignored) { }
@@ -303,6 +310,7 @@ public final class GameRuntimeService extends Service {
 
     private void publishStatus() {
         if (runtimeStatus == null || runtime == null) return;
+        if (failureReport != null) { runtimeStatus.save(failureReport); return; }
         String platform = "Android API " + android.os.Build.VERSION.SDK_INT + " / " + android.os.Build.MODEL
             + "\nABI: " + String.join(", ", android.os.Build.SUPPORTED_ABIS)
             + "\nProfile: " + runtime.profile.id + "\nRenderer: " + (runtime.gpu ? "Vulkan (VirGL/ANGLE)" : "software")
@@ -313,6 +321,32 @@ public final class GameRuntimeService extends Service {
                 + "\nPage size: " + android.system.Os.sysconf(android.system.OsConstants._SC_PAGESIZE);
         } catch (Exception ignored) { }
         runtimeStatus.publish(platform, stage, logFolder(), runtime.game.getPath(), getFilesDir().getPath(), getApplicationInfo().nativeLibraryDir);
+    }
+
+    private static File reportFolder(android.content.Context context) {
+        return new File(context.getFilesDir(), "runtime-reports");
+    }
+
+    public static String report(android.content.Context context) {
+        GameRuntimeService service = current;
+        if (service != null) {
+            if (service.failureReport != null) return service.failureReport;
+            RuntimeStatus status = service.runtimeStatus;
+            if (status != null && !status.latest().isEmpty()) return status.latest();
+        }
+        String saved = RuntimeReportStore.read(reportFolder(context));
+        if (!saved.isEmpty()) return saved;
+        File legacy = new File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "Dungeon Runners/logs");
+        saved = RuntimeReportStore.read(legacy);
+        if (!saved.isEmpty()) return saved;
+        String platform = "Android API " + android.os.Build.VERSION.SDK_INT + " / " + android.os.Build.MODEL
+            + "\nABI: " + String.join(", ", android.os.Build.SUPPORTED_ABIS);
+        try {
+            android.content.pm.PackageInfo app = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            long version = android.os.Build.VERSION.SDK_INT >= 28 ? app.getLongVersionCode() : app.versionCode;
+            platform += "\nLauncher: " + app.versionName + " (" + version + ")";
+        } catch (Exception ignored) { }
+        return "Dungeon Runners runtime\n" + platform + "\nNo game session report yet. Start the game, then reopen Diagnostics.";
     }
 
     private synchronized void closeProcesses() {

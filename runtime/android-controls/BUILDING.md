@@ -20,7 +20,7 @@ The 64-bit profiles use Wine 11.0 in WoW64 mode; ARM64 adds Box64 0.4.4. `build-
 
 Setup errors identify the failing step and exit code. Copy details includes device architecture, memory page size and bounded setup logs with local paths removed; game-session logs are excluded. `RuntimeDiagnosticsTest.java` and `tests/command_test.py` cover report limits and Wine shutdown ordering.
 
-Android sessions write `logs/LauncherRuntime.log` with the runtime build, renderer, bounded process samples and filtered loading stages. One previous report is retained. Raw game-session text, account names and chat are excluded. `RuntimeStatusTest.java` covers filtering and retention.
+Android sessions retain a private report and mirror it to `logs/LauncherRuntime.log`. Diagnostics in the launcher can copy, share or save it without file-manager access. Reports contain the runtime build, renderer, bounded process samples and filtered loading stages; one previous report is retained. Raw game-session text, account names and chat are excluded. `RuntimeStatusTest.java` covers filtering, retention and unavailable shared storage.
 
 Before WoW64 initialization, `WinePrefix` restores missing or invalid PE libraries from the verified runtime package. It checks both Windows architectures, preserves valid overrides and registry files, and keeps replaced files in the private prefix's `.aardvark-repair-backups` directory. A pending marker retains interrupted repairs for the next launch. `WinePrefixTest.java` covers partial prefixes, truncated files, retries and preservation.
 

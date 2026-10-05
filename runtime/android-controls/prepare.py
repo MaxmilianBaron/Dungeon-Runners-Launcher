@@ -29,7 +29,7 @@ def prepare(source, game, native_apk):
     if check.returncode:
         subprocess.run(['git', '-C', str(source), 'apply', '--check', patch], check=True)
         subprocess.run(['git', '-C', str(source), 'apply', patch], check=True)
-    for name in ('GameControls.java', 'GameMouse.java', 'GameRuntimeActivity.java', 'GameRuntimeService.java', 'NativeRuntime.java', 'RuntimeProfile.java', 'RuntimeDiagnostics.java', 'RuntimeStatus.java', 'WinePrefix.java', 'RuntimeSession.java', 'GameStartup.java', 'RuntimeCheckCache.java', 'GameDisplay.java', 'GraphicsChoice.java'):
+    for name in ('GameControls.java', 'GameMouse.java', 'GameRuntimeActivity.java', 'GameRuntimeService.java', 'NativeRuntime.java', 'RuntimeProfile.java', 'RuntimeDiagnostics.java', 'RuntimeStatus.java', 'RuntimeReportStore.java', 'RuntimeReportActivity.java', 'RuntimeReportProvider.java', 'WinePrefix.java', 'RuntimeSession.java', 'GameStartup.java', 'RuntimeCheckCache.java', 'GameDisplay.java', 'GraphicsChoice.java'):
         shutil.copyfile(here / name, source / 'lorie/src/main/java/com/termux/x11' / name)
     shutil.copyfile(here / 'AndroidManifest.xml', source / 'lorie/src/main/AndroidManifest.xml')
     shutil.copyfile(here / 'library.gradle', source / 'dungeon-runtime.gradle')

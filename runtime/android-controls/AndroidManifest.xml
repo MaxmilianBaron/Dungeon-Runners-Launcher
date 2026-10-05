@@ -11,6 +11,10 @@
             android:resizeableActivity="true" android:windowSoftInputMode="stateHidden|adjustNothing" android:exported="false" />
         <activity android:name="com.termux.x11.GameRuntimeActivity" android:taskAffinity=".GameRuntime"
             android:launchMode="singleTask" android:exported="false" android:label="Dungeon Runners" android:theme="@style/LorieAppTheme" />
+        <activity android:name="com.termux.x11.RuntimeReportActivity" android:exported="false"
+            android:label="Dungeon Runners diagnostics" android:theme="@style/LorieAppTheme" />
+        <provider android:name="com.termux.x11.RuntimeReportProvider" android:authorities="${applicationId}.reports"
+            android:exported="false" android:grantUriPermissions="true" />
         <activity android:name="com.termux.x11.LoriePreferences" android:theme="@style/Theme.AppCompat.DayNight"
             android:excludeFromRecents="true" android:exported="false" />
         <service android:name="com.termux.x11.GameRuntimeService" android:exported="false" android:foregroundServiceType="specialUse">

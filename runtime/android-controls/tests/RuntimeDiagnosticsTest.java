@@ -14,6 +14,7 @@ public final class RuntimeDiagnosticsTest {
             Files.writeString(folder.resolve("display.log"), "display detail");
             Files.writeString(folder.resolve("memory.log"), "memory-only detail");
             Files.writeString(folder.resolve("graphics.log"), "graphics-only detail");
+            Files.writeString(folder.resolve("renderer.log"), "renderer-only detail");
             Files.writeString(folder.resolve("session.log"), "PRIVATE_GAME_SESSION");
             String report = RuntimeDiagnostics.report("setup failed", "Android test", "Initializing Wine",
                 folder.toFile(), "requirements.log", "/private/game", "/private/app");
@@ -28,6 +29,7 @@ public final class RuntimeDiagnosticsTest {
             require(!report.contains("PRIVATE_GAME_SESSION"));
             report = RuntimeDiagnostics.report("failed", "Android test", "Checking graphics", folder.toFile(), "graphics.log");
             require(report.contains("graphics-only detail") && !report.contains("PRIVATE_GAME_SESSION") && !report.contains("memory-only detail"));
+            require(report.contains("renderer-only detail"));
             report = RuntimeDiagnostics.report("x".repeat(50000), "Android test", "Setup", folder.toFile(), "");
             require(report.length() == 24576);
             require(RuntimeDiagnostics.failed("Installing DirectX", 137).contains("Installing DirectX failed (exit 137)"));

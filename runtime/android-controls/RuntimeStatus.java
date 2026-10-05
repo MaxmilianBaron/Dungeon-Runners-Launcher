@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayDeque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,9 +20,18 @@ final class RuntimeStatus {
     private long logModified = -1, logLength = -1;
     private String progress = "No current game progress recorded";
     private String mappingError = "none recorded";
-    private boolean rotated;
+    private final RuntimeReportStore saved;
+    private final RuntimeReportStore shared;
+    private volatile String latest = "";
 
-    RuntimeStatus(File game, long started) { this.game = game; this.started = started; }
+    RuntimeStatus(File game, File reports, long started) {
+        this.game = game;
+        this.started = started;
+        saved = new RuntimeReportStore(reports);
+        shared = new RuntimeReportStore(new File(game, "logs"));
+    }
+
+    String latest() { return latest; }
 
     synchronized boolean sample(String event, long elapsedSeconds) {
         Matcher match = SAMPLE.matcher(event);
@@ -47,25 +55,21 @@ final class RuntimeStatus {
     void publish(String platform, String stage, File logs, String... privatePaths) {
         String text = RuntimeDiagnostics.report("Runtime observation; no automatic game changes.",
             platform + "\n" + details(), stage, logs, "graphics.log", privatePaths);
+        save(text);
+    }
+
+    void save(String text) {
+        latest = text;
+        saved.write(text);
+        boolean copied = false;
         try {
             File folder = new File(game, "logs");
-            if (!folder.isDirectory() && !folder.mkdirs()) return;
-            if (!folder.getCanonicalFile().equals(new File(game.getCanonicalFile(), "logs"))) return;
-            File destination = new File(folder, "LauncherRuntime.log");
-            File previous = new File(folder, "LauncherRuntime.previous.log");
-            File pending = new File(folder, ".LauncherRuntime.pending");
-            for (File file : new File[]{destination, previous, pending})
-                if (Files.isSymbolicLink(file.toPath()) || file.isDirectory()) return;
-            if (!rotated) {
-                if (destination.isFile()) {
-                    byte[] last = tail(destination, 24576);
-                    Files.write(previous.toPath(), last);
-                }
-                rotated = true;
-            }
-            Files.write(pending.toPath(), text.getBytes(StandardCharsets.UTF_8));
-            Files.move(pending.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            if (folder.getCanonicalFile().equals(new File(game.getCanonicalFile(), "logs"))) copied = shared.write(text);
         } catch (IOException | SecurityException ignored) { }
+        if (!copied) {
+            latest = "Download copy unavailable. This report is available in the launcher.\n\n" + text;
+            saved.write(latest);
+        }
     }
 
     private void refreshProgress() {
