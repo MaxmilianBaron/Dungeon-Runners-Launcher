@@ -1,4 +1,5 @@
 #include "profile.h"
+#include "wait-observer.h"
 
 static uintptr_t image;
 static UINT command;
@@ -6,6 +7,7 @@ static UINT command;
 __declspec(dllexport) LRESULT CALLBACK AardvarkTouchHook(int code, WPARAM sent, LPARAM parameter) {
     if (code >= 0) {
         const CWPSTRUCT *message = (const CWPSTRUCT*)parameter;
+        if (!waitStarted) start_wait_observer(message->hwnd);
         unsigned action = message->wParam & 15;
         if (message->message == command && (message->wParam & ~15u) == TOUCH_MAGIC && action >= 1 && action <= 3) {
             DWORD process = 0;

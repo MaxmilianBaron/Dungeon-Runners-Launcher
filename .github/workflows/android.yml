@@ -41,6 +41,7 @@ jobs:
       - run: javac -d artifacts/runtime-tests runtime/android-controls/GameDisplay.java runtime/android-controls/tests/GameDisplayTest.java && java -cp artifacts/runtime-tests com.termux.x11.GameDisplayTest
       - run: javac -d artifacts/runtime-tests runtime/android-controls/GameMouse.java runtime/android-controls/tests/GameMouseTest.java && java -cp artifacts/runtime-tests com.termux.x11.GameMouseTest
       - run: javac -d artifacts/runtime-tests runtime/android-controls/GraphicsChoice.java runtime/android-controls/tests/GraphicsChoiceTest.java && java -cp artifacts/runtime-tests com.termux.x11.GraphicsChoiceTest
+      - run: javac -d artifacts/runtime-tests runtime/android-controls/GraphicsRecovery.java runtime/android-controls/tests/GraphicsRecoveryTest.java && java -cp artifacts/runtime-tests com.termux.x11.GraphicsRecoveryTest
       - run: python3 runtime/android-controls/tests/command_test.py
       - run: python3 runtime/android-controls/tests/supervise_test.py
       - run: python3 runtime/android-controls/tests/session_test.py

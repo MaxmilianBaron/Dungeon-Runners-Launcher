@@ -32,6 +32,10 @@ public final class RuntimeStatusTest {
             require(!status.sample("AARDVARK_GAME_HEALTH 2 3 4 1 extra", 5));
             require(!status.sample("AARDVARK_GAME_HEALTH 2 3 4 7", 5));
             require(status.sample("AARDVARK_GAME_HEALTH -1 -1 -1 -1", 0));
+            require(status.sample("AARDVARK_GAME_WAIT main 00000020 ip ntdll.dll+00000123", 80));
+            require(status.sample("AARDVARK_GAME_WAIT main 00000020 stack_candidates Example.exe+00001234 kernel32.dll+00004321", 80));
+            require(!status.sample("AARDVARK_GAME_WAIT main 00000020 ip C:/private/file+00000123", 80));
+            require(!status.sample("AARDVARK_GAME_WAIT account PRIVATE_ACCOUNT", 80));
             for (int i=0; i<20; i++) require(status.sample("AARDVARK_GAME_HEALTH " + (100+i) + " 500 600 0", i*5L));
             status.publish("Android test", "Game window ready", runtime.toFile(), "/private/app");
             String report = Files.readString(game.resolve("LauncherRuntime.log"));
@@ -39,6 +43,14 @@ public final class RuntimeStatusTest {
             require(report.contains("Preparing shader ZonePortal.fx") && report.contains("mapping error: 998"));
             require(report.contains("ui_thread_cpu_ms=119") && !report.contains("ui_thread_cpu_ms=100 "));
             require(report.contains("window_response=0") && report.contains("GRAPHICS_READY"));
+            require(report.contains("ntdll.dll+00000123") && report.contains("not a verified call chain"));
+            Path waitFile = root.resolve("waits.log");
+            Files.writeString(waitFile, "PRIVATE_ACCOUNT\nAARDVARK_GAME_WAIT main 00000030 ip Example.exe+00000123\n");
+            status.readWaits(waitFile.toFile());
+            require(status.details().contains("Example.exe+00000123") && !status.details().contains("ntdll.dll+00000123") && !status.details().contains("PRIVATE_ACCOUNT"));
+            Files.writeString(waitFile, "AARDVARK_GAME_WAIT main 00000030 ip Example.exe+");
+            status.readWaits(waitFile.toFile());
+            require(status.details().contains("Example.exe+00000123"));
             require(!report.contains("PRIVATE_") && !report.contains("private text") && !report.contains("/private/app"));
             require(report.contains("<private>/library"));
             require(!Files.exists(game.resolve("LauncherRuntime.previous.log")));

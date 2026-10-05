@@ -17,8 +17,10 @@ final class NativeRuntime {
     final File root;
     final File libraries;
     final File game;
+    final String clientHash;
     final RuntimeProfile profile;
     boolean gpu;
+    boolean serialGraphics;
     final List<String> executableBindings = new ArrayList<>();
 
     NativeRuntime(Context context, String gamePath, String selected) throws Exception {
@@ -28,6 +30,7 @@ final class NativeRuntime {
         game = new File(gamePath).getCanonicalFile();
         for (String name : new String[]{"DungeonRunners.exe", "game.pki", "game.pkg"})
             if (!new File(game, name).isFile()) throw new IOException("Install the game before starting it.");
+        clientHash = hash(new File(game, "DungeonRunners.exe"));
         base = new File(context.getFilesDir(), "game-runtime");
         root = new File(base, profile.rootName());
         File preferred = new File(context.getApplicationInfo().nativeLibraryDir);
@@ -75,6 +78,7 @@ final class NativeRuntime {
         write(child(root, "etc/resolv.conf"), "nameserver 1.1.1.1\nnameserver 8.8.8.8\n");
         File scripts = new File(base, "scripts");
         scripts.mkdirs();
+        Files.deleteIfExists(new File(scripts, "AardvarkWaits.log").toPath());
         for (String name : new String[]{"play.sh", "command.sh", "supervise.sh", "session.sh"})
             try (InputStream input = context.getAssets().open("dungeon-runtime/" + name)) {
                 Files.copy(input, new File(scripts, name).toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -211,7 +215,7 @@ final class NativeRuntime {
         return RuntimeCheckCache.identity(platform, files.toArray(new File[0]));
     }
 
-    String graphicsIdentity() throws Exception { return RuntimeCheckCache.identity(checkIdentity() + ":" + gpu); }
+    String graphicsIdentity() throws Exception { return RuntimeCheckCache.identity(checkIdentity() + ":" + gpu + ":" + serialGraphics); }
 
     boolean requirementsReady() throws Exception {
         String[][] files = {
@@ -338,6 +342,7 @@ final class NativeRuntime {
             "WINEDEBUG=-all,err+all", "WINELOADER=/usr/local/bin/aardvark-wine", "WINESERVER=/usr/local/bin/aardvark-wineserver"));
         if (new File("/linkerconfig").isDirectory()) args.addAll(1, Arrays.asList("-b", "/linkerconfig"));
         for (String binding : executableBindings) args.addAll(1, Arrays.asList("-b", binding));
+        if (gpu && serialGraphics) args.add("WINE_D3D_CONFIG=csmt=0");
         args.addAll(Arrays.asList(task));
         args.addAll(0, Arrays.asList(new File(libraries, "libtalloc.so").getPath()
             + ":" + new File(libraries, "libandroid-shmem.so").getPath(), libraries.getPath()));

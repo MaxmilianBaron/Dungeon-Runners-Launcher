@@ -69,6 +69,9 @@ public final class GameRuntimeService extends Service {
         Thread displayLog = null;
         try {
             runtime = new NativeRuntime(this, root, profile);
+            String previousReport = RuntimeReportStore.read(reportFolder(this));
+            runtime.base.mkdirs();
+            runtime.serialGraphics = new GraphicsRecovery(runtime.base).select(runtime.profile.id, previousReport);
             observedSince = android.os.SystemClock.elapsedRealtime();
             if (play) runtimeStatus = new RuntimeStatus(runtime.game, reportFolder(this), System.currentTimeMillis());
             publishStatus();
@@ -311,9 +314,12 @@ public final class GameRuntimeService extends Service {
     private void publishStatus() {
         if (runtimeStatus == null || runtime == null) return;
         if (failureReport != null) { runtimeStatus.save(failureReport); return; }
+        if (startup != null) runtimeStatus.readWaits(new File(runtime.base, "scripts/AardvarkWaits.log"));
         String platform = "Android API " + android.os.Build.VERSION.SDK_INT + " / " + android.os.Build.MODEL
             + "\nABI: " + String.join(", ", android.os.Build.SUPPORTED_ABIS)
             + "\nProfile: " + runtime.profile.id + "\nRenderer: " + (runtime.gpu ? "Vulkan (VirGL/ANGLE)" : "software")
+            + "\nGraphics queue: " + (runtime.gpu && runtime.serialGraphics ? "synchronous compatibility" : "default")
+            + "\nClient SHA256: " + runtime.clientHash
             + "\nElapsed: " + ((android.os.SystemClock.elapsedRealtime() - observedSince) / 1000) + "s";
         try {
             android.content.pm.PackageInfo app = getPackageManager().getPackageInfo(getPackageName(), 0);

@@ -22,6 +22,8 @@ Setup errors identify the failing step and exit code. Copy details includes devi
 
 Android sessions retain a private report and mirror it to `logs/LauncherRuntime.log`. Diagnostics in the launcher can copy, share or save it without file-manager access. Reports contain the runtime build, renderer, bounded process samples and filtered loading stages; one previous report is retained. Raw game-session text, account names and chat are excluded. `RuntimeStatusTest.java` covers filtering, retention and unavailable shared storage.
 
+After an ARM64 Vulkan session records at least 60 seconds of unchanged UI-thread CPU and an unresponsive window during shader preparation, the next launch uses synchronous WineD3D commands. Vulkan remains enabled and setup rechecks the selected configuration. Waiting threads are sampled at most twice per session; reports retain only module names and executable offsets. `GraphicsRecoveryTest.java` covers recovery selection and `input/test_waits.c` checks thread resumption.
+
 Before WoW64 initialization, `WinePrefix` restores missing or invalid PE libraries from the verified runtime package. It checks both Windows architectures, preserves valid overrides and registry files, and keeps replaced files in the private prefix's `.aardvark-repair-backups` directory. A pending marker retains interrupted repairs for the next launch. `WinePrefixTest.java` covers partial prefixes, truncated files, retries and preservation.
 
 `supervise.sh` forwards cancellation to PRoot's tracee cleanup handler, preserving stdin for touch actions. Cancellation and timeout wait for the runtime to exit before releasing the session.

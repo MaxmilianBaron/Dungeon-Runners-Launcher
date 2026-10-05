@@ -16,7 +16,9 @@ final class RuntimeStatus {
     private final File game;
     private final long started;
     private final ArrayDeque<String> samples = new ArrayDeque<>();
+    private final ArrayDeque<String> waits = new ArrayDeque<>();
     private File currentLog;
+    private long waitModified = -1, waitLength = -1;
     private long logModified = -1, logLength = -1;
     private String progress = "No current game progress recorded";
     private String mappingError = "none recorded";
@@ -33,7 +35,26 @@ final class RuntimeStatus {
 
     String latest() { return latest; }
 
+    synchronized void readWaits(File file) {
+        try {
+            if (!file.isFile() || file.length() == 0 || file.length() > 16384 || Files.isSymbolicLink(file.toPath())) return;
+            long modified = file.lastModified(), length = file.length();
+            if (modified == waitModified && length == waitLength) return;
+            String text = new String(Files.readAllBytes(file.toPath()), StandardCharsets.US_ASCII);
+            if (!text.endsWith("\n")) return;
+            waits.clear();
+            for (String line : text.split("[\\r\\n]+")) if (line.startsWith("AARDVARK_GAME_WAIT ")) sample(line, 0);
+            waitModified = modified; waitLength = length;
+        } catch (IOException | SecurityException ignored) { }
+    }
+
     synchronized boolean sample(String event, long elapsedSeconds) {
+        if (event.startsWith("AARDVARK_GAME_WAIT ")) {
+            if (event.length() > 2048 || !event.matches("AARDVARK_GAME_WAIT (unavailable|(main|worker) [0-9a-f]{8} (ip|stack_candidates)( unavailable|( [A-Za-z0-9_.-]{1,63}\\+[0-9a-f]{8}){1,24}))")) return false;
+            waits.addLast(event.substring("AARDVARK_GAME_WAIT ".length()));
+            while (waits.size() > 26) waits.removeFirst();
+            return true;
+        }
         Matcher match = SAMPLE.matcher(event);
         if (!match.matches() || elapsedSeconds < 0) return false;
         samples.addLast(elapsedSeconds + "s ui_thread_cpu_ms=" + match.group(1) + " working_kib=" + match.group(2)
@@ -49,6 +70,10 @@ final class RuntimeStatus {
             .append("\nWindow response: 1=yes, 0=no response within 100 ms, -1=unavailable");
         if (samples.isEmpty()) value.append("\nNo game process samples yet");
         else for (String sample : samples) value.append('\n').append(sample);
+        if (!waits.isEmpty()) {
+            value.append("\nWait snapshot (code addresses only; stack candidates are not a verified call chain):");
+            for (String wait : waits) value.append('\n').append(wait);
+        }
         return value.toString();
     }
 
