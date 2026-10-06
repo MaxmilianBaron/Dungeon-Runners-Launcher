@@ -5,6 +5,7 @@ artifacts/
 *.pfx
 *.key
 *.pem
+!/src/Client.Windows/cacert.pem
 *.log
 *.apk
 *.aab
