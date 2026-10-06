@@ -98,6 +98,9 @@ internal static partial class Program
             var old = Encoding.UTF8.GetBytes("old runtime");
             SafeFiles.WriteAtomic(SafeFiles.Under(root, "d3d9.dll"), old);
             SafeFiles.WriteAtomic(SafeFiles.Under(root, "keep.txt"), old);
+            var loadoutPath = SafeFiles.Under(root, "Addons/Loadouts/character-0000000000000001.loadouts");
+            var loadouts = Encoding.UTF8.GetBytes("Loadouts 1 \"Demo\" 0\n");
+            SafeFiles.WriteAtomic(loadoutPath, loadouts);
             var files = new Dictionary<string, byte[]> {
                 ["d3d9.dll"] = Encoding.UTF8.GetBytes("new loader"),
                 ["Addons/Runtime/Addons.dll"] = Encoding.UTF8.GetBytes("new runtime"),
@@ -112,9 +115,15 @@ internal static partial class Program
             Check(!File.Exists(SafeFiles.Under(root, "Addons/Runtime/ui.bin")), "Android rollback left new UI data.");
             Check(!AndroidAddons.Pending(root), "Android journal remained after rollback.");
             Check(File.ReadAllBytes(SafeFiles.Under(root, "keep.txt")).SequenceEqual(old), "Android transaction changed unrelated data.");
+            Check(File.ReadAllBytes(loadoutPath).SequenceEqual(loadouts), "Android rollback changed saved loadouts.");
             var committed = new AndroidAddons(_ => { }).Apply(root, files, CancellationToken.None);
             Check(committed == 4 && !AndroidAddons.Pending(root), "Android transaction did not commit.");
             foreach (var file in files) Check(File.ReadAllBytes(SafeFiles.Under(root, file.Key)).SequenceEqual(file.Value), "Android install bytes differ.");
+            Check(File.ReadAllBytes(loadoutPath).SequenceEqual(loadouts), "Android update changed saved loadouts.");
+            Check(new AndroidAddons(_ => { }).Apply(root, files, CancellationToken.None) == 4, "Repeated Android transaction did not commit.");
+            Check(File.ReadAllBytes(loadoutPath).SequenceEqual(loadouts), "Repeated Android update changed saved loadouts.");
+            await Reject(() => Task.FromResult(manager.Apply(root, new Dictionary<string, byte[]> { ["Addons/Loadouts/character-0000000000000001.loadouts"] = old }, CancellationToken.None)));
+            Check(File.ReadAllBytes(loadoutPath).SequenceEqual(loadouts), "Android package replaced saved loadouts.");
             await Reject(() => Task.FromResult(manager.Apply(root, new Dictionary<string, byte[]> { ["DungeonRunners.exe"] = old }, CancellationToken.None)));
             await Reject(() => Task.FromResult(manager.Apply(root, new Dictionary<string, byte[]> { ["Addons/../addon.ini"] = old }, CancellationToken.None)));
         }

@@ -20,9 +20,12 @@ function Get-Pinned([string]$Url, [string]$Name, [string]$Hash) {
 $mbed = Get-Pinned 'https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.7/mbedtls-3.6.7.tar.bz2' 'mbedtls.tar.bz2' 'a7e8bcbec0e6f761b4af24f25677626b35f762f68eef79c08677a363212d11f6'
 $miniz = Get-Pinned 'https://github.com/richgel999/miniz/releases/download/3.1.2/miniz-3.1.2.zip' 'miniz.zip' 'f0446d863f9c19926ad9483c523fdc42e42b8d4a6a431d27e09d49c79a140d9a'
 $null = Get-Pinned 'https://github.com/nlohmann/json/releases/download/v3.12.0/json.hpp' 'json.hpp' 'aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63'
-$roots = Get-Pinned 'https://curl.se/ca/cacert-2026-09-25.pem' 'cacert.pem' 'a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505'
+$roots = Join-Path $projectRoot 'src/Client.Windows/cacert.pem'
+if ((Get-FileHash -LiteralPath $roots).Hash -ne 'a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505') { throw 'Bundled certificate verification failed.' }
+Write-Output 'Extracting verified native dependencies.'
 if (-not (Test-Path -LiteralPath (Join-Path $stage 'mbedtls-3.6.7'))) { & tar -xf $mbed -C $stage; if ($LASTEXITCODE -ne 0) { throw 'TLS dependency extraction failed.' } }
 if (-not (Test-Path -LiteralPath (Join-Path $stage 'miniz'))) { Expand-Archive -LiteralPath $miniz -DestinationPath (Join-Path $stage 'miniz') }
+Write-Output 'Configuring the native toolchain.'
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
 $installation = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.v141.x86.x64 -property installationPath
 if (-not $installation) { throw 'Install the Visual Studio v141 x86/x64 and Windows XP support components.' }
@@ -39,6 +42,7 @@ $env:VSLANG = '1033'
 $resourceCompiler = (Join-Path $sdkRoot "bin/$sdk/x64/rc.exe").Replace('\','/')
 $modern = [IO.Path]::GetFullPath($ModernExecutable)
 $notices = Join-Path $stage 'notices.txt'
+Write-Output 'Exporting bundled notices.'
 $noticeStart = [Diagnostics.ProcessStartInfo]::new($modern)
 $noticeStart.UseShellExecute = $false
 $noticeStart.CreateNoWindow = $true
