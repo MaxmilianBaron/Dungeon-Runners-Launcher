@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          - os: windows-2022
             platform: Windows
           - os: ubuntu-22.04
             platform: Linux
@@ -34,11 +34,14 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           $vswhere = "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe"
-          $installation = & $vswhere -latest -products '*' -property installationPath
+          $installation = & $vswhere -latest -version '[17.0,18.0)' -products '*' -property installationPath
+          if (-not $installation) { throw 'Visual Studio 2022 is required for the Windows XP toolchain.' }
           $installer = "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/setup.exe"
-          $arguments = @('modify', '--installPath', ('"' + $installation + '"'), '--add', 'Microsoft.VisualStudio.Component.VC.v141.x86.x64', '--add', 'Microsoft.VisualStudio.Component.WinXP', '--quiet', '--norestart')
+          $arguments = @('modify', '--installPath', ('"' + $installation + '"'), '--add', 'Microsoft.VisualStudio.Component.VC.v141.x86.x64', '--add', 'Microsoft.VisualStudio.Component.WinXP', '--add', 'Microsoft.Component.VC.Runtime.UCRTSDK', '--quiet', '--norestart')
           $process = Start-Process -FilePath $installer -ArgumentList $arguments -WindowStyle Hidden -Wait -PassThru
           if ($process.ExitCode -notin @(0, 3010)) { throw "Native toolchain setup failed: $($process.ExitCode)" }
+          $crt = "${env:ProgramFiles(x86)}/Windows Kits/10/Lib/10.0.10240.0/ucrt/x86/libucrt.lib"
+          if (-not (Test-Path -LiteralPath $crt)) { throw 'Windows XP static CRT setup did not finish.' }
       - run: dotnet run --project tests/Client.Tests -c Release
       - run: dotnet run --project tests/Client.UI.Tests -c Release -- artifacts/ui
       - run: ./tools/Package-Launcher.ps1 -Platform ${{ matrix.platform }}
