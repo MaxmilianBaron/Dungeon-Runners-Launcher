@@ -1,6 +1,6 @@
 # Build
 
-.NET 8 SDK and PowerShell 7. The modern interface uses the same Avalonia XAML, assets and embedded font on all platforms. The core and game packaging tool have no external package dependencies. Windows packaging also requires CMake, Ninja, Visual Studio's v141 x86/x64 tools and Windows XP support component (including the 10.0.10240 static UCRT).
+.NET 8 SDK and PowerShell 7. The modern interface uses the same Avalonia XAML, assets and embedded font on all platforms. The core and game packaging tool have no external package dependencies. Windows packaging also requires Python 3, CMake, Ninja, Visual Studio's v141 x86/x64 tools and Windows XP support component (including the 10.0.10240 static UCRT).
 
 ```powershell
 dotnet run --project tests/Client.Tests -c Release

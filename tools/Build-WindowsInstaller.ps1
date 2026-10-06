@@ -24,9 +24,7 @@ $roots = Join-Path $projectRoot 'src/Client.Windows/cacert.pem'
 if ((Get-FileHash -LiteralPath $roots).Hash -ne 'a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505') { throw 'Bundled certificate verification failed.' }
 if (-not (Test-Path -LiteralPath (Join-Path $stage 'mbedtls-3.6.7'))) {
     Write-Output 'Extracting Mbed TLS.'
-    $tar = Join-Path $env:SystemRoot 'System32/tar.exe'
-    if (-not (Test-Path -LiteralPath $tar)) { throw 'The Windows tar utility is required.' }
-    & $tar -xf $mbed -C $stage
+    & python -m tarfile -e $mbed $stage
     if ($LASTEXITCODE -ne 0) { throw 'TLS dependency extraction failed.' }
 }
 if (-not (Test-Path -LiteralPath (Join-Path $stage 'miniz'))) {
