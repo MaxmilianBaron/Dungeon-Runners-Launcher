@@ -84,6 +84,7 @@ $resources = @(
     (Resource-Line 201 'RCDATA' (Join-Path $projectRoot 'src/Client.Launcher/Assets/AdBackground.png'))
     (Resource-Line 202 'RCDATA' (Join-Path $projectRoot 'src/Client.Launcher/Assets/Load_01.png'))
     (Resource-Line 203 'RCDATA' (Join-Path $projectRoot 'src/Client.Launcher/Assets/AdFrame_DRLogo.png'))
+    (Resource-Line 204 'RCDATA' (Join-Path $projectRoot 'src/Client.Launcher/Assets/Fonts/SourceSerif4-Regular.otf'))
 )
 $resourceFile = Join-Path $stage 'installer.rc'
 [IO.File]::WriteAllLines($resourceFile, $resources)

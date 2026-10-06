@@ -21,6 +21,7 @@ int run_tests(const Path& output) {
     require(quote(L"a b\\")==L"\"a b\\\\\""&&quote(L"a\"b")==L"\"a\\\"b\"","Windows argument quoting failed.");passed.push_back("Structured process arguments");
     Path fixtures=under(directory(absolute(output)),"contracts-"+std::to_string(GetCurrentProcessId()));
     installation_contracts(fixtures);passed.push_back("ZIP allowlist, integrity, configuration preservation and interrupted update recovery");
+    addon_contracts(under(fixtures,"addons"));passed.push_back("Addon install, update, removal, cancellation, rollback, graphics chaining, settings and loadout preservation");
     write(output,bytes(Json({{"passed",passed.size()},{"checks",passed}}).dump(2)));return 0;
 }
 }

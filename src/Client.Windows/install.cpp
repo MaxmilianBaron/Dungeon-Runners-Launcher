@@ -62,6 +62,7 @@ public:
     }
     ~Lock(){if(file!=INVALID_HANDLE_VALUE)CloseHandle(file);}
 };
+void installation_lock(const Path& root,const std::function<void()>& action) { Lock lock(root); action(); }
 static void remove_tree(const Path& root) {
     no_links(root); WIN32_FIND_DATAW data{}; HANDLE find=FindFirstFileW((root+L"\\*").c_str(),&data);
     if(find!=INVALID_HANDLE_VALUE) { do { if(!wcscmp(data.cFileName,L".")||!wcscmp(data.cFileName,L".."))continue; Path item=under(root,utf8(data.cFileName)); if(data.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)remove_tree(item); else require(DeleteFileW(item.c_str())!=0,"Cannot remove staging file."); }while(FindNextFileW(find,&data)); FindClose(find); }
@@ -106,7 +107,7 @@ static void stage(const Json& package,const Path& archive,const Path& root) {
     } catch(...) { mz_zip_reader_end(&zip); fclose(stream); throw; } mz_zip_reader_end(&zip); fclose(stream);
 }
 void install(const Path& root,const Bytes& signed_bytes,const Progress& progress) {
-    Json data=manifest(signed_bytes); game_closed(); folders(root); Lock lock(root); recover(root);
+    Json data=manifest(signed_bytes); game_closed(); folders(root); Lock lock(root); recover(root); recover_addons(root);
     Path work=under(root,".dr-client"),saved=under(work,"manifest.json");
     if(exists(saved))require(version(data.at("version"))>=version(manifest(read(saved,131072)).at("version")),"An older release cannot replace the installed game.");
     std::set<std::string> pending; Bytes existing_image,updated_image;
@@ -172,7 +173,7 @@ void requirements(const Path& root,const Progress& progress) {
 void play(const Path& root,const Progress& progress) {
     Path saved=under(root,".dr-client/manifest.json"); auto signed_bytes=exists(saved)?read(saved,131072):download(feed,131072); Json data=manifest(signed_bytes);
     { Lock lock(root); if(exists(under(root,".dr-client/transaction"))){game_closed();recover(root);}
-      require(!exists(under(root,".dr-client/android-addons-transaction.json"))&&!exists(under(root,".dr-client/addon-removal.json")),"Finish the interrupted addon update before playing.");
+      if(exists(under(root,".dr-client/android-addon-install.json"))||exists(under(root,".dr-client/addon-removal.json"))){game_closed();recover_addons(root);}
       for(const auto& package:data.at("packages"))for(const auto& file:package.at("files")) { std::string name=file.at("path");if(seed(name))continue;Path path=under(root,name);require(exists(path),"A game file is missing. Select Repair.");
         if(name=="DungeonRunners.exe")require(compatible(read(path,33554432),parse(resource(102)).at("installed")),"The game executable is incompatible. Select Repair.");
         else { require(length(path)==file.at("size").get<uint64_t>(),"A game file is incomplete. Select Repair.");if(!exists(saved)||name.find(".dll")!=std::string::npos)require(file_hash(path)==file.at("sha256"),"A game file failed verification. Select Repair."); }

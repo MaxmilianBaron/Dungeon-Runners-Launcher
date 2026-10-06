@@ -61,6 +61,8 @@ bool update_launcher(const Path& root,const Progress& progress) {
     for(int i=0;i<150;i++){if(exists(under(stage,"ready")))return true;Sleep(100);}atomic_write(under(stage,"cancelled"),{});throw std::runtime_error("The update could not start. Your installed launcher was preserved.");
 }
 int dispatch(const std::vector<Path>& args) {
+    if(args.size()==2&&args[0]==L"--preview-ui")return legacy_ui(true,absolute(args[1]));
+    if(args.size()==3&&args[0]==L"--verify-addons"){verify_addon_package(game_root(args[1]),args[2]);return 0;}
     if(args.size()==2&&args[0]==L"--apply-launcher-update")return update_worker(args[1]);
     if(args.size()==2&&args[0]==L"--self-test")return run_tests(args[1]);
     if(args.size()==2&&args[0]==L"--test-https")return test_https(args[1]);
@@ -83,6 +85,8 @@ int WINAPI wWinMain(HINSTANCE,HINSTANCE,LPWSTR,int) {
     int count=0;LPWSTR* raw=CommandLineToArgvW(GetCommandLineW(),&count);std::vector<dr::Path> args;for(int i=1;i<count;i++)args.push_back(raw[i]);LocalFree(raw);
     int result=1;try{result=dr::dispatch(args);}catch(const std::exception& error){
         if(args.size()==2&&(args[0]==L"--self-test"||args[0]==L"--verify-feed"||args[0]==L"--detect"||args[0]==L"--test-https")) {try{dr::write(args[1],dr::bytes(dr::Json({{"error",error.what()}}).dump(2)));}catch(...){}}
+        else if(args.size()==3&&args[0]==L"--verify-addons") {try{dr::write(args[2],dr::bytes(dr::Json({{"error",error.what()}}).dump(2)));}catch(...){}}
+        else if(args.size()==2&&args[0]==L"--preview-ui") {try{dr::folders(dr::absolute(args[1]));dr::write(dr::under(dr::absolute(args[1]),"error.json"),dr::bytes(dr::Json({{"error",error.what()}}).dump(2)));}catch(...){}}
         else MessageBoxW(nullptr,dr::wide(error.what()).c_str(),L"Dungeon Runners Launcher",MB_OK|MB_ICONERROR);
     }WSACleanup();return result;
 }

@@ -11,7 +11,7 @@ set(MBEDTLS_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/legacy_config.h" CACHE STRI
 add_subdirectory("${DEPENDENCIES}/mbedtls-3.6.7" mbedtls)
 add_library(miniz STATIC "${DEPENDENCIES}/miniz/miniz.c")
 target_compile_definitions(miniz PRIVATE MINIZ_NO_ARCHIVE_WRITING_APIS)
-add_executable(DungeonRunnersWindows WIN32 support.cpp https.cpp install.cpp bundle.cpp window.cpp tests.cpp version.rc "${RESOURCES}")
+add_executable(DungeonRunnersWindows WIN32 support.cpp https.cpp install.cpp addons.cpp addon_skin.cpp bundle.cpp window.cpp tests.cpp version.rc "${RESOURCES}")
 target_include_directories(DungeonRunnersWindows PRIVATE "${DEPENDENCIES}/downloads" "${DEPENDENCIES}/miniz")
 target_link_libraries(DungeonRunnersWindows PRIVATE mbedtls mbedx509 mbedcrypto miniz ws2_32 advapi32 user32 gdi32 gdiplus shell32 ole32 uuid comctl32)
 target_link_options(DungeonRunnersWindows PRIVATE /SUBSYSTEM:WINDOWS,5.01 /OSVERSION:5.1 /MANIFEST:NO /DYNAMICBASE /NXCOMPAT)
