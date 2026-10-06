@@ -9,7 +9,11 @@ $downloads = Join-Path $stage 'downloads'
 [IO.Directory]::CreateDirectory($downloads) | Out-Null
 function Get-Pinned([string]$Url, [string]$Name, [string]$Hash) {
     $path = Join-Path $downloads $Name
-    if (-not (Test-Path -LiteralPath $path) -or (Get-FileHash -LiteralPath $path).Hash -ne $Hash) { Invoke-WebRequest -Uri $Url -OutFile $path }
+    if (-not (Test-Path -LiteralPath $path) -or (Get-FileHash -LiteralPath $path).Hash -ne $Hash) {
+        Write-Output "Downloading $Name" | Out-Host
+        & curl.exe --fail --location --silent --show-error --proto '=https' --proto-redir '=https' --connect-timeout 30 --max-time 180 --retry 2 --retry-delay 3 --output $path $Url
+        if ($LASTEXITCODE -ne 0) { throw "Dependency download failed: $Name" }
+    }
     if ((Get-FileHash -LiteralPath $path).Hash -ne $Hash) { throw "Dependency verification failed: $Name" }
     return $path
 }

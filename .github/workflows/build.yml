@@ -45,6 +45,7 @@ jobs:
       - run: dotnet run --project tests/Client.Tests -c Release
       - run: dotnet run --project tests/Client.UI.Tests -c Release -- artifacts/ui
       - run: ./tools/Package-Launcher.ps1 -Platform ${{ matrix.platform }}
+        timeout-minutes: 15
       - name: Runtime installation
         timeout-minutes: 20
         env:
