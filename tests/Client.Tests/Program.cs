@@ -533,8 +533,14 @@ internal static partial class Program
             executions++;
             if (command.FileName == "/usr/bin/pkexec") command = Dependencies.Command("/usr/bin/sudo", new[] { "-n" }.Concat(command.ArgumentList).ToArray());
             else if (command.FileName == "/usr/bin/osascript") command = Dependencies.Command("/usr/bin/sudo", "-n", "/bin/sh", "-c", command.ArgumentList[3]);
-            Console.WriteLine("Runtime process: " + Path.GetFileName(command.FileName));
-            await Dependencies.RunAsync(command, token);
+            Console.WriteLine("Runtime process: " + Path.GetFileName(command.FileName) + " " + string.Join(" ", command.ArgumentList));
+            if (OperatingSystem.IsMacOS())
+            {
+                command.Environment["WINEDEBUG"] = "-all,err+all";
+                command.Environment["MVK_CONFIG_LOG_LEVEL"] = "0";
+            }
+            await Dependencies.RunAsync(command, token).WaitAsync(TimeSpan.FromMinutes(4), token);
+            Console.WriteLine("Runtime process finished: " + Path.GetFileName(command.FileName));
         }
         string? wine;
         try { wine = (await Dependencies.EnsureAsync(root, downloads, progress, () => { }, CancellationToken.None, Execute)).Wine; }
@@ -572,9 +578,43 @@ internal static partial class Program
                 graphics.CopyTo(bytes);
                 SafeFiles.WriteAtomic(probe, bytes.ToArray());
             }
-            using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(2));
-            for (var attempt = 0; attempt < 2; attempt++)
-                await Execute(Dependencies.WineCommand(root, wine!, probe), timeout.Token);
+            try
+            {
+                for (var attempt = 0; attempt < 2; attempt++)
+                {
+                    using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+                    await Execute(Dependencies.WineCommand(root, wine!, probe), timeout.Token);
+                }
+            }
+            catch
+            {
+                async Task StopWine()
+                {
+                    var stop = Dependencies.Command(Path.Combine(Path.GetDirectoryName(wine!)!, "wineserver"), "-k");
+                    GameLaunch.ConfigureWine(stop, root, wine!);
+                    await Execute(stop, CancellationToken.None);
+                }
+                try
+                {
+                    await StopWine();
+                    using var original = typeof(Program).Assembly.GetManifestResourceStream("mac-wow64-original.dll")!;
+                    using var bytes = new MemoryStream();
+                    original.CopyTo(bytes);
+                    SafeFiles.WriteAtomic(SafeFiles.Under(root, MacWineCompatibility.RuntimeLibrary), bytes.ToArray());
+                    SafeFiles.WriteAtomic(prefixLibrary, bytes.ToArray());
+                    Console.WriteLine("Diagnostic comparison: unmodified Wine on the same graphics host.");
+                    using var baselineTimeout = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+                    await Execute(Dependencies.WineCommand(root, wine!, probe), baselineTimeout.Token);
+                    Console.WriteLine("Unmodified Wine graphics probe passed.");
+                }
+                catch (Exception baseline) { Console.WriteLine("Unmodified Wine graphics probe: " + baseline); }
+                finally
+                {
+                    await StopWine();
+                    MacWineCompatibility.Configure(root, wine!, () => { }, () => { }, CancellationToken.None);
+                }
+                throw;
+            }
             Console.WriteLine("PASS Mac Wine migration and repeated 32-bit DirectDraw/Direct3D rendering.");
         }
         Console.WriteLine("PASS native runtime installation, required libraries and repeat verification.");

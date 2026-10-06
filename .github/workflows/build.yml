@@ -60,6 +60,7 @@ jobs:
         run: |
           $root = Join-Path $env:RUNNER_TEMP "runtime game"
           if ($IsMacOS -and $root.StartsWith("/var/")) { $root = "/private" + $root }
+          if ($IsMacOS) { & /usr/sbin/system_profiler SPDisplaysDataType }
           if ($IsLinux) {
             xvfb-run -a dotnet run --project tests/Client.Tests -c Release -- --runtime-integration $root
           } else {
