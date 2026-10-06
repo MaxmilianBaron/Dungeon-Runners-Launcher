@@ -24,7 +24,7 @@ jobs:
           - os: macos-latest
             platform: Mac
             artifact: Mac
-          - os: macos-15-intel
+          - os: macos-26-intel
             platform: Mac
             artifact: Mac-Intel
     runs-on: ${{ matrix.os }}
