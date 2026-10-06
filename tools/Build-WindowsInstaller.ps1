@@ -22,9 +22,17 @@ $miniz = Get-Pinned 'https://github.com/richgel999/miniz/releases/download/3.1.2
 $null = Get-Pinned 'https://github.com/nlohmann/json/releases/download/v3.12.0/json.hpp' 'json.hpp' 'aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63'
 $roots = Join-Path $projectRoot 'src/Client.Windows/cacert.pem'
 if ((Get-FileHash -LiteralPath $roots).Hash -ne 'a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505') { throw 'Bundled certificate verification failed.' }
-Write-Output 'Extracting verified native dependencies.'
-if (-not (Test-Path -LiteralPath (Join-Path $stage 'mbedtls-3.6.7'))) { & tar -xf $mbed -C $stage; if ($LASTEXITCODE -ne 0) { throw 'TLS dependency extraction failed.' } }
-if (-not (Test-Path -LiteralPath (Join-Path $stage 'miniz'))) { Expand-Archive -LiteralPath $miniz -DestinationPath (Join-Path $stage 'miniz') }
+if (-not (Test-Path -LiteralPath (Join-Path $stage 'mbedtls-3.6.7'))) {
+    Write-Output 'Extracting Mbed TLS.'
+    $tar = Join-Path $env:SystemRoot 'System32/tar.exe'
+    if (-not (Test-Path -LiteralPath $tar)) { throw 'The Windows tar utility is required.' }
+    & $tar -xf $mbed -C $stage
+    if ($LASTEXITCODE -ne 0) { throw 'TLS dependency extraction failed.' }
+}
+if (-not (Test-Path -LiteralPath (Join-Path $stage 'miniz'))) {
+    Write-Output 'Extracting miniz.'
+    [IO.Compression.ZipFile]::ExtractToDirectory($miniz, (Join-Path $stage 'miniz'))
+}
 Write-Output 'Configuring the native toolchain.'
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
 $installation = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.v141.x86.x64 -property installationPath
