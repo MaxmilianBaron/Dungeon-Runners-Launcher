@@ -148,5 +148,29 @@ internal static partial class Program
             Check(error.Message.Contains("cxmessage standin was called.") && error.Message.Contains("fixture runtime cause at the end"), "Runtime failure lost stdout, stderr or its final cause.");
             Check(error.Message.Length < 17000, "Runtime diagnostic is not bounded.");
         }
+        var identity = Path.Combine(NewRoot(), "child.txt");
+        command.ArgumentList[^1] = "--runtime-inherited-output-fixture";
+        command.ArgumentList.Add(identity);
+        try
+        {
+            await Dependencies.RunAsync(command, CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(6));
+            throw new Exception("Failing runtime unexpectedly succeeded.");
+        }
+        catch (IOException error)
+        {
+            Check(error.Message.Contains("parent runtime finished") && error.Message.Contains("parent runtime failure"), "Inherited pipes lost the parent runtime diagnostics.");
+        }
+        finally
+        {
+            if (File.Exists(identity))
+            {
+                try
+                {
+                    using var child = System.Diagnostics.Process.GetProcessById(int.Parse(File.ReadAllText(identity)));
+                    if (!child.HasExited) child.Kill(true);
+                }
+                catch (ArgumentException) { }
+            }
+        }
     }
 }

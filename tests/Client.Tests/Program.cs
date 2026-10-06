@@ -17,6 +17,20 @@ internal static partial class Program
         Directory.CreateDirectory(Sandbox);
         try
         {
+            if (args.SequenceEqual(new[] { "--runtime-output-holder" })) { await Task.Delay(TimeSpan.FromSeconds(30)); return 0; }
+            if (args.Length == 2 && args[0] == "--runtime-inherited-output-fixture")
+            {
+                var child = Dependencies.Command(Environment.ProcessPath!);
+                if (Path.GetFileNameWithoutExtension(child.FileName).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
+                    child.ArgumentList.Add(typeof(Program).Assembly.Location);
+                child.ArgumentList.Add("--runtime-output-holder");
+                child.RedirectStandardOutput = child.RedirectStandardError = false;
+                using var process = System.Diagnostics.Process.Start(child)!;
+                File.WriteAllText(args[1], process.Id.ToString());
+                Console.WriteLine("parent runtime finished");
+                Console.Error.WriteLine("parent runtime failure");
+                return 7;
+            }
             if (args.SequenceEqual(new[] { "--runtime-output-fixture" }))
             {
                 Console.Error.WriteLine("cxmessage standin was called.\nArguments:");
@@ -539,7 +553,18 @@ internal static partial class Program
                 command.Environment["WINEDEBUG"] = "-all,err+all";
                 command.Environment["MVK_CONFIG_LOG_LEVEL"] = "0";
             }
-            await Dependencies.RunAsync(command, token).WaitAsync(TimeSpan.FromMinutes(4), token);
+            var execution = Dependencies.RunAsync(command, token);
+            try { await execution.WaitAsync(TimeSpan.FromMinutes(4), token); }
+            catch (TimeoutException) when (OperatingSystem.IsMacOS() && command.FileName == GameLaunch.ManagedWinePath(root))
+            {
+                var stop = Dependencies.Command(Path.Combine(Path.GetDirectoryName(command.FileName)!, "wineserver"), "-k");
+                GameLaunch.ConfigureWine(stop, root, command.FileName);
+                using var server = System.Diagnostics.Process.Start(stop)!;
+                await server.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));
+                try { await execution.WaitAsync(TimeSpan.FromSeconds(30)); }
+                catch (Exception failure) { Console.WriteLine("Timed-out runtime output: " + failure); }
+                throw;
+            }
             Console.WriteLine("Runtime process finished: " + Path.GetFileName(command.FileName));
         }
         string? wine;
@@ -586,13 +611,20 @@ internal static partial class Program
                     await Execute(Dependencies.WineCommand(root, wine!, probe), timeout.Token);
                 }
             }
-            catch
+            catch (Exception patched)
             {
+                Console.WriteLine("Repaired Wine graphics probe: " + patched);
                 async Task StopWine()
                 {
                     var stop = Dependencies.Command(Path.Combine(Path.GetDirectoryName(wine!)!, "wineserver"), "-k");
                     GameLaunch.ConfigureWine(stop, root, wine!);
-                    await Execute(stop, CancellationToken.None);
+                    using var server = System.Diagnostics.Process.Start(stop)!;
+                    using var stopTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                    await server.WaitForExitAsync(stopTimeout.Token);
+                    Check(server.ExitCode is 0 or 1, "The test Wine server could not stop.");
+                    var wait = Dependencies.Command(stop.FileName, "-w");
+                    GameLaunch.ConfigureWine(wait, root, wine!);
+                    await Execute(wait, stopTimeout.Token);
                 }
                 try
                 {

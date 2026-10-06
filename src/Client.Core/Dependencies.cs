@@ -250,39 +250,50 @@ public static class Dependencies
 
     private static async Task<int> ExitCodeAsync(ProcessStartInfo command, CancellationToken token)
     {
-        using var process = Process.Start(command) ?? throw new IOException("The runtime installer could not start.");
-        var output = command.RedirectStandardOutput ? DrainAsync(process.StandardOutput) : Task.FromResult("");
-        var error = command.RedirectStandardError ? DrainAsync(process.StandardError) : Task.FromResult("");
-        await process.WaitForExitAsync(token);
-        await output; await error;
-        return process.ExitCode;
+        var result = await CaptureAsync(command, token);
+        return result.Code;
     }
 
     public static async Task RunAsync(ProcessStartInfo command, CancellationToken token)
     {
-        using var process = Process.Start(command) ?? throw new IOException("The runtime installer could not start.");
-        var output = command.RedirectStandardOutput ? DrainAsync(process.StandardOutput) : Task.FromResult("");
-        var error = command.RedirectStandardError ? DrainAsync(process.StandardError) : Task.FromResult("");
-        await process.WaitForExitAsync(token);
-        var text = await output; var failure = await error;
-        if (process.ExitCode == 3010) throw new IOException("Runtime installation succeeded. Restart the computer before playing.");
-        if (process.ExitCode != 0)
+        var result = await CaptureAsync(command, token);
+        if (result.Code == 3010) throw new IOException("Runtime installation succeeded. Restart the computer before playing.");
+        if (result.Code != 0)
         {
-            var details = string.Join("\n", new[] { failure, text }.Where(value => !string.IsNullOrWhiteSpace(value)).Distinct());
-            throw new IOException("Runtime setup failed (" + process.ExitCode + "). " + details);
+            var details = string.Join("\n", new[] { result.Error, result.Output }.Where(value => !string.IsNullOrWhiteSpace(value)).Distinct());
+            throw new IOException("Runtime setup failed (" + result.Code + "). " + details);
         }
     }
 
-    private static async Task<string> DrainAsync(StreamReader reader)
+    private static async Task<(int Code, string Output, string Error)> CaptureAsync(ProcessStartInfo command, CancellationToken token)
+    {
+        using var process = Process.Start(command) ?? throw new IOException("The runtime installer could not start.");
+        using var drain = new CancellationTokenSource();
+        var output = command.RedirectStandardOutput ? DrainAsync(process.StandardOutput, drain.Token) : Task.FromResult("");
+        var error = command.RedirectStandardError ? DrainAsync(process.StandardError, drain.Token) : Task.FromResult("");
+        try
+        {
+            await process.WaitForExitAsync(token);
+            drain.CancelAfter(TimeSpan.FromSeconds(2));
+            return (process.ExitCode, await output, await error);
+        }
+        finally { drain.Cancel(); }
+    }
+
+    private static async Task<string> DrainAsync(StreamReader reader, CancellationToken token)
     {
         var result = new StringBuilder();
         var buffer = new char[1024];
-        int read;
-        while ((read = await reader.ReadAsync(buffer)) != 0)
+        try
         {
-            result.Append(buffer, 0, read);
-            if (result.Length > 8192) result.Remove(0, result.Length - 8192);
+            int read;
+            while ((read = await reader.ReadAsync(buffer.AsMemory(), token)) != 0)
+            {
+                result.Append(buffer, 0, read);
+                if (result.Length > 8192) result.Remove(0, result.Length - 8192);
+            }
         }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
         return result.ToString().Trim();
     }
 }

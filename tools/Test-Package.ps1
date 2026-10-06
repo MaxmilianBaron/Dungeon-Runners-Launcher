@@ -5,12 +5,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $outputRoot = [IO.Path]::GetFullPath($OutputDirectory)
-$stage = Join-Path $outputRoot ('.smoke-' + [Guid]::NewGuid().ToString('N'))
+$stageRoot = if ($Platform -eq 'Windows') { [IO.Path]::GetFullPath([IO.Path]::GetTempPath()) } else { $outputRoot }
+$stage = Join-Path $stageRoot ('.smoke-' + [Guid]::NewGuid().ToString('N'))
 $architecture = [Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
 $mounted = $false
 [IO.Directory]::CreateDirectory($stage) | Out-Null
 
 function Invoke-Checked([string]$Executable, [string[]]$Arguments) {
+    Write-Output ("Packaged check: " + [IO.Path]::GetFileName($Executable) + " " + ($Arguments -join ' '))
     $start = [Diagnostics.ProcessStartInfo]::new($Executable)
     $start.WorkingDirectory = $stage
     $start.UseShellExecute = $false
@@ -19,7 +21,12 @@ function Invoke-Checked([string]$Executable, [string[]]$Arguments) {
     $process = [Diagnostics.Process]::Start($start)
     try {
         if (-not $process.WaitForExit(60000)) { $process.Kill($true); throw 'Packaged startup timed out.' }
-        if ($process.ExitCode -ne 0) { throw "Packaged startup failed: $($process.ExitCode)" }
+        if ($process.ExitCode -ne 0) {
+            if ($Arguments.Count -eq 2 -and [IO.Path]::GetExtension($Arguments[1]) -eq '.json' -and (Test-Path -LiteralPath $Arguments[1])) {
+                Get-Content -LiteralPath $Arguments[1] -TotalCount 40 | Write-Output
+            }
+            throw "Packaged startup failed: $($process.ExitCode)"
+        }
     } finally { $process.Dispose() }
 }
 
@@ -87,7 +94,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'DMG unmount failed; temporary mount preserved.' }
     }
     $resolvedStage = [IO.Path]::GetFullPath($stage)
-    $prefix = $outputRoot.TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+    $prefix = $stageRoot.TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
     if (-not $resolvedStage.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($resolvedStage) -notmatch '^\.smoke-[0-9a-f]{32}$') { throw 'Invalid staging directory.' }
     if (Test-Path -LiteralPath $resolvedStage) { Remove-Item -LiteralPath $resolvedStage -Recurse -Force }
 }
