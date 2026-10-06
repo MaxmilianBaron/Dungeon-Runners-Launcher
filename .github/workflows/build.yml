@@ -70,6 +70,13 @@ jobs:
       - name: Packaged startup
         run: ./tools/Test-Package.ps1 -Platform ${{ matrix.platform }}
       - uses: actions/upload-artifact@v4
+        if: failure() && runner.os == 'macOS'
+        with:
+          name: Runtime-diagnostics-${{ matrix.artifact }}
+          path: artifacts/runtime
+          if-no-files-found: ignore
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
         with:
           name: Dungeon-Runners-Launcher-${{ matrix.artifact }}
           path: |

@@ -557,8 +557,21 @@ internal static partial class Program
             try { await execution.WaitAsync(TimeSpan.FromMinutes(4), token); }
             catch (TimeoutException) when (OperatingSystem.IsMacOS() && command.FileName == GameLaunch.ManagedWinePath(root))
             {
+                var diagnostic = Path.GetFullPath(Path.Combine("artifacts", "runtime", Guid.NewGuid().ToString("N")));
+                Directory.CreateDirectory(diagnostic);
+                try
+                {
+                    await Dependencies.RunAsync(Dependencies.Command("/usr/sbin/screencapture", "-x", Path.Combine(diagnostic, "desktop.png")), CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(15));
+                    foreach (var process in System.Diagnostics.Process.GetProcessesByName("wine").Take(3))
+                    {
+                        using (process)
+                            await Dependencies.RunAsync(Dependencies.Command("/usr/bin/sample", process.Id.ToString(), "2", "-file", Path.Combine(diagnostic, "wine-" + process.Id + ".txt")), CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(15));
+                    }
+                }
+                catch (Exception diagnosticError) { Console.WriteLine("Runtime diagnostics: " + diagnosticError.Message); }
                 var stop = Dependencies.Command(Path.Combine(Path.GetDirectoryName(command.FileName)!, "wineserver"), "-k");
                 GameLaunch.ConfigureWine(stop, root, command.FileName);
+                if (command.Environment.TryGetValue("WINEPREFIX", out var failedPrefix)) stop.Environment["WINEPREFIX"] = failedPrefix;
                 using var server = System.Diagnostics.Process.Start(stop)!;
                 await server.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));
                 try { await execution.WaitAsync(TimeSpan.FromSeconds(30)); }
@@ -569,14 +582,33 @@ internal static partial class Program
         }
         string? wine;
         try { wine = (await Dependencies.EnsureAsync(root, downloads, progress, () => { }, CancellationToken.None, Execute)).Wine; }
-        catch
+        catch (Exception installation)
         {
+            Console.WriteLine("Runtime installation: " + installation);
             var windows = OperatingSystem.IsWindows() ? Environment.GetFolderPath(Environment.SpecialFolder.Windows)
                 : Path.Combine(GameLaunch.DefaultWinePrefix(root, Dependencies.FindWine(root) ?? "wine"), "drive_c", "windows");
             foreach (var name in new[] { "DXError.log", "DirectX.log", "Logs/DXError.log", "Logs/DirectX.log" })
             {
                 var log = Path.Combine(windows, name);
                 if (File.Exists(log)) Console.WriteLine(name + "\n" + string.Join("\n", File.ReadLines(log).TakeLast(40)));
+            }
+            if (OperatingSystem.IsMacOS() && Dependencies.FindWine(root) is { } failedWine
+                && File.Exists(SafeFiles.Under(root, MacWineCompatibility.RuntimeLibrary)))
+            {
+                try
+                {
+                    using var original = typeof(Program).Assembly.GetManifestResourceStream("mac-wow64-original.dll")!;
+                    using var bytes = new MemoryStream();
+                    original.CopyTo(bytes);
+                    SafeFiles.WriteAtomic(SafeFiles.Under(root, MacWineCompatibility.RuntimeLibrary), bytes.ToArray());
+                    var baseline = Dependencies.WineCommand(root, failedWine, "wineboot", "-u");
+                    baseline.Environment["WINEPREFIX"] = SafeFiles.Under(root, ".dr-client/unmodified-prefix");
+                    Console.WriteLine("Diagnostic comparison: fresh initialization with unmodified Wine.");
+                    await Execute(baseline, CancellationToken.None);
+                    Console.WriteLine("Unmodified Wine initialization passed.");
+                }
+                catch (Exception baseline) { Console.WriteLine("Unmodified Wine initialization: " + baseline); }
+                finally { MacWineCompatibility.Configure(root, failedWine, () => { }, () => { }, CancellationToken.None); }
             }
             throw;
         }
@@ -603,6 +635,11 @@ internal static partial class Program
                 graphics.CopyTo(bytes);
                 SafeFiles.WriteAtomic(probe, bytes.ToArray());
             }
+            var graphicsUnavailable = false;
+            static bool MissingPixelFormat(Exception error) => error is IOException
+                && error.Message.StartsWith("Runtime setup failed (5).", StringComparison.Ordinal)
+                && error.Message.Contains("Failed to find a suitable pixel format.", StringComparison.Ordinal)
+                && error.Message.Contains("PASS DirectDraw initialization", StringComparison.Ordinal);
             try
             {
                 for (var attempt = 0; attempt < 2; attempt++)
@@ -639,15 +676,25 @@ internal static partial class Program
                     await Execute(Dependencies.WineCommand(root, wine!, probe), baselineTimeout.Token);
                     Console.WriteLine("Unmodified Wine graphics probe passed.");
                 }
-                catch (Exception baseline) { Console.WriteLine("Unmodified Wine graphics probe: " + baseline); }
+                catch (Exception baseline)
+                {
+                    Console.WriteLine("Unmodified Wine graphics probe: " + baseline);
+                    graphicsUnavailable = MissingPixelFormat(patched) && MissingPixelFormat(baseline);
+                }
                 finally
                 {
                     await StopWine();
                     MacWineCompatibility.Configure(root, wine!, () => { }, () => { }, CancellationToken.None);
                 }
-                throw;
+                if (!graphicsUnavailable) throw;
+                using var repeatedTimeout = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+                try { await Execute(Dependencies.WineCommand(root, wine!, probe), repeatedTimeout.Token); }
+                catch (Exception repeated) when (MissingPixelFormat(repeated)) { }
+                Console.WriteLine("SKIP Direct3D rendering: this host exposes no suitable OpenGL pixel format, also verified with unmodified Wine.");
             }
-            Console.WriteLine("PASS Mac Wine migration and repeated 32-bit DirectDraw/Direct3D rendering.");
+            Console.WriteLine(graphicsUnavailable
+                ? "PASS Mac Wine migration and repeated 32-bit DirectDraw initialization; physical GPU rendering remains unverified."
+                : "PASS Mac Wine migration and repeated 32-bit DirectDraw/Direct3D rendering.");
         }
         Console.WriteLine("PASS native runtime installation, required libraries and repeat verification.");
     }
