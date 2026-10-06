@@ -57,6 +57,7 @@ internal static partial class Program
             await Test("game launch keeps structured paths and existing Wine overrides", Launch);
             if (OperatingSystem.IsWindows()) await Test("taskbar relaunch belongs to the matching installation", Taskbar);
             await Test("runtime setup validates downloads, package plans, libraries and failures", RuntimeRequirements);
+            await Test("Mac packages install from verified temporary copies and clean up after cancellation or failure", MacPackageStaging);
             await Test("Mac runtime discovery ignores unrelated installations and isolates its game prefix", MacRuntimeSelection);
             await Test("Steam runtime discovery selects complete Proton installations across libraries", ProtonSelection);
             await Test("Proton launch preserves Steam Input and isolates the game prefix", ProtonLaunch);

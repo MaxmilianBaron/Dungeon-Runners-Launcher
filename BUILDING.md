@@ -1,6 +1,6 @@
 # Build
 
-.NET 8 SDK and PowerShell 7. The interface uses the same Avalonia XAML, assets and embedded font on all platforms. The core and game packaging tool have no external package dependencies.
+.NET 8 SDK and PowerShell 7. The modern interface uses the same Avalonia XAML, assets and embedded font on all platforms. The core and game packaging tool have no external package dependencies. Windows packaging also requires CMake, Ninja, Visual Studio's v141 x86/x64 tools and Windows XP support component (including the 10.0.10240 static UCRT).
 
 ```powershell
 dotnet run --project tests/Client.Tests -c Release
@@ -9,7 +9,9 @@ dotnet run --project tests/Client.UI.Tests -c Release -- artifacts/ui
 ./tools/Test-Package.ps1 -Platform Windows
 ```
 
-Use `-Platform Mac` on macOS or `-Platform Linux` on Linux. Windows produces a standalone x64 EXE. Mac produces a DMG containing an application for x64 and arm64. Linux produces a universal `.run` installer containing x64 and arm64 AppImages built with checksum-pinned appimagetool 1.9.1 and type2-runtime 20251108. The .NET runtime and license notices are embedded in each executable; `--licenses notices.txt` exports the notices.
+Use `-Platform Mac` on macOS or `-Platform Linux` on Linux. Windows produces one standalone x86 EXE containing both the native installer and modern x64 launcher. Mac produces a DMG containing an application for x64 and arm64. Linux produces a universal `.run` installer containing x64 and arm64 AppImages built with checksum-pinned appimagetool 1.9.1 and type2-runtime 20251108. The .NET runtime and license notices are embedded in each executable; `--licenses notices.txt` exports the notices.
+
+The Windows entry point selects the modern launcher on Windows 10/11 x64 and Windows 11 ARM64. Other Windows installations use the native interface, which provides game installation, updates, repair and play without .NET. It targets XP SP3 x86 / XP SP2 x64 or later and preserves existing addon files; addon management uses the modern interface. HTTPS uses checksum-pinned Mbed TLS 3.6.7 and Mozilla roots, with TLS 1.2 as its minimum and full certificate verification independent of the system TLS defaults. JSON for Modern C++ 3.12.0 and miniz 3.1.2 are pinned build dependencies. Launcher updates replace the complete bundle. `--legacy --smoke-test` checks the native interface; `--self-test result.json`, `--test-https result.json` and `--verify-feed result.json` exercise the native contracts, TLS validation and signed feed. `tools/Test-WindowsImports.ps1` checks the PE target and XP import contract; these checks do not replace testing on each target operating system.
 
 The Linux installer detects the kernel architecture and 64-bit userspace, extracts and verifies the selected AppImage, then opens the launcher using extract-and-run mode without FUSE. Enable execution in the file manager or run `sh Dungeon-Runners-Launcher-Linux.run`. `--detect` prints the selected architecture; `--verify` checks the embedded payload without starting it. `tools/Package-LinuxInstaller.ps1` can package existing AppImages. `tools/Test-LinuxInstaller.sh` checks both payloads, unsupported platforms, damaged downloads and temporary-file cleanup.
 
@@ -17,7 +19,7 @@ The same packaging command produces `Dungeon-Runners-Launcher-SteamDeck.run` wit
 
 ## Platforms
 
-Windows 10/11 x64; macOS 12 or later; desktop Linux with glibc 2.31 or later and X11/XWayland. The Linux desktop must provide `libx11`, `libice`, `libsm`, `libfontconfig` and OpenSSL. Mac uses its built-in shell and JavaScript for Automation.
+Windows XP SP3 x86 / XP SP2 x64, Vista, 7, 8, 8.1, 10 or 11; macOS 12 or later; desktop Linux with glibc 2.31 or later and X11/XWayland. The game still requires compatible 32-bit DirectX 9 graphics drivers. The Linux desktop must provide `libx11`, `libice`, `libsm`, `libfontconfig` and OpenSSL. Mac uses its built-in shell and JavaScript for Automation.
 
 The Mac download is not notarized. Use the system's Open/Allow Anyway action for this downloaded application if Gatekeeper requests approval.
 
@@ -26,6 +28,8 @@ The launcher runs natively. The Windows x86 game uses [Wine](https://www.winehq.
 Install, Repair and Play check game requirements. Missing DirectX libraries are installed from the checksum-pinned [Microsoft June 2010 runtime](https://www.microsoft.com/en-us/download/details.aspx?id=8109). Mac installs a pinned Wine build and GStreamer from their upstream releases; Apple Silicon requests Rosetta through Apple's system installer. Windows UAC and macOS authorization remain enabled. Linux installs Wine through authenticated system repositories on Debian, Ubuntu, Mint, Pop!_OS, Fedora, Arch, Manjaro and openSUSE; desktop polkit authorization is required. Automatic Linux game-runtime setup is x86-64 only. Missing Python for Linux Addons is installed through the same package manager.
 
 External Wine settings are preserved when explicitly selected. The managed Mac runtime uses `.dr-client/wine-prefix` and ignores inherited foreign Wine loaders, architecture and CrossOver bottle settings. Downloads are size- and SHA-256-checked before execution; downloaded scripts are never used for privilege elevation. Runtime errors stop launch and can be retried with Repair. System runtime packages are not removed if the game installation is cancelled.
+
+Mac runtime packages are copied to a unique temporary folder outside Documents before authorization. The administrator process makes its own private copy under `/private/tmp`, verifies the pinned SHA-256 again and invokes Apple's installer. Both temporary copies are removed afterward; the verified download remains cached for retries.
 
 DirectX setup uses the [minimal redistributable layout](https://learn.microsoft.com/en-us/windows/win32/dxtecharts/directx-setup-for-game-developers#small-installation-packages) with the x86 D3DX9 31 and 40 cabinets required by the game and addons.
 

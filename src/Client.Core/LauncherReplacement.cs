@@ -30,6 +30,7 @@ public static class LauncherReplacement
         using var installLock = Installer.Lock(root);
         SafeFiles.NoLinks(candidate);
         if (!Catalog.IsHash(hash) || await Catalog.HashAsync(candidate, token) != hash) throw new IOException("The launcher update failed verification.");
+        LauncherExecutable.ValidateReplacement(candidate);
         var previous = await OwnedHashAsync(root, token);
         var stageName = "launcher-update-" + Guid.NewGuid().ToString("N");
         var stage = SafeFiles.Under(root, ".dr-client/" + stageName);
@@ -39,7 +40,7 @@ public static class LauncherReplacement
             var helper = SafeFiles.Under(stage, ExecutableName);
             File.Copy(candidate, helper);
             MakeExecutable(helper);
-            using var parent = Process.GetCurrentProcess();
+            using var parent = LauncherExecutable.OwnerProcess();
             var plan = new LauncherReplacementPlan(root, stageName, previous, hash, parent.Id, ProcessStamp(parent));
             var path = SafeFiles.Under(stage, "plan.json");
             SafeFiles.WriteAtomic(path, JsonSerializer.SerializeToUtf8Bytes(plan, Catalog.Json));

@@ -2,6 +2,57 @@ using DungeonRunners.Client;
 
 internal static partial class Program
 {
+    private static async Task MacPackageStaging()
+    {
+        var root = NewRoot();
+        var source = SafeFiles.Under(root, "Documents/game folder/runtime-downloads/cached.zip");
+        var data = "verified package fixture"u8.ToArray();
+        SafeFiles.WriteAtomic(source, data);
+        var package = Dependencies.GStreamer with { Size = data.Length, Sha256 = Hash(data) };
+        var temp = SafeFiles.Under(NewRoot(), "temporary folder's packages");
+        Directory.CreateDirectory(temp);
+        var commits = 0;
+        var runs = 0;
+        async Task Inspect(System.Diagnostics.ProcessStartInfo command, CancellationToken token)
+        {
+            runs++;
+            var staged = Directory.GetFiles(temp, "runtime.pkg", SearchOption.AllDirectories).Single();
+            Check((await File.ReadAllBytesAsync(staged)).SequenceEqual(data), "The staged package differs from its verified source.");
+            var script = command.ArgumentList[3];
+            Check(command.FileName == "/usr/bin/osascript" && command.ArgumentList[2] == "--" && !command.ArgumentList[1].Contains(staged), "Package paths were interpolated into AppleScript.");
+            Check(!script.Contains(source) && script.Contains(staged.Replace("'", "'\"'\"'")), "The installer reads from Documents or lost path quoting.");
+            Check(script.Contains("mktemp -d /private/tmp/") && script.IndexOf("/usr/bin/shasum", StringComparison.Ordinal) < script.IndexOf("/usr/sbin/installer", StringComparison.Ordinal), "The privileged copy is not verified before installation.");
+            Check(!token.CanBeCanceled && commits == runs, "Package installation crossed its commit boundary incorrectly.");
+            if (!OperatingSystem.IsWindows()) Check(File.GetUnixFileMode(Path.GetDirectoryName(staged)!) == (UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute), "Temporary package access is not private.");
+        }
+        await MacPackages.InstallAsync(source, package, null, () => commits++, default, Inspect, temp);
+        Check(runs == 1 && !Directory.EnumerateFileSystemEntries(temp).Any() && File.ReadAllBytes(source).SequenceEqual(data), "Package install did not clean up or changed the cached download.");
+        await Reject(() => MacPackages.InstallAsync(source, package, null, () => commits++, default, async (command, token) => { await Inspect(command, token); throw new IOException("installer failure fixture"); }, temp));
+        Check(runs == 2 && !Directory.EnumerateFileSystemEntries(temp).Any(), "Failed installer left temporary packages.");
+        await Reject(() => MacPackages.InstallAsync(source, package, null, () => commits++, new CancellationToken(true), Inspect, temp));
+        Check(runs == 2 && commits == 2 && !Directory.EnumerateFileSystemEntries(temp).Any(), "Cancellation invoked an installer or left its staging folder.");
+        File.WriteAllBytes(source, new byte[data.Length]);
+        await Reject(() => MacPackages.InstallAsync(source, package, null, () => commits++, default, Inspect, temp));
+        File.WriteAllBytes(source, new byte[data.Length + 1]);
+        await Reject(() => MacPackages.InstallAsync(source, package, null, () => commits++, default, Inspect, temp));
+        Check(runs == 2 && commits == 2 && !Directory.EnumerateFileSystemEntries(temp).Any(), "Unverified bytes reached the administrator prompt.");
+        await Reject(() => MacPackages.Command(source, "not a digest"));
+        if (OperatingSystem.IsMacOS())
+        {
+            var script = MacPackages.Command(source, package.Sha256).ArgumentList[3];
+            var command = Dependencies.Command("/bin/sh", "-c", script);
+            try
+            {
+                await Dependencies.RunAsync(command, default);
+                throw new Exception("The privileged installation command accepted an altered package.");
+            }
+            catch (IOException error)
+            {
+                Check(error.Message.Contains("checksum", StringComparison.OrdinalIgnoreCase), "The installation script failed before exercising its checksum guard.");
+            }
+        }
+    }
+
     private static async Task MacDisplayProfile()
     {
         var fresh = System.Text.Encoding.UTF8.GetString(MacGraphics.Profile(null));

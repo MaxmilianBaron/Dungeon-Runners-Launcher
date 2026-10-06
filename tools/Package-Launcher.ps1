@@ -85,7 +85,7 @@ try {
         $binary = Join-Path $publish $executable
         if ($Platform -eq 'Windows') {
             $destination = Join-Path $outputRoot $executable
-            Copy-Item -LiteralPath $binary -Destination $destination -Force
+            & (Join-Path $PSScriptRoot 'Build-WindowsInstaller.ps1') -ModernExecutable $binary -OutputPath $destination
             $outputs += $destination
         } elseif ($Platform -eq 'Mac') {
             $destination = Join-Path $resourceRoot "bin/$runtime"

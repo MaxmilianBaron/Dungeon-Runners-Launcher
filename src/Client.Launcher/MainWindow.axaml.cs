@@ -72,7 +72,7 @@ public partial class MainWindow : Window
             }
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException) { }
-        if (!preview && Environment.ProcessPath is string executable)
+        if (!preview && LauncherExecutable.Path is string executable)
         {
             var installed = Shortcuts.FindInstallation(executable);
             if (installed is not null) { folder = installed; rememberedFolder = true; }
@@ -236,7 +236,7 @@ public partial class MainWindow : Window
         launcherUpdate = null; launcherCheckError = null;
         try
         {
-            var executable = Environment.ProcessPath ?? throw new IOException("The launcher location is unavailable.");
+            var executable = LauncherExecutable.Path;
             launcherUpdate = await LauncherUpdates.CheckAsync(executable, downloads, token);
         }
         catch (Exception error) when (!token.IsCancellationRequested && error is IOException or InvalidDataException or HttpRequestException or System.Text.Json.JsonException or InvalidOperationException or KeyNotFoundException or OperationCanceledException)
@@ -488,7 +488,7 @@ public partial class MainWindow : Window
 
     private static async Task InstallEntryPointsAsync(string root, bool createShortcut, bool retirePreviousEntries = false)
     {
-        var source = Environment.ProcessPath ?? throw new IOException("The launcher executable could not be located.");
+        var source = LauncherExecutable.Path;
         if (System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name == "DungeonRunnersLauncher")
         {
             EnsureClosed(root);

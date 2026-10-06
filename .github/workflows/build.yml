@@ -30,6 +30,15 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+      - name: Windows native toolchain
+        if: runner.os == 'Windows'
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe"
+          $installation = & $vswhere -latest -products '*' -property installationPath
+          $installer = "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/setup.exe"
+          $arguments = @('modify', '--installPath', ('"' + $installation + '"'), '--add', 'Microsoft.VisualStudio.Component.VC.v141.x86.x64', '--add', 'Microsoft.VisualStudio.Component.WinXP', '--quiet', '--norestart')
+          $process = Start-Process -FilePath $installer -ArgumentList $arguments -WindowStyle Hidden -Wait -PassThru
+          if ($process.ExitCode -notin @(0, 3010)) { throw "Native toolchain setup failed: $($process.ExitCode)" }
       - run: dotnet run --project tests/Client.Tests -c Release
       - run: dotnet run --project tests/Client.UI.Tests -c Release -- artifacts/ui
       - run: ./tools/Package-Launcher.ps1 -Platform ${{ matrix.platform }}

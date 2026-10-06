@@ -197,11 +197,9 @@ public static class Dependencies
         if (!Directory.Exists("/Library/Frameworks/GStreamer.framework"))
         {
             var package = await downloads.VerifiedFileAsync(GStreamer, cache, progress, token, ValidateUrl);
-            var installer = SafeFiles.Under(cache, "gstreamer.pkg");
-            SafeFiles.WriteAtomic(installer, await File.ReadAllBytesAsync(package, token));
-            progress?.Report(new("Installing requirements", "Installing GStreamer. Approve the system authorization dialog."));
-            token.ThrowIfCancellationRequested(); committing();
-            await run(MacAdmin("/usr/sbin/installer -pkg " + ShellQuote(installer) + " -target /"), CancellationToken.None);
+            await MacPackages.InstallAsync(package, GStreamer, progress, committing, token, run);
+            if (!Directory.Exists("/Library/Frameworks/GStreamer.framework"))
+                throw new IOException("GStreamer setup finished, but its framework is missing. Select Repair to retry.");
         }
         var destination = SafeFiles.Under(root, ".dr-client/wine");
         if (Directory.Exists(destination)) throw new IOException("An incomplete Wine installation exists. Preserve or remove .dr-client/wine, then retry.");
@@ -241,7 +239,6 @@ public static class Dependencies
     }
 
     public static ProcessStartInfo MacAdmin(string command) => Command("/usr/bin/osascript", "-e", "on run argv\ndo shell script (item 1 of argv) with administrator privileges\nend run", "--", command);
-    private static string ShellQuote(string text) => "'" + text.Replace("'", "'\"'\"'") + "'";
     private static string? FindOnPath(string name) => (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator).Where(Path.IsPathFullyQualified).Select(path => Path.Combine(path, name)).FirstOrDefault(File.Exists);
     private static string Distribution()
     {

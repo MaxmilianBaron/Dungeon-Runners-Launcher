@@ -10,6 +10,8 @@ Install, Play and GitHub updates for the launcher, game and [Addons](https://git
 
 C# / .NET 8 / Avalonia. Shared desktop UI with bundled .NET and automatic game runtime setup. The Windows game uses Wine on macOS and Linux.
 
+Windows: one installer automatically selects the modern interface or the native Install / Update / Repair / Play interface for XP, Vista, 7 and 8.
+
 Linux: allow execution and open the installer. x64/ARM64 selection is automatic; FUSE is not required.
 
 Steam Deck: dedicated x64 installer for Desktop Mode; detects installed Proton and its Steam Linux Runtime. Controller addon includes skill bindings, sensitivity and dead-zone settings; use the Steam Input Gamepad template.

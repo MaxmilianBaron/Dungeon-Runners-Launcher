@@ -29,7 +29,12 @@ try {
         $executable = Join-Path $stage 'DungeonRunnersLauncher.exe'
         Copy-Item -LiteralPath (Join-Path $outputRoot 'DungeonRunnersLauncher.exe') -Destination $executable
         Invoke-Checked $executable @('--licenses', $notices)
+        Invoke-Checked $executable @('--self-test', (Join-Path $stage 'native-contracts.json'))
+        Invoke-Checked $executable @('--test-https', (Join-Path $stage 'tls-contracts.json'))
+        Invoke-Checked $executable @('--verify-feed', (Join-Path $stage 'manifest.json'))
+        Invoke-Checked $executable @('--legacy', '--smoke-test')
         Invoke-Checked $executable @('--smoke-test')
+        & (Join-Path $PSScriptRoot 'Test-WindowsImports.ps1') -Executable $executable
     } elseif ($Platform -eq 'Mac') {
         $mount = Join-Path $stage 'volume'
         & hdiutil attach -readonly -nobrowse -mountpoint $mount (Join-Path $outputRoot 'Dungeon-Runners-Launcher-Mac.dmg')

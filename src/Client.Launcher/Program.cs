@@ -7,6 +7,7 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        args = DungeonRunners.Client.LauncherExecutable.Initialize(args);
         if (args.Length == 2 && args[0] == "--apply-launcher-update")
             return DungeonRunners.Client.LauncherReplacement.CompleteAsync(args[1]).GetAwaiter().GetResult();
         if (args.Length == 2 && args[0] == "--licenses")
