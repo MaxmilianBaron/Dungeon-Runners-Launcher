@@ -282,11 +282,13 @@ public partial class MainWindow : Window
         var running = false;
         var addonsPresent = false;
         var removalPending = false;
+        OpenGameLog.IsVisible = false;
         string? installedVersion = null;
         try
         {
             var root = SafeFiles.Root(Folder.Text ?? "");
             gamePresent = File.Exists(SafeFiles.Under(root, "DungeonRunners.exe"));
+            OpenGameLog.IsVisible = GameSession.LatestLog(root) is not null;
             addonsPresent = File.Exists(SafeFiles.Under(root, "Addons/Runtime/Addons.dll"));
             removalPending = AddonRemoval.Pending(root);
             installed = Catalog.Managed.Where(p => !Catalog.Seeds.Contains(p)).All(p =>
@@ -324,7 +326,7 @@ public partial class MainWindow : Window
     {
         Status.IsVisible = !string.IsNullOrWhiteSpace(Status.Text);
         Detail.IsVisible = !string.IsNullOrWhiteSpace(Detail.Text);
-        StatusPanel.IsVisible = operation is not null || Status.IsVisible || Detail.IsVisible;
+        StatusPanel.IsVisible = operation is not null || Status.IsVisible || Detail.IsVisible || OpenGameLog.IsVisible;
     }
 
     private void UpdateResponsiveLayout()

@@ -59,6 +59,7 @@ internal static partial class Program
             await Test("runtime setup validates downloads, package plans, libraries and failures", RuntimeRequirements);
             await Test("Mac packages install from verified temporary copies and clean up after cancellation or failure", MacPackageStaging);
             await Test("Mac runtime discovery ignores unrelated installations and isolates its game prefix", MacRuntimeSelection);
+            await Test("Mac Wine repair migrates existing prefixes and preserves unknown or changing runtimes", MacWineRepair);
             await Test("Steam runtime discovery selects complete Proton installations across libraries", ProtonSelection);
             await Test("Proton launch preserves Steam Input and isolates the game prefix", ProtonLaunch);
             await Test("Mac display setup skips automatic benchmarking and preserves user settings", MacDisplayProfile);
@@ -552,6 +553,30 @@ internal static partial class Program
         var first = executions;
         await Dependencies.EnsureAsync(root, downloads, progress, () => { }, CancellationToken.None, Execute);
         Check(executions == first, "An installed runtime was reinstalled.");
+        if (OperatingSystem.IsMacOS())
+        {
+            var prefixLibrary = SafeFiles.Under(root, MacWineCompatibility.PrefixLibrary);
+            Check(await Catalog.HashAsync(prefixLibrary) == MacWineCompatibility.AppliedHash, "A fresh Wine prefix did not inherit the compatibility repair.");
+            using (var original = typeof(Program).Assembly.GetManifestResourceStream("mac-wow64-original.dll")!)
+            using (var bytes = new MemoryStream())
+            {
+                original.CopyTo(bytes);
+                SafeFiles.WriteAtomic(prefixLibrary, bytes.ToArray());
+            }
+            await Dependencies.EnsureAsync(root, downloads, progress, () => { }, CancellationToken.None, Execute);
+            Check(executions == first && await Catalog.HashAsync(prefixLibrary) == MacWineCompatibility.AppliedHash, "An existing prefix was not repaired without reinstallation.");
+            var probe = SafeFiles.Under(root, "wine-graphics.exe");
+            using (var graphics = typeof(Program).Assembly.GetManifestResourceStream("wine-graphics.exe")!)
+            using (var bytes = new MemoryStream())
+            {
+                graphics.CopyTo(bytes);
+                SafeFiles.WriteAtomic(probe, bytes.ToArray());
+            }
+            using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+            for (var attempt = 0; attempt < 2; attempt++)
+                await Execute(Dependencies.WineCommand(root, wine!, probe), timeout.Token);
+            Console.WriteLine("PASS Mac Wine migration and repeated 32-bit DirectDraw/Direct3D rendering.");
+        }
         Console.WriteLine("PASS native runtime installation, required libraries and repeat verification.");
     }
 

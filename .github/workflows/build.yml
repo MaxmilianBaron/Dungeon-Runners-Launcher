@@ -17,10 +17,16 @@ jobs:
         include:
           - os: windows-2022
             platform: Windows
+            artifact: Windows
           - os: ubuntu-22.04
             platform: Linux
+            artifact: Linux
           - os: macos-latest
             platform: Mac
+            artifact: Mac
+          - os: macos-15-intel
+            platform: Mac
+            artifact: Mac-Intel
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -64,7 +70,7 @@ jobs:
         run: ./tools/Test-Package.ps1 -Platform ${{ matrix.platform }}
       - uses: actions/upload-artifact@v4
         with:
-          name: Dungeon-Runners-Launcher-${{ matrix.platform }}
+          name: Dungeon-Runners-Launcher-${{ matrix.artifact }}
           path: |
             artifacts/DungeonRunnersLauncher.exe
             artifacts/DungeonRunnersLauncher-linux-*

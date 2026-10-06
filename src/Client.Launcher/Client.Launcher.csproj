@@ -19,6 +19,8 @@
     <AvaloniaResource Include="Assets/**" />
     <EmbeddedResource Include="../../LICENSE" LogicalName="DungeonRunners.Licenses.LICENSE.txt" />
     <EmbeddedResource Include="../../NOTICE.md" LogicalName="DungeonRunners.Licenses.NOTICE.txt" />
+    <EmbeddedResource Include="../../runtime/mac-wow64/COPYING.LIB" LogicalName="DungeonRunners.Licenses.Wine-LGPL-2.1.txt" />
+    <EmbeddedResource Include="../../runtime/mac-wow64/README.md" LogicalName="DungeonRunners.Licenses.Wine-compatibility.txt" />
     <EmbeddedResource Include="../../licenses/*" LogicalName="DungeonRunners.Licenses.%(Filename)%(Extension)" />
     <EmbeddedResource Include="Assets/Fonts/LICENSE.md" LogicalName="DungeonRunners.Licenses.SourceSerif4-OFL.txt" />
     <EmbeddedResource Include="$(LauncherNoticeDirectory)/*" Condition="'$(LauncherNoticeDirectory)' != ''" LogicalName="DungeonRunners.Licenses.%(Filename)%(Extension)" />

@@ -11,7 +11,7 @@ public sealed class Downloads : IDisposable
     {
         client = new HttpClient(handler ?? new SocketsHttpHandler { AllowAutoRedirect = false, AutomaticDecompression = DecompressionMethods.None, ConnectTimeout = TimeSpan.FromSeconds(20) });
         client.Timeout = Timeout.InfiniteTimeSpan;
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("Dungeon-Runners-Launcher/1.0.1");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("Dungeon-Runners-Launcher/1.0.2");
     }
 
     private async Task<HttpResponseMessage> OpenAsync(string url, long offset, CancellationToken token, Func<string, Uri>? validate = null)

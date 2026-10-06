@@ -80,7 +80,7 @@ void download(const std::string& requested,const Path& target,uint64_t limit,con
     std::string url=requested; folders(directory(target)); no_links(target);
     for(int hop=0;hop<6;hop++) {
         require(allowed_url(url),"Untrusted download destination."); Url u=split_url(url); Tls tls; tls.connect(u.host);
-        tls.send("GET "+u.path+" HTTP/1.1\r\nHost: "+u.host+"\r\nUser-Agent: Dungeon-Runners-Launcher/1.0.1\r\nAccept: */*\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n");
+        tls.send("GET "+u.path+" HTTP/1.1\r\nHost: "+u.host+"\r\nUser-Agent: Dungeon-Runners-Launcher/1.0.2\r\nAccept: */*\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n");
         Reader reader(tls); auto status=reader.line(1024); require(status.size()>=12 && status.compare(0,9,"HTTP/1.1 ")==0,"Invalid HTTP response."); int code=static_cast<int>(number(status.substr(9,3),10));
         std::map<std::string,std::string> headers; size_t header_size=status.size();
         while(true) {

@@ -235,6 +235,15 @@ internal static class Program
                 Check(Find<Border>("StatusPanel").IsVisible && !Find<StackPanel>("InstallationPanel").IsVisible, "Update error hidden or installation controls exposed.");
                 detail.Text = "";
                 Check(!Find<Border>("StatusPanel").IsVisible, "Cleared status retains an empty frame.");
+                var session = Guid.NewGuid().ToString("N");
+                SafeFiles.WriteAtomic(SafeFiles.Under(existing, ".dr-client/game-sessions/" + session + "/wine.log"), "previous game crash"u8.ToArray());
+                SafeFiles.WriteAtomic(SafeFiles.Under(existing, ".dr-client/game-sessions/latest.txt"), System.Text.Encoding.ASCII.GetBytes(session));
+                typeof(MainWindow).GetMethod("RefreshActions", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, null);
+                Check(Find<Button>("OpenGameLog").IsVisible && Find<Border>("StatusPanel").IsVisible, "A previous game's diagnostic is hidden after reopening the launcher.");
+                folder.Text = previous; Dispatcher.UIThread.RunJobs();
+                Check(!Find<Button>("OpenGameLog").IsVisible, "Changing installation folders retains an unrelated game log.");
+                folder.Text = existing; Dispatcher.UIThread.RunJobs();
+                Check(Find<Button>("OpenGameLog").IsVisible, "Returning to an installation does not restore its game log.");
                 File.Delete(SafeFiles.Under(existing, "game.pkg"));
                 folder.Text = previous; Dispatcher.UIThread.RunJobs(); folder.Text = existing; Dispatcher.UIThread.RunJobs();
                 Check(Equals(Find<Button>("Primary").Content, "Install game"), "Incomplete installation displays Play.");

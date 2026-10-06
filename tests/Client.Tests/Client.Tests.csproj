@@ -1,4 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup><ProjectReference Include="../../src/Client.Core/Client.Core.csproj" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="Fixtures/mac-wow64-original.dll" LogicalName="mac-wow64-original.dll" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="Fixtures/wine-graphics.exe" LogicalName="wine-graphics.exe" /></ItemGroup>
 </Project>

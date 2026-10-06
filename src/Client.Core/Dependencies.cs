@@ -88,6 +88,8 @@ public static class Dependencies
             }
             else throw new PlatformNotSupportedException();
         }
+        if (OperatingSystem.IsMacOS())
+            changed |= MacWineCompatibility.Configure(root, wine, () => GameLaunch.EnsureClosed(root), committing, token);
         var marker = SafeFiles.Under(root, ".dr-client/directx-runtime.txt");
         if (ProtonRuntime.IsProton(wine)) Directory.CreateDirectory(SafeFiles.Under(root, ".dr-client/proton"));
         var initialize = WineCommand(root, wine, "wineboot", "-u");
