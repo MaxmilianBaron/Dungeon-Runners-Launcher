@@ -1,0 +1,62 @@
+--- a/lorie-app/build.gradle
++++ b/lorie-app/build.gradle
+@@ -6,7 +6,7 @@
+     compileSdkVersion 34
+     ndkVersion termuxX11NdkVersion
+     defaultConfig {
+-        applicationId "com.termux.x11"
++        applicationId project.findProperty("runtimePackage") ?: "com.termux.x11"
+         minSdkVersion 24
+         targetSdkVersion 34
+         versionCode 15
+--- a/lorie/src/main/java/com/termux/x11/LorieApp.java
++++ b/lorie/src/main/java/com/termux/x11/LorieApp.java
+@@ -81,7 +81,7 @@
+ 
+         // The parts of the notification that don't depend on preferences, built once and reused as a template.
+         baseNotification = new NotificationCompat.Builder(this, channelId)
+-                .setContentTitle("Termux:X11")
++                .setContentTitle("Dungeon Runners")
+                 .setSmallIcon(R.drawable.ic_x11_icon)
+                 .setContentText(getResources().getText(R.string.lorie_notification_content_text))
+                 .setOngoing(true)
+@@ -170,8 +170,10 @@
+                 break;
+             }
+             case MainActivity.ACTION_STOP:
+-                if (activity != null)
+-                    activity.finishAffinity();
++                if (activity != null) {
++                    activity.getLorieView().setKeyboardVisible(false);
++                    activity.finishAndRemoveTask();
++                }
+                 break;
+             case ACTION_PREFERENCES_CHANGED:
+                 if (activity != null)
+--- a/lorie/src/main/java/com/termux/x11/MainActivity.java
++++ b/lorie/src/main/java/com/termux/x11/MainActivity.java
+@@ -258,6 +258,7 @@
+ 
+     @Override
+     protected void onDestroy() {
++        if (isFinishing() && !GameRuntimeService.isStopping()) stopService(new Intent(this, GameRuntimeService.class));
+         handler.removeCallbacks(screenIdleTimeoutCheck);
+         if (mInputHandler != null)
+             mInputHandler.onDestroy();
+--- a/lorie/src/main/java/com/termux/x11/CmdEntryPoint.java
++++ b/lorie/src/main/java/com/termux/x11/CmdEntryPoint.java
+@@ -192,11 +192,12 @@
+         String path = "lib/" + Build.SUPPORTED_ABIS[0] + "/libXlorie.so";
+         ClassLoader loader = CmdEntryPoint.class.getClassLoader();
+         URL res = loader != null ? loader.getResource(path) : null;
+-        String libPath = res != null ? res.getFile().replace("file:", "") : null;
++        String libPath = System.getenv("DR_X11_LIBRARY");
++        if (libPath == null) libPath = res != null ? res.getFile().replace("file:", "") : null;
+         if (libPath != null) {
+             try {
+                 System.load(libPath);
+-            } catch (Exception e) {
++            } catch (Exception | LinkageError e) {
+                 Log.e("CmdEntryPoint", "Failed to dlopen " + libPath, e);
+                 System.err.println("Failed to load native library. Did you install the right apk? Try the universal one.");
+                 System.exit(134);

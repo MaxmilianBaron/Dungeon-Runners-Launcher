@@ -1,0 +1,15 @@
+[
+  {"id":"damage-meter","directory":"DamageMeter","name":"Damage Meter","description":"Damage Done/Taken, DPS, skill details, critical hits, dungeon history and party chat reports.","legacyDirectories":[]},
+  {"id":"hide-gold-labels","directory":"HideGoldLabels","name":"Hide Gold Labels","description":"Hides gold labels while keeping pickup available.","legacyDirectories":[]},
+  {"id":"cooldown-timers","directory":"CooldownTimers","name":"Cooldown Timers","description":"Skill, buff and curse timers. The hotbar flashes when a skill is ready.","legacyDirectories":[]},
+  {"id":"nameplates","directory":"Nameplates","name":"Nameplates","description":"HP/Mana, names and Posse above players, plus health bars for Bling Gnomes and Flaming Buddies.","legacyDirectories":[]},
+  {"id":"better-character-sheet","directory":"BetterCharacterSheet","name":"Better Character Sheet","description":"Weapon and magic critical chance, stun resistance, movement speed and resistance chances.","legacyDirectories":[]},
+  {"id":"mythic-drop-sounds","directory":"MythicDropSounds","name":"Mythic Drop Sounds","description":"Sound and chat alerts for Mythic drops. Adjustable volume and custom WAV/MP3 sounds.","legacyDirectories":[]},
+  {"id":"wishing-well-tracker","directory":"WishingWellTracker","name":"Wishing Well Tracker","description":"Wishing Well cooldown, reminders and optional custom sounds.","legacyDirectories":[]},
+  {"id":"moveeverything","directory":"Moveeverything","name":"Moveeverything","description":"Move and resize player, party and target frames, chat and minimap.","legacyDirectories":[]},
+  {"id":"cursor-circle","directory":"CursorCircle","name":"Cursor Circle","description":"Highlights the cursor during combat. Adjustable size and color.","legacyDirectories":[]},
+  {"id":"loadouts","directory":"Loadouts","name":"Loadouts & Sorting","description":"Gear and hotbar saves. Sort Inventory or selected bank pages by item type, appearance and armor set.","legacyDirectories":["SortBankPages"]},
+  {"id":"leaderboard","directory":"Leaderboard","name":"Leaderboard","description":"Official Reborn rankings inside the game. Open ESC > Leaderboard.","legacyDirectories":[]},
+  {"id":"controller","directory":"Controller","name":"Controller","description":"XInput movement, aiming, skills, consumables and menus. Steam Deck uses the Steam Input Gamepad template.","legacyDirectories":[]},
+  {"id":"enhanced-settings","directory":"EnhancedSettings","name":"Enhanced Settings","description":"Right-button mouse look, left-click attack control and an adjustable low-HP warning.","legacyDirectories":["LowHPWarning","UnbindLeftClick"]}
+]

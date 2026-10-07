@@ -1,0 +1,183 @@
+--- /dev/null
++++ b/src/include/guestmem.h
+@@ -0,0 +1,9 @@
++#ifndef BOX86_GUESTMEM_H
++#define BOX86_GUESTMEM_H
++#include <sys/mman.h>
++
++static inline int hostGuestProtection(int prot)
++{
++    return (prot & ~PROT_EXEC) | ((prot & PROT_EXEC) ? PROT_READ : 0);
++}
++#endif
+--- a/src/wrapped/wrappedlibc.c
++++ b/src/wrapped/wrappedlibc.c
+@@ -28,6 +28,7 @@
+ #include <sys/socket.h>
+ #include <sys/utsname.h>
+ #include <sys/mman.h>
++#include "guestmem.h"
+ #include <sys/types.h>
+ #include <sys/ipc.h>
+ #include <sys/sem.h>
+@@ -3090,25 +3091,25 @@
+     #else
+     void* new_addr = (flags&MAP_FIXED)?addr:(addr?findBlockNearHint(addr, length, 0):find32bitBlock(length));
+     #endif
+-    void* ret = mmap(new_addr, length, prot, flags, fd, offset);
++    void* ret = mmap(new_addr, length, hostGuestProtection(prot), flags, fd, offset);
+     #ifndef NOALIGN
+     if(!addr && ret!=new_addr && ret!=MAP_FAILED) {
+         munmap(ret, length);
+         loadProtectionFromMap();    // reload map, because something went wrong previously
+         new_addr = findBlockNearHint(addr, length, 0);
+-        ret = mmap(new_addr, length, prot, flags, fd, offset);
++        ret = mmap(new_addr, length, hostGuestProtection(prot), flags, fd, offset);
+     } else if(addr && ret!=MAP_FAILED && ret!=new_addr && 
+       ((uintptr_t)ret&0xffff) && !(flags&MAP_FIXED) && box86_wine) {
+         munmap(ret, length);
+         loadProtectionFromMap();    // reload map, because something went wrong previously
+         new_addr = findBlockNearHint(addr, length, 0);
+-        ret = mmap(new_addr, length, prot, flags, fd, offset);
++        ret = mmap(new_addr, length, hostGuestProtection(prot), flags, fd, offset);
+         if(ret!=MAP_FAILED && ret!=addr && ((uintptr_t)ret&0xffff) && box86_wine) {
+             // addr is probably too high, start again with a low address
+             munmap(ret, length);
+             loadProtectionFromMap();    // reload map, because something went wrong previously
+             new_addr = findBlockNearHint(NULL, length, 0); // is this the best way?
+-            ret = mmap(new_addr, length, prot, flags, fd, offset);
++            ret = mmap(new_addr, length, hostGuestProtection(prot), flags, fd, offset);
+             if(ret!=MAP_FAILED && (uintptr_t)ret&0xffff) {
+                 munmap(ret, length);
+                 ret = MAP_FAILED;
+@@ -3158,25 +3159,25 @@
+     #else
+     void* new_addr = (flags&MAP_FIXED)?addr:(addr?findBlockNearHint(addr, length, 0):find32bitBlock(length));
+     #endif
+-    void* ret = mmap64(new_addr, length, prot, flags, fd, offset);
++    void* ret = mmap64(new_addr, length, hostGuestProtection(prot), flags, fd, offset);
+     #ifndef NOALIGN
+     if(!addr && ret!=new_addr && ret!=MAP_FAILED) {
+         munmap(ret, length);
+         loadProtectionFromMap();    // reload map, because something went wrong previously
+         new_addr = (flags&MAP_FIXED)?addr:(addr?findBlockNearHint(addr, length, 0):find32bitBlock(length));
+-        ret = mmap64(new_addr, length, prot, flags, fd, offset);
++        ret = mmap64(new_addr, length, hostGuestProtection(prot), flags, fd, offset);
+     } else if(addr && ret!=MAP_FAILED && ret!=new_addr && 
+       ((uintptr_t)ret&0xffff) && !(flags&MAP_FIXED) && box86_wine) {
+         munmap(ret, length);
+         loadProtectionFromMap();    // reload map, because something went wrong previously
+         new_addr = findBlockNearHint(addr, length, 0);
+-        ret = mmap64(new_addr, length, prot, flags, fd, offset);
++        ret = mmap64(new_addr, length, hostGuestProtection(prot), flags, fd, offset);
+         if(ret!=MAP_FAILED && ret!=addr && ((uintptr_t)ret&0xffff) && box86_wine) {
+             // addr is probably too high, start again with a low address
+             munmap(ret, length);
+             loadProtectionFromMap();    // reload map, because something went wrong previously
+             new_addr = findBlockNearHint(NULL, length, 0); // is this the best way?
+-            ret = mmap64(new_addr, length, prot, flags, fd, offset);
++            ret = mmap64(new_addr, length, hostGuestProtection(prot), flags, fd, offset);
+             if(ret!=MAP_FAILED && (uintptr_t)ret&0xffff) {
+                 munmap(ret, length);
+                 errno = EEXIST;
+@@ -3287,7 +3288,7 @@
+     dynarec_log(LOG_DEBUG, "mprotect(%p, %lu, 0x%x)\n", addr, len, prot);
+     if(prot&PROT_WRITE) 
+         prot|=PROT_READ;    // PROT_READ is implicit with PROT_WRITE on i386
+-    int ret = mprotect(addr, len, prot);
++    int ret = mprotect(addr, len, hostGuestProtection(prot));
+     #ifdef DYNAREC
+     if(box86_dynarec && len) {
+         if(prot& PROT_EXEC)
+--- a/src/custommem.c
++++ b/src/custommem.c
+@@ -21,6 +21,7 @@
+ #include "x86trace.h"
+ #include "signals.h"
+ #include <sys/mman.h>
++#include "guestmem.h"
+ #include "custommem.h"
+ #include "threads.h"
+ #include "rbtree.h"
+@@ -808,7 +809,7 @@
+             prot&=~PROT_CUSTOM;
+             if(prot&PROT_WRITE) {
+                 if(!dyn) 
+-                    mprotect((void*)cur, bend-cur, prot&~PROT_WRITE);
++                    mprotect((void*)cur, bend-cur, hostGuestProtection(prot&~PROT_WRITE));
+                 prot |= PROT_DYNAREC;
+             } else 
+                 prot |= PROT_DYNAREC_R;
+@@ -848,7 +849,7 @@
+                 prot&=~PROT_DYN;
+                 if(mark)
+                     cleanDBFromAddressRange(cur, bend-cur, 0);
+-                mprotect((void*)cur, bend-cur, prot);
++                mprotect((void*)cur, bend-cur, hostGuestProtection(prot));
+             } else if(prot&PROT_DYNAREC_R)
+                 prot &= ~PROT_CUSTOM;
+         }
+@@ -919,7 +920,7 @@
+         if(!(dyn&PROT_NEVERPROT)) {
+             if(dyn && (prot&PROT_WRITE)) {   // need to remove the write protection from this block
+                 dyn = PROT_DYNAREC;
+-                mprotect((void*)cur, bend-cur, prot&~PROT_WRITE);
++                mprotect((void*)cur, bend-cur, hostGuestProtection(prot&~PROT_WRITE));
+             } else if(dyn && !(prot&PROT_WRITE)) {
+                 dyn = PROT_DYNAREC_R;
+             }
+@@ -982,7 +983,7 @@
+     uint32_t prot;
+     uintptr_t bend;
+     if (rb_get_end(memprot, addr, &prot, &bend)) {
+-        int ret = mprotect((void*)(addr&~(box86_pagesize-1)), box86_pagesize, prot&~PROT_CUSTOM);
++        int ret = mprotect((void*)(addr&~(box86_pagesize-1)), box86_pagesize, hostGuestProtection(prot&~PROT_CUSTOM));
+         dynarec_log(LOG_DEBUG, "refreshProtection(%p): %p/0x%x (ret=%d/%s)\n", (void*)addr, (void*)(addr&~(box86_pagesize-1)), prot, ret, ret?strerror(errno):"ok");
+     }
+     mutex_unlock(&mutex_prot);
+--- a/src/elfs/elfloader.c
++++ b/src/elfs/elfloader.c
+@@ -4,6 +4,7 @@
+ #include <string.h>
+ #include <elf.h>
+ #include <sys/mman.h>
++#include "guestmem.h"
+ #include <sys/stat.h>
+ #include <sys/sysmacros.h>
+ #include <sys/types.h>
+@@ -267,7 +268,7 @@
+                 void* p = mmap64(
+                     (void*)head->multiblocks[n].paddr, 
+                     head->multiblocks[n].size, 
+-                    prot,
++                    hostGuestProtection(prot),
+                     MAP_PRIVATE|MAP_FIXED, //((prot&PROT_WRITE)?MAP_SHARED:MAP_PRIVATE)|MAP_FIXED,
+                     head->fileno,
+                     e->p_offset
+@@ -292,7 +293,7 @@
+                     p = mmap64(
+                         (void*)paddr,
+                         asize,
+-                        prot|PROT_WRITE,
++                        hostGuestProtection(prot|PROT_WRITE),
+                         MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED,
+                         -1,
+                         0
+@@ -311,7 +312,7 @@
+                         p = mmap64(
+                             (void*)new_addr,
+                             ALIGN(new_size),
+-                            prot|PROT_WRITE,
++                            hostGuestProtection(prot|PROT_WRITE),
+                             MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED,
+                             -1,
+                             0
+@@ -342,7 +343,7 @@
+                     }
+                 }
+                 if(!(prot&PROT_WRITE) && (paddr==(paddr&(box86_pagesize-1)) && (asize==ALIGN(asize))))
+-                    mprotect((void*)paddr, asize, prot);
++                    mprotect((void*)paddr, asize, hostGuestProtection(prot));
+             }
+ #ifdef DYNAREC
+             if(box86_dynarec && (e->p_flags & PF_X)) {

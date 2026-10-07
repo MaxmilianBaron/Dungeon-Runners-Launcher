@@ -1,0 +1,13 @@
+--- a/dlls/ntdll/unix/virtual.c
++++ b/dlls/ntdll/unix/virtual.c
+@@ -2720,8 +2720,11 @@
+ static NTSTATUS map_pe_header( void *ptr, size_t size, size_t map_size, int fd, BOOL *removable )
+ {
++    const char *image_copy = getenv( "WINE_ANDROID_IMAGE_COPY" );
++
+     if (!size) return STATUS_INVALID_IMAGE_FORMAT;
+ 
++    if (image_copy && !strcmp( image_copy, "1" )) *removable = TRUE;
+     map_size &= ~host_page_mask;
+ 
+     if (!*removable && map_size)

@@ -1,0 +1,45 @@
+#!/bin/sh
+set -eu
+export LC_ALL=C
+target=@TARGET@
+
+fail() { printf '%s\n' "$*" >&2; exit 1; }
+[ "$(uname -s)" = Linux ] || fail 'This installer requires Linux.'
+[ "$(getconf LONG_BIT)" = 64 ] || fail 'This installer requires a 64-bit Linux system.'
+case "$(uname -m)" in
+    x86_64|amd64)
+        architecture=x64
+        asset=Dungeon-Runners-Launcher-Linux.AppImage
+        bytes=@X64_SIZE@
+        digest=@X64_SHA256@
+        ;;
+    aarch64|arm64)
+        [ "$target" != SteamDeck ] || fail 'This Steam Deck installer requires x86-64 Linux.'
+        architecture=arm64
+        asset=Dungeon-Runners-Launcher-Linux-arm64.AppImage
+        bytes=@ARM64_SIZE@
+        digest=@ARM64_SHA256@
+        ;;
+    *) fail 'Supported Linux architectures: x86-64 and ARM64.' ;;
+esac
+if [ "${1:-}" = --detect ]; then printf '%s\n' "$architecture"; exit 0; fi
+for tool in tail tar sha256sum wc mktemp chmod rm rmdir; do
+    command -v "$tool" >/dev/null 2>&1 || fail "Required system tool is missing: $tool"
+done
+workdir=$(mktemp -d "${TMPDIR:-/tmp}/dungeon-runners.XXXXXXXXXX") || fail 'Cannot create an installer directory.'
+payload="$workdir/$asset"
+cleanup() { rm -f -- "$payload"; rmdir -- "$workdir"; }
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+tail -n +@PAYLOAD_LINE@ -- "$0" | tar -xzOf - "$asset" > "$payload" || fail 'The installer is incomplete or damaged. Download it again.'
+[ "$(wc -c < "$payload")" -eq "$bytes" ] || fail 'Installer payload size mismatch.'
+actual=$(sha256sum "$payload")
+actual=${actual%% *}
+[ "$actual" = "$digest" ] || fail 'Installer checksum mismatch. Download it again.'
+if [ "${1:-}" = --verify ]; then printf '%s  %s\n' "$digest" "$asset"; exit 0; fi
+chmod 700 "$payload"
+result=0
+"$payload" --appimage-extract-and-run "$@" || result=$?
+exit "$result"
+__DUNGEON_RUNNERS_PAYLOAD__
