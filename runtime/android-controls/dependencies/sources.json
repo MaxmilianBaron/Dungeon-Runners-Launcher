@@ -1,0 +1,1386 @@
+{
+  "bash": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/b/bash/bash_5.2.21-2ubuntu4.dsc",
+      "sha256": "d5a89c09f42c828d5e31dc3a1680882aa0ddaad5072963e563dec7dfc4919d33",
+      "size": 2437,
+      "file": "bash.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/b/bash/bash_5.2.21.orig.tar.xz",
+      "sha256": "ec21ab4efd6bd7a6e2802fbda622b81bfc43a8095d721234d4bf075797683014",
+      "size": 5598816,
+      "file": "bash_5.2.21.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/b/bash/bash_5.2.21-2ubuntu4.debian.tar.xz",
+      "sha256": "bdb10c18d167dda3b265cb3db75314d524edbf7794fed36f0fb0dcc32f5e6ac9",
+      "size": 94124,
+      "file": "bash_5.2.21-2ubuntu4.debian.tar.xz"
+    }
+  ],
+  "coreutils": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/c/coreutils/coreutils_9.4-3ubuntu6.3.dsc",
+      "sha256": "419fea2f0fec8299d95cafb11425391fe45d60b30d052c7f1e3a162ea56a6653",
+      "size": 2030,
+      "file": "coreutils.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/c/coreutils/coreutils_9.4.orig.tar.xz",
+      "sha256": "ea613a4cf44612326e917201bbbcdfbd301de21ffc3b59b6e5c07e040b275e52",
+      "size": 5979200,
+      "file": "coreutils_9.4.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/c/coreutils/coreutils_9.4-3ubuntu6.3.debian.tar.xz",
+      "sha256": "23eb9e94564e2451ea02a879daa0ee9ba8db3777e84e020fcd08d49aaebc57d4",
+      "size": 43156,
+      "file": "coreutils_9.4-3ubuntu6.3.debian.tar.xz"
+    }
+  ],
+  "mesa": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/m/mesa/mesa_25.2.8-0ubuntu0.24.04.4.dsc",
+      "sha256": "8703280401d59a28abc6503461e1cb167bffcd967c7cf8309f00749d125f406f",
+      "size": 5358,
+      "file": "mesa.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/m/mesa/mesa_25.2.8.orig.tar.xz",
+      "sha256": "097842f3e49d996868b38688db87b006f7d4541e93ce86d2f341d8b3e7be7c93",
+      "size": 43813260,
+      "file": "mesa_25.2.8.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/m/mesa/mesa_25.2.8-0ubuntu0.24.04.4.debian.tar.xz",
+      "sha256": "b2fe9e714f7824fb763b693ffd170ba9af3982a970273bc8bae6edf380f51af3",
+      "size": 406360,
+      "file": "mesa_25.2.8-0ubuntu0.24.04.4.debian.tar.xz"
+    }
+  ],
+  "glibc": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/glibc_2.39-0ubuntu8.9.dsc",
+      "sha256": "1b73a89e0910eb3e5920cde639ac7eb606256d8ee809688ff9b5912b67002711",
+      "size": 9387,
+      "file": "glibc.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/glibc_2.39.orig.tar.xz",
+      "sha256": "f77bd47cf8170c57365ae7bf86696c118adb3b120d3259c64c502d3dc1e2d926",
+      "size": 18520988,
+      "file": "glibc_2.39.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/glibc_2.39.orig.tar.xz.asc",
+      "sha256": "2cce427ef7933c17379f5514e4f0ccf8dffae5bf8c72f0f7e0bf8b8401f34be5",
+      "size": 833,
+      "file": "glibc_2.39.orig.tar.xz.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/glibc_2.39-0ubuntu8.9.debian.tar.xz",
+      "sha256": "d6114f2302896a3c8612453e1bf1d0e61603e3029ba4a7c246fbb1ab4c48d2b0",
+      "size": 491440,
+      "file": "glibc_2.39-0ubuntu8.9.debian.tar.xz"
+    }
+  ],
+  "libglvnd": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libglvnd/libglvnd_1.7.0-1build1.dsc",
+      "sha256": "d0f2f934a0b329cc1ea257f4a2b0f1386842917ad7381743ee8e8f40a1e8fc7f",
+      "size": 2819,
+      "file": "libglvnd.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libglvnd/libglvnd_1.7.0.orig.tar.gz",
+      "sha256": "073e7292788d4d3eeb45ea6c7bdcce9bfdb3b3eef8d7dbd47f2f30dce046ef98",
+      "size": 839809,
+      "file": "libglvnd_1.7.0.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libglvnd/libglvnd_1.7.0-1build1.debian.tar.xz",
+      "sha256": "d75e37585040ca01fbaab98efbd800d7db65caee2a9e81f93bdcdbf584e6bd54",
+      "size": 22520,
+      "file": "libglvnd_1.7.0-1build1.debian.tar.xz"
+    }
+  ],
+  "libx11": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libx11/libx11_1.8.7-1build1.dsc",
+      "sha256": "bdf5b5bc66a20bbc6966ac1656c0257a4f5853ec1e01d73d448a8c2237f3dc7e",
+      "size": 2612,
+      "file": "libx11.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libx11/libx11_1.8.7.orig.tar.gz",
+      "sha256": "793ebebf569f12c864b77401798d38814b51790fce206e01a431e5feb982e20b",
+      "size": 3185363,
+      "file": "libx11_1.8.7.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libx11/libx11_1.8.7.orig.tar.gz.asc",
+      "sha256": "c1cba69555c89e503abac81ebf1113a756f2fafd72677e7862b40f12208e0260",
+      "size": 833,
+      "file": "libx11_1.8.7.orig.tar.gz.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libx11/libx11_1.8.7-1build1.diff.gz",
+      "sha256": "f475e5203caa43e2881df9f0f25cd5a1c6dfb1ad77d9eb057e3dbe17a46e8563",
+      "size": 74380,
+      "file": "libx11_1.8.7-1build1.diff.gz"
+    }
+  ],
+  "libxext": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxext/libxext_1.3.4-1build2.dsc",
+      "sha256": "0d2faa231cb2d5750994e8d93c4973cf4c24f74d8f1912234a1a244952d5e627",
+      "size": 2250,
+      "file": "libxext.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxext/libxext_1.3.4.orig.tar.gz",
+      "sha256": "8ef0789f282826661ff40a8eef22430378516ac580167da35cc948be9041aac1",
+      "size": 494434,
+      "file": "libxext_1.3.4.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxext/libxext_1.3.4-1build2.diff.gz",
+      "sha256": "ed434b3facecdf2c1f9ff58578033da61e087d73d6ce2d84433871ee4fb22ba6",
+      "size": 12720,
+      "file": "libxext_1.3.4-1build2.diff.gz"
+    }
+  ],
+  "libxrender": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxrender/libxrender_0.9.10-1.1build1.dsc",
+      "sha256": "fbc2eb120a290e733e01420e6bed5f7158a822e94baa8952b10bdcf5ae55a15e",
+      "size": 2204,
+      "file": "libxrender.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxrender/libxrender_0.9.10.orig.tar.gz",
+      "sha256": "770527cce42500790433df84ec3521e8bf095dfe5079454a92236494ab296adf",
+      "size": 373717,
+      "file": "libxrender_0.9.10.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxrender/libxrender_0.9.10-1.1build1.diff.gz",
+      "sha256": "7a09639402d326f5c665c848286d26932ba3a1d104e41fb921500ca93895598b",
+      "size": 15274,
+      "file": "libxrender_0.9.10-1.1build1.diff.gz"
+    }
+  ],
+  "libxrandr": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxrandr/libxrandr_1.5.2-2build1.dsc",
+      "sha256": "733b5be4c178c017181334e36d6649455c78222b2a146bb732a03598f8da6ffc",
+      "size": 2207,
+      "file": "libxrandr.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxrandr/libxrandr_1.5.2.orig.tar.gz",
+      "sha256": "3f10813ab355e7a09f17e147d61b0ce090d898a5ea5b5519acd0ef68675dcf8e",
+      "size": 411714,
+      "file": "libxrandr_1.5.2.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxrandr/libxrandr_1.5.2-2build1.diff.gz",
+      "sha256": "65e365ff8a3205d5532e9867045238dc6abbcdc146e063bafc7f614e730c1b7b",
+      "size": 15940,
+      "file": "libxrandr_1.5.2-2build1.diff.gz"
+    }
+  ],
+  "libxcursor": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcursor/libxcursor_1.2.1-1build1.dsc",
+      "sha256": "eddf2ff8bb61871ff00af5f31333b4e4ab9328ab5b220b269ed3348664cc8b2e",
+      "size": 2363,
+      "file": "libxcursor.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcursor/libxcursor_1.2.1.orig.tar.gz",
+      "sha256": "77f96b9ad0a3c422cfa826afabaf1e02b9bfbfc8908c5fa1a45094faad074b98",
+      "size": 415378,
+      "file": "libxcursor_1.2.1.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcursor/libxcursor_1.2.1-1build1.debian.tar.xz",
+      "sha256": "bc511593cf395948184efc6dd861a2864c3cd4a2c55bb7bc11b018bf8f2422fb",
+      "size": 9188,
+      "file": "libxcursor_1.2.1-1build1.debian.tar.xz"
+    }
+  ],
+  "libxi": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxi/libxi_1.8.1-1build1.dsc",
+      "sha256": "be66f78bc6bcd3038e31db9c880c18837bd90ad02860323a74b29e00cf69e2b6",
+      "size": 2418,
+      "file": "libxi.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxi/libxi_1.8.1.orig.tar.gz",
+      "sha256": "3b5f47c223e4b63d7f7fe758886b8bf665b20a7edb6962c423892fd150e326ea",
+      "size": 610202,
+      "file": "libxi_1.8.1.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxi/libxi_1.8.1.orig.tar.gz.asc",
+      "sha256": "b5c9eeb7e50cd128d749aa74da9ad4114276b88cc9dd0c0463272d4d5e2ee92d",
+      "size": 195,
+      "file": "libxi_1.8.1.orig.tar.gz.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxi/libxi_1.8.1-1build1.diff.gz",
+      "sha256": "271d0fc504c47738b36f82d2107ec2e3d03c250778f383d4652dc6a7fcaf1b2d",
+      "size": 25945,
+      "file": "libxi_1.8.1-1build1.diff.gz"
+    }
+  ],
+  "libxinerama": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxinerama/libxinerama_1.1.4-3build1.dsc",
+      "sha256": "1b4280858eb9c44eb28fc17d785d4712c0255ae441de897fcd2d42eecb2f5049",
+      "size": 2220,
+      "file": "libxinerama.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxinerama/libxinerama_1.1.4.orig.tar.gz",
+      "sha256": "64de45e18cc76b8e703cb09b3c9d28bd16e3d05d5cd99f2d630de2d62c3acc18",
+      "size": 380740,
+      "file": "libxinerama_1.1.4.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxinerama/libxinerama_1.1.4-3build1.diff.gz",
+      "sha256": "c9a95ee62cef0075a491ae98718dfbc37b971d697910bcc097c89cf0c4170905",
+      "size": 8639,
+      "file": "libxinerama_1.1.4-3build1.diff.gz"
+    }
+  ],
+  "freetype": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/freetype/freetype_2.13.2+dfsg-1ubuntu0.1.dsc",
+      "sha256": "05368dead2fd8739fb2aa3a11e6ffd4376039b57536cc1c5cdadceb75496f385",
+      "size": 3606,
+      "file": "freetype.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/freetype/freetype_2.13.2+dfsg.orig-ft2demos.tar.xz",
+      "sha256": "99ee2ed8b98bcfad17bc57c2d9699d764f20fe29ad304c69b8eb28834ca3b48e",
+      "size": 341140,
+      "file": "freetype_2.13.2+dfsg.orig-ft2demos.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/freetype/freetype_2.13.2+dfsg.orig-ft2demos.tar.xz.asc",
+      "sha256": "e58ba462f7bdcdc5899f777d33453c1ce6f6e46b080047580f45c9fd9f2dc08c",
+      "size": 833,
+      "file": "freetype_2.13.2+dfsg.orig-ft2demos.tar.xz.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/freetype/freetype_2.13.2+dfsg.orig-ft2docs.tar.xz",
+      "sha256": "685c25e1035a5076e5097186b3143b9c06878f3f9087d0a81e4d8538d5d15424",
+      "size": 2173920,
+      "file": "freetype_2.13.2+dfsg.orig-ft2docs.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/freetype/freetype_2.13.2+dfsg.orig-ft2docs.tar.xz.asc",
+      "sha256": "d7e17c8a3bce50181530ebe06346f506cbfc92ecc5ca7cc395c7dbb24a71a5c0",
+      "size": 833,
+      "file": "freetype_2.13.2+dfsg.orig-ft2docs.tar.xz.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/freetype/freetype_2.13.2+dfsg.orig.tar.xz",
+      "sha256": "48c78a4194adfcd15a4d089f3206dab8454c311f5577f3ef7eaef95f777f86e6",
+      "size": 2220368,
+      "file": "freetype_2.13.2+dfsg.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/freetype/freetype_2.13.2+dfsg-1ubuntu0.1.debian.tar.xz",
+      "sha256": "41371d9748c0e6f407c44c52c7fe5fbd4fbc2276a168ae528404731ae2e95b31",
+      "size": 44692,
+      "file": "freetype_2.13.2+dfsg-1ubuntu0.1.debian.tar.xz"
+    }
+  ],
+  "fontconfig": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/fontconfig/fontconfig_2.15.0-1.1ubuntu2.dsc",
+      "sha256": "3bf8ffe75d6932ba542646c6816b769d49f90c673bbd4ebc728e0e9622bcce0f",
+      "size": 2817,
+      "file": "fontconfig.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/fontconfig/fontconfig_2.15.0.orig.tar.xz",
+      "sha256": "63a0658d0e06e0fa886106452b58ef04f21f58202ea02a94c39de0d3335d7c0e",
+      "size": 1447820,
+      "file": "fontconfig_2.15.0.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/fontconfig/fontconfig_2.15.0-1.1ubuntu2.debian.tar.xz",
+      "sha256": "29ebacc2cd8f2d336150b3895feea8bb35e4340f7a34dfb37d915be76fb36b91",
+      "size": 30556,
+      "file": "fontconfig_2.15.0-1.1ubuntu2.debian.tar.xz"
+    }
+  ],
+  "alsa-lib": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/a/alsa-lib/alsa-lib_1.2.11-1ubuntu0.3.dsc",
+      "sha256": "0d259dcaefe6a5579e60da930d665480cfdb026278dc7440dfea9bbd4a8f8645",
+      "size": 3034,
+      "file": "alsa-lib.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/a/alsa-lib/alsa-lib_1.2.11.orig.tar.bz2",
+      "sha256": "9f3f2f69b995f9ad37359072fbc69a3a88bfba081fc83e9be30e14662795bb4d",
+      "size": 1107150,
+      "file": "alsa-lib_1.2.11.orig.tar.bz2"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/a/alsa-lib/alsa-lib_1.2.11.orig.tar.bz2.asc",
+      "sha256": "d9c93a9d8fd4c1ce0f90ebda7570c32612bfd3a6572579e87b0ef29c81b9c584",
+      "size": 833,
+      "file": "alsa-lib_1.2.11.orig.tar.bz2.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/a/alsa-lib/alsa-lib_1.2.11-1ubuntu0.3.debian.tar.xz",
+      "sha256": "a304e5ac97abb30d1b6020bd4cffa324aeae7451ea4e37b58a6730799c849e66",
+      "size": 34836,
+      "file": "alsa-lib_1.2.11-1ubuntu0.3.debian.tar.xz"
+    }
+  ],
+  "pulseaudio": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/p/pulseaudio/pulseaudio_16.1+dfsg1-2ubuntu10.1.dsc",
+      "sha256": "12ba094e43fb9e39de87647cf4c353a3b8c8a1ba48a419e812ab5f9b9ed936d3",
+      "size": 3865,
+      "file": "pulseaudio.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/p/pulseaudio/pulseaudio_16.1+dfsg1.orig.tar.xz",
+      "sha256": "e471c61c47b6d95089be52a5122c87161a695b60534a0c8a36fe344310fd3d06",
+      "size": 1437216,
+      "file": "pulseaudio_16.1+dfsg1.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/p/pulseaudio/pulseaudio_16.1+dfsg1-2ubuntu10.1.debian.tar.xz",
+      "sha256": "80db1588384392c47d3233e670ca1e25e8096fd4f37e1160f3b476bc61b9668c",
+      "size": 98660,
+      "file": "pulseaudio_16.1+dfsg1-2ubuntu10.1.debian.tar.xz"
+    }
+  ],
+  "gcc-14": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/g/gcc-14/gcc-14_14.2.0-4ubuntu2~24.04.1.dsc",
+      "sha256": "50950080874a6ec6780dd60c243e21d9cda9d736bb32bca98d16095d27cc01b5",
+      "size": 46930,
+      "file": "gcc-14.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/g/gcc-14/gcc-14_14.2.0.orig.tar.gz",
+      "sha256": "768c314c11eeab56ccebb91eb42ec4a41122fa94f0d83400126401942622197b",
+      "size": 97158172,
+      "file": "gcc-14_14.2.0.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/g/gcc-14/gcc-14_14.2.0-4ubuntu2~24.04.1.debian.tar.xz",
+      "sha256": "cfece214c2fb790ef5f3baffb9a53e40618e7ae12d053610b251e94d77d08ade",
+      "size": 1950432,
+      "file": "gcc-14_14.2.0-4ubuntu2~24.04.1.debian.tar.xz"
+    }
+  ],
+  "ncurses": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/n/ncurses/ncurses_6.4+20240113-1ubuntu2.2.dsc",
+      "sha256": "a7dea4604db5c8bc113eda2c4a7353f357618a74d96e404ae98655128e2f03ec",
+      "size": 3942,
+      "file": "ncurses.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/n/ncurses/ncurses_6.4+20240113.orig.tar.gz",
+      "sha256": "37a12a0f8ae2605012c9a164dd286b0cfa02b51b5055836d09eb3d597fc351b1",
+      "size": 3688489,
+      "file": "ncurses_6.4+20240113.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/n/ncurses/ncurses_6.4+20240113.orig.tar.gz.asc",
+      "sha256": "b70cfa4f155f61dfa7c085ad1e3f90c73132ad198764d7793a44cd7fdca51f1b",
+      "size": 729,
+      "file": "ncurses_6.4+20240113.orig.tar.gz.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/n/ncurses/ncurses_6.4+20240113-1ubuntu2.2.debian.tar.xz",
+      "sha256": "c7bbb8483d7ec358fb925a370575d8ebef63d6e455edce140de2ca7b86cf98d1",
+      "size": 50532,
+      "file": "ncurses_6.4+20240113-1ubuntu2.2.debian.tar.xz"
+    }
+  ],
+  "libdrm": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libd/libdrm/libdrm_2.4.125-1ubuntu0.1~24.04.2.dsc",
+      "sha256": "fe54cc87c1f2b44794ec0af7dd3af59c65192eb50a0b1fb9bf03b4992f6fef69",
+      "size": 3328,
+      "file": "libdrm.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libd/libdrm/libdrm_2.4.125.orig.tar.xz",
+      "sha256": "d4bae92797a50f81a93524762e0410a49cd84cfa0f997795bc0172ac8fb1d96a",
+      "size": 485592,
+      "file": "libdrm_2.4.125.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libd/libdrm/libdrm_2.4.125.orig.tar.xz.asc",
+      "sha256": "d13820b5488bddee445c1afca57402ec2560cbd9d48f3e9ca5d03cc3fbf304d0",
+      "size": 833,
+      "file": "libdrm_2.4.125.orig.tar.xz.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libd/libdrm/libdrm_2.4.125-1ubuntu0.1~24.04.2.debian.tar.xz",
+      "sha256": "0737265d83b6a4675f0a260f29d77cbc31c8128979d77665a8dd57f21cfc6dc4",
+      "size": 77556,
+      "file": "libdrm_2.4.125-1ubuntu0.1~24.04.2.debian.tar.xz"
+    }
+  ],
+  "libxcb": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcb/libxcb_1.15-1ubuntu2.dsc",
+      "sha256": "aa994469e76b17847c1153d43cd37884adebbce5008ad221ef0e1e8ad840f8de",
+      "size": 5372,
+      "file": "libxcb.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcb/libxcb_1.15.orig.tar.gz",
+      "sha256": "1cb65df8543a69ec0555ac696123ee386321dfac1964a3da39976c9a05ad724d",
+      "size": 650774,
+      "file": "libxcb_1.15.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcb/libxcb_1.15-1ubuntu2.diff.gz",
+      "sha256": "d45e55f604af83b47f621c97b49885f35b518909bb3b9f9c877cfd3daddfb5ee",
+      "size": 26975,
+      "file": "libxcb_1.15-1ubuntu2.diff.gz"
+    }
+  ],
+  "libxxf86vm": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxxf86vm/libxxf86vm_1.1.4-1build4.dsc",
+      "sha256": "efbb54cef5d6b8c6c36ca8a265a5462aa9015dac9534e2f6e74e876129214e0d",
+      "size": 2224,
+      "file": "libxxf86vm.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxxf86vm/libxxf86vm_1.1.4.orig.tar.gz",
+      "sha256": "5108553c378a25688dcb57dca383664c36e293d60b1505815f67980ba9318a99",
+      "size": 363146,
+      "file": "libxxf86vm_1.1.4.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxxf86vm/libxxf86vm_1.1.4-1build4.diff.gz",
+      "sha256": "ecd278edcb373b5ee6e1586a90a7e4107b7c0bcf0c8826227458d25bede257be",
+      "size": 8492,
+      "file": "libxxf86vm_1.1.4-1build4.diff.gz"
+    }
+  ],
+  "expat": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/e/expat/expat_2.6.1-2ubuntu0.6.dsc",
+      "sha256": "d1a0cb48d939de61f2121669c941664b844d9a1adf9d8db28e000489df665070",
+      "size": 1474,
+      "file": "expat.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/e/expat/expat_2.6.1.orig.tar.gz",
+      "sha256": "14113ed69357172a0bf5a268793c8b5b01afc77c7a2e5fb8dd0b06cb87c02c4a",
+      "size": 8414649,
+      "file": "expat_2.6.1.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/e/expat/expat_2.6.1-2ubuntu0.6.debian.tar.xz",
+      "sha256": "95ae84284d153f5108255b21bc0e76f8cdabaf0bb74cdc61ef410f4b77146517",
+      "size": 75472,
+      "file": "expat_2.6.1-2ubuntu0.6.debian.tar.xz"
+    }
+  ],
+  "libxfixes": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxfixes/libxfixes_6.0.0-2build1.dsc",
+      "sha256": "85c831269a0513da54f1cd6a816a9d2fa75d4bb04159079618fb2ecc5ea2b7ab",
+      "size": 2372,
+      "file": "libxfixes.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxfixes/libxfixes_6.0.0.orig.tar.gz",
+      "sha256": "82045da5625350838390c9440598b90d69c882c324ca92f73af9f0e992cb57c7",
+      "size": 387810,
+      "file": "libxfixes_6.0.0.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxfixes/libxfixes_6.0.0.orig.tar.gz.asc",
+      "sha256": "e5598f42aa32140936c7772ab4d99ba35ecb859c29adc1703bb51440e7a54928",
+      "size": 195,
+      "file": "libxfixes_6.0.0.orig.tar.gz.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxfixes/libxfixes_6.0.0-2build1.diff.gz",
+      "sha256": "4afbdb618c6f60e95c4251a8c08e928b19c3a19316dc9801c1e51c5c0b7f7a49",
+      "size": 17437,
+      "file": "libxfixes_6.0.0-2build1.diff.gz"
+    }
+  ],
+  "zlib": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/z/zlib/zlib_1.3.dfsg-3.1ubuntu2.2.dsc",
+      "sha256": "56a7cd029863cbddafce831e4e63cccfa84017f93617929cb7c02f80bb5a122a",
+      "size": 2987,
+      "file": "zlib.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/z/zlib/zlib_1.3.dfsg.orig.tar.xz",
+      "sha256": "5eea0322c1c21c75cad3b607ac1c43ff5c71e014b8ac4a34300b5e2b80d02e70",
+      "size": 1128572,
+      "file": "zlib_1.3.dfsg.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/z/zlib/zlib_1.3.dfsg-3.1ubuntu2.2.debian.tar.xz",
+      "sha256": "de1c2d532ecb7caf99ccb905fb03c37fe0c8117fbdc79d05be4474b71e6398c2",
+      "size": 61316,
+      "file": "zlib_1.3.dfsg-3.1ubuntu2.2.debian.tar.xz"
+    }
+  ],
+  "bzip2": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/b/bzip2/bzip2_1.0.8-5.1ubuntu0.1.dsc",
+      "sha256": "87d782671790af480ab3c3b258885ad2c239e41772e0116ceda6446c493f9dd4",
+      "size": 1699,
+      "file": "bzip2.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/b/bzip2/bzip2_1.0.8.orig.tar.gz",
+      "sha256": "ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269",
+      "size": 810029,
+      "file": "bzip2_1.0.8.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/b/bzip2/bzip2_1.0.8-5.1ubuntu0.1.debian.tar.bz2",
+      "sha256": "77c61e0490ff7cf49aa8ffe62e117e85b3af08e14341c4b851f8d7ec757fe099",
+      "size": 27529,
+      "file": "bzip2_1.0.8-5.1ubuntu0.1.debian.tar.bz2"
+    }
+  ],
+  "libpng1.6": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libp/libpng1.6/libpng1.6_1.6.43-5ubuntu0.6.dsc",
+      "sha256": "b5c3539ad4f9289480671a5a89aad2d9ad60c5eae79255460f1e929be1e272ad",
+      "size": 2384,
+      "file": "libpng1.6.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libp/libpng1.6/libpng1.6_1.6.43.orig.tar.gz",
+      "sha256": "fecc95b46cf05e8e3fc8a414750e0ba5aad00d89e9fdf175e94ff041caf1a03a",
+      "size": 1554715,
+      "file": "libpng1.6_1.6.43.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libp/libpng1.6/libpng1.6_1.6.43-5ubuntu0.6.debian.tar.xz",
+      "sha256": "2410934848547a4c826e102b54e2abdf005fa4e0fbc4aa1e9fe3200638cd9328",
+      "size": 50432,
+      "file": "libpng1.6_1.6.43-5ubuntu0.6.debian.tar.xz"
+    }
+  ],
+  "brotli": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/b/brotli/brotli_1.1.0-2build2.dsc",
+      "sha256": "c58421959677a80d942924685007e8d5b5d1160fd7f61a1f0a9062bf08835856",
+      "size": 2401,
+      "file": "brotli.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/b/brotli/brotli_1.1.0.orig.tar.gz",
+      "sha256": "10973f4b4199eafa1d5735ef661ddb2ec2f97319ee9fd1824d4aabe08cff5265",
+      "size": 512036,
+      "file": "brotli_1.1.0.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/b/brotli/brotli_1.1.0-2build2.debian.tar.xz",
+      "sha256": "96603222d7b6edb3253a846852972b6bde5b86814907d5540249e6950980a943",
+      "size": 5644,
+      "file": "brotli_1.1.0-2build2.debian.tar.xz"
+    }
+  ],
+  "dbus": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/d/dbus/dbus_1.14.10-4ubuntu4.1.dsc",
+      "sha256": "3d9037176550657a3584f7640027a6d970c85b0cd158a2be7e8051aab1349edb",
+      "size": 3746,
+      "file": "dbus.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/d/dbus/dbus_1.14.10.orig.tar.xz",
+      "sha256": "ba1f21d2bd9d339da2d4aa8780c09df32fea87998b73da24f49ab9df1e36a50f",
+      "size": 1372328,
+      "file": "dbus_1.14.10.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/d/dbus/dbus_1.14.10.orig.tar.xz.asc",
+      "sha256": "5f292cd0603c3d736026ed3f4d1c1937847981669c1f0a389083518f013e1081",
+      "size": 833,
+      "file": "dbus_1.14.10.orig.tar.xz.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/d/dbus/dbus_1.14.10-4ubuntu4.1.debian.tar.xz",
+      "sha256": "c28e0e4840bf3c3f3cbdacae9b7228bb4694dd234f325535942dde76af3c322e",
+      "size": 69668,
+      "file": "dbus_1.14.10-4ubuntu4.1.debian.tar.xz"
+    }
+  ],
+  "llvm-toolchain-20": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/universe/l/llvm-toolchain-20/llvm-toolchain-20_20.1.2-0ubuntu1~24.04.3.dsc",
+      "sha256": "cd0ec8d11b7df50d7845dbcc54146bdf76cf86f699a16c37c428bcf0e1d6b712",
+      "size": 8624,
+      "file": "llvm-toolchain-20.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/universe/l/llvm-toolchain-20/llvm-toolchain-20_20.1.2.orig-integration-test-suite.tar.gz",
+      "sha256": "67362ff54fdbde5a09ce6614e8bcb5ae994bf6216584be895fcecd1299aa13c6",
+      "size": 195387,
+      "file": "llvm-toolchain-20_20.1.2.orig-integration-test-suite.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/universe/l/llvm-toolchain-20/llvm-toolchain-20_20.1.2.orig.tar.gz",
+      "sha256": "9ee597456405ddf4809bcf66a4765137a68a85361347ca2a4bb13d9176e932ab",
+      "size": 226701433,
+      "file": "llvm-toolchain-20_20.1.2.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/universe/l/llvm-toolchain-20/llvm-toolchain-20_20.1.2-0ubuntu1~24.04.3.debian.tar.xz",
+      "sha256": "9336f1d1753c60c83b473c449f94b8355c4b702849c2b1127f7c6e995c4953a2",
+      "size": 155136,
+      "file": "llvm-toolchain-20_20.1.2-0ubuntu1~24.04.3.debian.tar.xz"
+    }
+  ],
+  "libzstd": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libz/libzstd/libzstd_1.5.5+dfsg2-2build1.1.dsc",
+      "sha256": "c190a5dff9e7c5b5b1399f0d701bb2c173bc7cbdf14d5e05970f5ac066c25570",
+      "size": 2485,
+      "file": "libzstd.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libz/libzstd/libzstd_1.5.5+dfsg2.orig.tar.xz",
+      "sha256": "d7cf3c10d416fd999cb8fcf7685d9268ba7bec8eb78121fc2d0d916fa393d22b",
+      "size": 1784164,
+      "file": "libzstd_1.5.5+dfsg2.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libz/libzstd/libzstd_1.5.5+dfsg2-2build1.1.debian.tar.xz",
+      "sha256": "c1df6d2628b26d085259b8e7ac020eb060e4c1feca98d6103058eda5ded725bc",
+      "size": 21288,
+      "file": "libzstd_1.5.5+dfsg2-2build1.1.debian.tar.xz"
+    }
+  ],
+  "lm-sensors": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/l/lm-sensors/lm-sensors_3.6.0-9build1.dsc",
+      "sha256": "816067facc835416c6cc2cd6695536bfa7eaa75c4acc54d0f72773d56ea34306",
+      "size": 2164,
+      "file": "lm-sensors.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/l/lm-sensors/lm-sensors_3.6.0.orig.tar.gz",
+      "sha256": "0591f9fa0339f0d15e75326d0365871c2d4e2ed8aa1ff759b3a55d3734b7d197",
+      "size": 273209,
+      "file": "lm-sensors_3.6.0.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/l/lm-sensors/lm-sensors_3.6.0-9build1.debian.tar.xz",
+      "sha256": "ffbc1ba5616a63dbcace91f3e5e5f14dea12869ef43492bc658eb1beb3e4ed4e",
+      "size": 32080,
+      "file": "lm-sensors_3.6.0-9build1.debian.tar.xz"
+    }
+  ],
+  "libxshmfence": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxshmfence/libxshmfence_1.3-1build5.dsc",
+      "sha256": "c3bbade0178c24947acbeb79c140b3921b9568cbe7739ad5dc857011285c8b27",
+      "size": 2228,
+      "file": "libxshmfence.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxshmfence/libxshmfence_1.3.orig.tar.gz",
+      "sha256": "7eb3d46ad91bab444f121d475b11b39273142d090f7e9ac43e6a87f4ff5f902c",
+      "size": 378960,
+      "file": "libxshmfence_1.3.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxshmfence/libxshmfence_1.3-1build5.diff.gz",
+      "sha256": "58b871680b7a0936a1845330ebe6f47d5b6730a0c9b23c995c741447f83289b2",
+      "size": 17946,
+      "file": "libxshmfence_1.3-1build5.diff.gz"
+    }
+  ],
+  "elfutils": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/e/elfutils/elfutils_0.190-1.1ubuntu0.1.dsc",
+      "sha256": "7852785ce5ce51a6dad0f6b67188d94ffedaffa6d0128fecabeb6a1ccc2aabea",
+      "size": 3410,
+      "file": "elfutils.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/e/elfutils/elfutils_0.190.orig.tar.bz2",
+      "sha256": "8e00a3a9b5f04bc1dc273ae86281d2d26ed412020b391ffcc23198f10231d692",
+      "size": 9162766,
+      "file": "elfutils_0.190.orig.tar.bz2"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/e/elfutils/elfutils_0.190-1.1ubuntu0.1.debian.tar.xz",
+      "sha256": "4c3130951f7b865d50ff57379a258926a66bcd2753e3c12301bbb110fbb417fa",
+      "size": 46976,
+      "file": "elfutils_0.190-1.1ubuntu0.1.debian.tar.xz"
+    }
+  ],
+  "libxau": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxau/libxau_1.0.9-1build6.dsc",
+      "sha256": "b6a676b936d6c7c2c75b60b789066f0b92f741104d6dfacaaffb985800ba4e55",
+      "size": 2315,
+      "file": "libxau.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxau/libxau_1.0.9.orig.tar.gz",
+      "sha256": "1f123d8304b082ad63a9e89376400a3b1d4c29e67e3ea07b3f659cccca690eea",
+      "size": 394068,
+      "file": "libxau_1.0.9.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxau/libxau_1.0.9.orig.tar.gz.asc",
+      "sha256": "af6104aaf3c5ede529e381237dd60f49640ec96593a84502fa493b86582b2f04",
+      "size": 801,
+      "file": "libxau_1.0.9.orig.tar.gz.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxau/libxau_1.0.9-1build6.diff.gz",
+      "sha256": "6e68b5a0dd458b0736fb4e327ca96ea5d3a25ec6fe5bd65c8ef66f90006248bd",
+      "size": 10712,
+      "file": "libxau_1.0.9-1build6.diff.gz"
+    }
+  ],
+  "libxdmcp": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxdmcp/libxdmcp_1.1.3-0ubuntu6.dsc",
+      "sha256": "71d1e9513fb58807fb131a5a2327eaac801ac5789ce4292038c2fed6365f7f68",
+      "size": 2252,
+      "file": "libxdmcp.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxdmcp/libxdmcp_1.1.3.orig.tar.gz",
+      "sha256": "2ef9653d32e09d1bf1b837d0e0311024979653fe755ad3aaada8db1aa6ea180c",
+      "size": 429668,
+      "file": "libxdmcp_1.1.3.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxdmcp/libxdmcp_1.1.3-0ubuntu6.diff.gz",
+      "sha256": "9a72f64460520fdc2125472557f30a4748107f98fe008a04b576dc8b93536bc8",
+      "size": 18400,
+      "file": "libxdmcp_1.1.3-0ubuntu6.diff.gz"
+    }
+  ],
+  "libsndfile": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libs/libsndfile/libsndfile_1.2.2-1ubuntu5.24.04.1.dsc",
+      "sha256": "b59d6b10344043e7c1382627966449992c2f65911443e71a854298d2f5061ca8",
+      "size": 2370,
+      "file": "libsndfile.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libs/libsndfile/libsndfile_1.2.2.orig.tar.gz",
+      "sha256": "ffe12ef8add3eaca876f04087734e6e8e029350082f3251f565fa9da55b52121",
+      "size": 684875,
+      "file": "libsndfile_1.2.2.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libs/libsndfile/libsndfile_1.2.2-1ubuntu5.24.04.1.debian.tar.xz",
+      "sha256": "bb33bf50bde6feabb4c903b47b4f646071ac1c6bb33fbb8650661152e619ff81",
+      "size": 29192,
+      "file": "libsndfile_1.2.2-1ubuntu5.24.04.1.debian.tar.xz"
+    }
+  ],
+  "systemd": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/s/systemd/systemd_255.4-1ubuntu8.17.dsc",
+      "sha256": "8e5f4e5a7b7ee457214be1efd1ea1d380186c38b146d8c98af5da0f625d3c396",
+      "size": 7324,
+      "file": "systemd.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/s/systemd/systemd_255.4.orig.tar.gz",
+      "sha256": "96e75bd08c57ad401677456fb88ef54a9f05bb1695693013bc6ecce839640fd5",
+      "size": 14952427,
+      "file": "systemd_255.4.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/s/systemd/systemd_255.4-1ubuntu8.17.debian.tar.xz",
+      "sha256": "4695ff34f83b1f7e6e02bf3cfac2e2a44ac76b6cfc5a38c0081bac6919d547bb",
+      "size": 272596,
+      "file": "systemd_255.4-1ubuntu8.17.debian.tar.xz"
+    }
+  ],
+  "libasyncns": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/liba/libasyncns/libasyncns_0.8-6build4.dsc",
+      "sha256": "1509aa38b5f49b34acd62c1c87dd8b848f113de235f60b1df712550e8de56aaa",
+      "size": 2067,
+      "file": "libasyncns.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/liba/libasyncns/libasyncns_0.8.orig.tar.gz",
+      "sha256": "4f1a66e746cbe54ff3c2fbada5843df4fbbbe7481d80be003e8d11161935ab74",
+      "size": 341591,
+      "file": "libasyncns_0.8.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/liba/libasyncns/libasyncns_0.8-6build4.debian.tar.xz",
+      "sha256": "872436761f5afcbc6118df3f52a3e28af5218490276ad253e51505fcc7ba635a",
+      "size": 4852,
+      "file": "libasyncns_0.8-6build4.debian.tar.xz"
+    }
+  ],
+  "apparmor": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/a/apparmor/apparmor_4.0.1really4.0.1-0ubuntu0.24.04.8.dsc",
+      "sha256": "f73d91f3b5f648cee59474189982a96791728826818f58b61edd50967e8f206b",
+      "size": 3434,
+      "file": "apparmor.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/a/apparmor/apparmor_4.0.1really4.0.1.orig.tar.gz",
+      "sha256": "b0d72cedc48e533d189ea415bde721ad597101c77fa398fdd2858ec4f58f7e26",
+      "size": 6984984,
+      "file": "apparmor_4.0.1really4.0.1.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/a/apparmor/apparmor_4.0.1really4.0.1-0ubuntu0.24.04.8.debian.tar.xz",
+      "sha256": "ee743b137754d09da93b579abaac21da8526eef5a32834a8d3e011710bd14885",
+      "size": 140696,
+      "file": "apparmor_4.0.1really4.0.1-0ubuntu0.24.04.8.debian.tar.xz"
+    }
+  ],
+  "libffi": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libf/libffi/libffi_3.4.6-1build1.dsc",
+      "sha256": "a7a2c320c04149192a6dd78df8be28b2b27fd38e48d76f2ee6ba0c19ae0758f6",
+      "size": 2055,
+      "file": "libffi.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libf/libffi/libffi_3.4.6.orig.tar.gz",
+      "sha256": "9ac790464c1eb2f5ab5809e978a1683e9393131aede72d1b0a0703771d3c6cda",
+      "size": 598175,
+      "file": "libffi_3.4.6.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libf/libffi/libffi_3.4.6-1build1.debian.tar.xz",
+      "sha256": "9d8712818b833baf002a2413552194b8770800cb20b802ba1d3714156eba14fe",
+      "size": 10736,
+      "file": "libffi_3.4.6-1build1.debian.tar.xz"
+    }
+  ],
+  "libedit": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libe/libedit/libedit_3.1-20230828-1build1.dsc",
+      "sha256": "8f0644bf36c5c07122dccfdf6025941b7d6625582562292544068f323505b4bd",
+      "size": 2399,
+      "file": "libedit.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libe/libedit/libedit_3.1-20230828.orig.tar.gz",
+      "sha256": "4ee8182b6e569290e7d1f44f0f78dac8716b35f656b76528f699c69c98814dad",
+      "size": 534072,
+      "file": "libedit_3.1-20230828.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libe/libedit/libedit_3.1-20230828-1build1.debian.tar.xz",
+      "sha256": "0df7e31ff4324654caa22386b7a7d404f769838e035555507eacd6e86bcf570d",
+      "size": 16748,
+      "file": "libedit_3.1-20230828-1build1.debian.tar.xz"
+    }
+  ],
+  "libxml2": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxml2/libxml2_2.9.14+dfsg-1.3ubuntu3.9.dsc",
+      "sha256": "12e1225206fc7145115750f5c432fee45943c6ac817eaaa0f7e2f43e5a6c1f00",
+      "size": 3038,
+      "file": "libxml2.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxml2/libxml2_2.9.14+dfsg.orig.tar.xz",
+      "sha256": "4fe913dec8b1ab89d13b489b419a8203176ea39e931eaa0d25b17eafb9c279e9",
+      "size": 2351200,
+      "file": "libxml2_2.9.14+dfsg.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxml2/libxml2_2.9.14+dfsg-1.3ubuntu3.9.debian.tar.xz",
+      "sha256": "938b503219dccd976bcb44ef22bdd4a9bbac90c29ca5f65e03992a91386190d1",
+      "size": 59428,
+      "file": "libxml2_2.9.14+dfsg-1.3ubuntu3.9.debian.tar.xz"
+    }
+  ],
+  "libbsd": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libb/libbsd/libbsd_0.12.1-1build1.1.dsc",
+      "sha256": "a44c2a70dbb9703c342ae49525507d22795b37308302c6167d72c3cbd3e76236",
+      "size": 2458,
+      "file": "libbsd.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libb/libbsd/libbsd_0.12.1.orig.tar.xz",
+      "sha256": "d7747f8ec1baa6ff5c096a9dd587c061233dec90da0f1aedd66d830f6db6996a",
+      "size": 444048,
+      "file": "libbsd_0.12.1.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libb/libbsd/libbsd_0.12.1.orig.tar.xz.asc",
+      "sha256": "04a4b66da93ea3c761e15fcedd705a969b67597d0619c3ebc5fe3cf72d477f1f",
+      "size": 833,
+      "file": "libbsd_0.12.1.orig.tar.xz.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libb/libbsd/libbsd_0.12.1-1build1.1.debian.tar.xz",
+      "sha256": "4086dc52ae53f0d7625a593c331460377868edc2a5606f4d8a341565aa94b2be",
+      "size": 18732,
+      "file": "libbsd_0.12.1-1build1.1.debian.tar.xz"
+    }
+  ],
+  "flac": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/flac/flac_1.4.3+ds-2.1ubuntu2.dsc",
+      "sha256": "87f2c7e67791a4711f84ca624367f70980a8b499e1c1d493f52982b2027ad504",
+      "size": 2502,
+      "file": "flac.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/flac/flac_1.4.3+ds.orig.tar.xz",
+      "sha256": "6ab48719bb60a38b391736518116b70ac55952963853ff27fc5206eb2bc108fc",
+      "size": 769468,
+      "file": "flac_1.4.3+ds.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/flac/flac_1.4.3+ds-2.1ubuntu2.debian.tar.xz",
+      "sha256": "b295c764278488a05371ccd210b016a1e84446d150a33e0efd166acef506762d",
+      "size": 17636,
+      "file": "flac_1.4.3+ds-2.1ubuntu2.debian.tar.xz"
+    }
+  ],
+  "libvorbis": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libv/libvorbis/libvorbis_1.3.7-1build3.dsc",
+      "sha256": "45953afb7453e430d8573ad474a9f4ba90cbf76c99a1d4a80acdd46e952bebe9",
+      "size": 2494,
+      "file": "libvorbis.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libv/libvorbis/libvorbis_1.3.7.orig.tar.gz",
+      "sha256": "0e982409a9c3fc82ee06e08205b1355e5c6aa4c36bca58146ef399621b0ce5ab",
+      "size": 1658963,
+      "file": "libvorbis_1.3.7.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libv/libvorbis/libvorbis_1.3.7-1build3.debian.tar.xz",
+      "sha256": "9e5d88326b8de10ffd3feed8798e0c54b5ce1ed1bdc78ddee4d822955da454c4",
+      "size": 11800,
+      "file": "libvorbis_1.3.7-1build3.debian.tar.xz"
+    }
+  ],
+  "opus": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/o/opus/opus_1.4-1build1.dsc",
+      "sha256": "873892e1f22d3297a79adbec277e53da490da249855ba1b69f19431d9ef806bf",
+      "size": 2271,
+      "file": "opus.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/o/opus/opus_1.4.orig.tar.gz",
+      "sha256": "c9b32b4253be5ae63d1ff16eea06b94b5f0f2951b7a02aceef58e3a3ce49c51f",
+      "size": 1063408,
+      "file": "opus_1.4.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/o/opus/opus_1.4-1build1.debian.tar.xz",
+      "sha256": "cea2249c7aa45747ef64e8a10ae5f3f40eb7e895e2acfff44dceaf453eed6da3",
+      "size": 109268,
+      "file": "opus_1.4-1build1.debian.tar.xz"
+    }
+  ],
+  "libogg": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libo/libogg/libogg_1.3.5-3build1.dsc",
+      "sha256": "60e700e863a1214221bf083edc5f2562e26f1e0c933da374a2f6e7cfaad96562",
+      "size": 2194,
+      "file": "libogg.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libo/libogg/libogg_1.3.5.orig.tar.xz",
+      "sha256": "c4d91be36fc8e54deae7575241e03f4211eb102afb3fc0775fbbc1b740016705",
+      "size": 429076,
+      "file": "libogg_1.3.5.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libo/libogg/libogg_1.3.5-3build1.debian.tar.xz",
+      "sha256": "e8c8e0b7840794288808c613002d340776a9cd2f75b3bd3c6349a43f73cb577c",
+      "size": 18152,
+      "file": "libogg_1.3.5-3build1.debian.tar.xz"
+    }
+  ],
+  "mpg123": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/m/mpg123/mpg123_1.32.5-1ubuntu1.1.dsc",
+      "sha256": "10c771ac9362ddfa6b863740cc541a3d1b88841908231a28b87b49f66974cab6",
+      "size": 2479,
+      "file": "mpg123.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/m/mpg123/mpg123_1.32.5.orig.tar.xz",
+      "sha256": "04d20ed3ae6aad576a0ccec4a851b9f142afa56ef20e82f1bf610c4e8bcd8579",
+      "size": 927136,
+      "file": "mpg123_1.32.5.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/m/mpg123/mpg123_1.32.5-1ubuntu1.1.debian.tar.xz",
+      "sha256": "b82502b87d031e5f9f49eef0d90e59bc94eba737bcc1aa3e6a8e3a665ea6774a",
+      "size": 35592,
+      "file": "mpg123_1.32.5-1ubuntu1.1.debian.tar.xz"
+    }
+  ],
+  "lame": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/l/lame/lame_3.100-6build1.dsc",
+      "sha256": "5e3b3dad91b659e2b8cd7962f1978a5bd1fc3381d1dcb00823ca85292fcd8402",
+      "size": 2275,
+      "file": "lame.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/l/lame/lame_3.100.orig.tar.gz",
+      "sha256": "ddfe36cab873794038ae2c1210557ad34857a4b6bdc515785d1da9e175b1da1e",
+      "size": 1524133,
+      "file": "lame_3.100.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/l/lame/lame_3.100-6build1.debian.tar.xz",
+      "sha256": "49e2130db68031586cd42a1af23b0b0d722d0aeeebfce07f8b8e2adabf7cdc68",
+      "size": 13440,
+      "file": "lame_3.100-6build1.debian.tar.xz"
+    }
+  ],
+  "libcap2": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libc/libcap2/libcap2_2.66-5ubuntu2.4.dsc",
+      "sha256": "8178019803f285b92e52e82cf84b0a6fc18840041270b2c588db826b8277e3e0",
+      "size": 2319,
+      "file": "libcap2.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libc/libcap2/libcap2_2.66.orig.tar.xz",
+      "sha256": "15c40ededb3003d70a283fe587a36b7d19c8b3b554e33f86129c059a4bb466b2",
+      "size": 181592,
+      "file": "libcap2_2.66.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libc/libcap2/libcap2_2.66-5ubuntu2.4.debian.tar.xz",
+      "sha256": "7eb46752c6b59984494d2f641a049b9d4b394b7d1fe067729ccbc413c5943136",
+      "size": 24724,
+      "file": "libcap2_2.66-5ubuntu2.4.debian.tar.xz"
+    }
+  ],
+  "libgcrypt20": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libgcrypt20/libgcrypt20_1.10.3-2ubuntu0.2.dsc",
+      "sha256": "688df10bc9c90b241926470d1f12a4d5092157263a6c1555996c53bcf40ca7d1",
+      "size": 2914,
+      "file": "libgcrypt20.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libgcrypt20/libgcrypt20_1.10.3.orig.tar.bz2",
+      "sha256": "8b0870897ac5ac67ded568dcfadf45969cfa8a6beb0fd60af2a9eadc2a3272aa",
+      "size": 3783827,
+      "file": "libgcrypt20_1.10.3.orig.tar.bz2"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libgcrypt20/libgcrypt20_1.10.3.orig.tar.bz2.asc",
+      "sha256": "f02a5f961b89c034a78decbb355ea5a8d9356df5a9636dec53ae548d7d814b14",
+      "size": 390,
+      "file": "libgcrypt20_1.10.3.orig.tar.bz2.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libgcrypt20/libgcrypt20_1.10.3-2ubuntu0.2.debian.tar.xz",
+      "sha256": "8298a57538f427d3c1112f2d86e374dd8223156e06b403f5c7945dd3d86f2050",
+      "size": 66364,
+      "file": "libgcrypt20_1.10.3-2ubuntu0.2.debian.tar.xz"
+    }
+  ],
+  "lz4": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/l/lz4/lz4_1.9.4-1build1.1.dsc",
+      "sha256": "ba7b585b15d8b4c955dd68c7af5aa89901cfbb3fdb4f2607ccad51628857d669",
+      "size": 2061,
+      "file": "lz4.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/l/lz4/lz4_1.9.4.orig.tar.gz",
+      "sha256": "0b0e3aa07c8c063ddf40b082bdf7e37a1562bda40a0ff5272957f3e987e0e54b",
+      "size": 354063,
+      "file": "lz4_1.9.4.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/l/lz4/lz4_1.9.4-1build1.1.debian.tar.xz",
+      "sha256": "9551b039576db7c87f38c3c847283877de65114cca06488accb9596a7c4f1ead",
+      "size": 8356,
+      "file": "lz4_1.9.4-1build1.1.debian.tar.xz"
+    }
+  ],
+  "xz-utils": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/x/xz-utils/xz-utils_5.6.1+really5.4.5-1ubuntu0.3.dsc",
+      "sha256": "34c2be772533a5c31e881bc620cedaf9be3d315feb677f00e12c136c299d126a",
+      "size": 2505,
+      "file": "xz-utils.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/x/xz-utils/xz-utils_5.6.1+really5.4.5.orig.tar.xz",
+      "sha256": "da9dec6c12cf2ecf269c31ab65b5de18e8e52b96f35d5bcd08c12b43e6878803",
+      "size": 1680520,
+      "file": "xz-utils_5.6.1+really5.4.5.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/x/xz-utils/xz-utils_5.6.1+really5.4.5-1ubuntu0.3.debian.tar.xz",
+      "sha256": "03f321901f6e1c56235cd7ae6a6784c104b1b1060ca3afa5a5806e345ee72e01",
+      "size": 31672,
+      "file": "xz-utils_5.6.1+really5.4.5-1ubuntu0.3.debian.tar.xz"
+    }
+  ],
+  "icu": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/i/icu/icu_74.2-1ubuntu3.1.dsc",
+      "sha256": "6cbf2e7018b5d16d634994e32af96f4d60f4468c36674c57f897b68812bbd883",
+      "size": 2350,
+      "file": "icu.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/i/icu/icu_74.2.orig.tar.gz",
+      "sha256": "5e4fb11d6a3e6b85afb55de8da8a71538f1d8fd64fce893986b37d60e5bb0091",
+      "size": 26618071,
+      "file": "icu_74.2.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/i/icu/icu_74.2.orig.tar.gz.asc",
+      "sha256": "1ca528b0017bae639fec7e89e3f988d0fa7def3e2436e5f7f5f9ec7dec2d9ece",
+      "size": 659,
+      "file": "icu_74.2.orig.tar.gz.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/i/icu/icu_74.2-1ubuntu3.1.debian.tar.xz",
+      "sha256": "45c74f50709547b0bfe3de020fd77be92c44d55e7020e718b0a47a0d0382f074",
+      "size": 64432,
+      "file": "icu_74.2-1ubuntu3.1.debian.tar.xz"
+    }
+  ],
+  "libmd": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libm/libmd/libmd_1.1.0-2build1.1.dsc",
+      "sha256": "11dfd22bba97a4c4ca6c09f34743ac6c72a34eb81344e3a1681c45e2d60ce239",
+      "size": 2391,
+      "file": "libmd.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libm/libmd/libmd_1.1.0.orig.tar.xz",
+      "sha256": "1bd6aa42275313af3141c7cf2e5b964e8b1fd488025caf2f971f43b00776b332",
+      "size": 271228,
+      "file": "libmd_1.1.0.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libm/libmd/libmd_1.1.0.orig.tar.xz.asc",
+      "sha256": "402fd3024e43ab975733d09e661804a58ca58697194e4b15216b1217cfe1dadb",
+      "size": 833,
+      "file": "libmd_1.1.0.orig.tar.xz.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libm/libmd/libmd_1.1.0-2build1.1.debian.tar.xz",
+      "sha256": "ed337af7e336b7dbb6b246c339baa34c9e832bf614a44d06158238259df12307",
+      "size": 8448,
+      "file": "libmd_1.1.0-2build1.1.debian.tar.xz"
+    }
+  ],
+  "libgpg-error": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libgpg-error/libgpg-error_1.47-3build2.1.dsc",
+      "sha256": "3c8abf463c9ade945fe2e9d87c4aa2bff0026964207b07e99432d9ef6d9436d8",
+      "size": 3007,
+      "file": "libgpg-error.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libgpg-error/libgpg-error_1.47.orig.tar.bz2",
+      "sha256": "9e3c670966b96ecc746c28c2c419541e3bcb787d1a73930f5e5f5e1bcbbb9bdb",
+      "size": 1020862,
+      "file": "libgpg-error_1.47.orig.tar.bz2"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libgpg-error/libgpg-error_1.47.orig.tar.bz2.asc",
+      "sha256": "6ab547bf020761e1df80b08335773a91c345ff2c1344f15b1f7d195293ab21a5",
+      "size": 228,
+      "file": "libgpg-error_1.47.orig.tar.bz2.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libgpg-error/libgpg-error_1.47-3build2.1.debian.tar.xz",
+      "sha256": "f02a079a6ddf9930659c3402820b6bd190687e8f1c223f340c965a9da74abcd5",
+      "size": 18776,
+      "file": "libgpg-error_1.47-3build2.1.debian.tar.xz"
+    }
+  ],
+  "fonts-dejavu": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/fonts-dejavu/fonts-dejavu_2.37-8.dsc",
+      "sha256": "219f7f8fba98827caaa296520730171ec230d3090ed8b6d663edb66839b48847",
+      "size": 2156,
+      "file": "fonts-dejavu.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/fonts-dejavu/fonts-dejavu_2.37.orig.tar.bz2",
+      "sha256": "4b21c5203f792343d5e90ab1cb0cf07e99887218abe3d83cd9a98cea9085e799",
+      "size": 12050109,
+      "file": "fonts-dejavu_2.37.orig.tar.bz2"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/fonts-dejavu/fonts-dejavu_2.37-8.debian.tar.xz",
+      "sha256": "2401402245dec8a59fc5f0f8eff76d203a38440797f7f223e1d044e07c2d41fb",
+      "size": 13176,
+      "file": "fonts-dejavu_2.37-8.debian.tar.xz"
+    }
+  ],
+  "vulkan-loader": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/v/vulkan-loader/vulkan-loader_1.3.275.0-1build1.dsc",
+      "sha256": "e158bda184efcdbb5a063dc2e008ec5ab943ea4f1825eb9cb86615a190df05e5",
+      "size": 2384,
+      "file": "vulkan-loader.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/v/vulkan-loader/vulkan-loader_1.3.275.0.orig.tar.xz",
+      "sha256": "5f95219fc189b4c09ce537d8ec1ea4b5861b087cd00b6d821f99aecf6e9dddce",
+      "size": 2642760,
+      "file": "vulkan-loader_1.3.275.0.orig.tar.xz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/v/vulkan-loader/vulkan-loader_1.3.275.0-1build1.debian.tar.xz",
+      "sha256": "16b22d9a95fb35ae1e9d9d89f26b4f27305f86700b20615c23618014ab184ac9",
+      "size": 9132,
+      "file": "vulkan-loader_1.3.275.0-1build1.debian.tar.xz"
+    }
+  ],
+  "libxcomposite": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcomposite/libxcomposite_0.4.5-1build3.dsc",
+      "sha256": "ab25ebb6e0f160f5fc146822ac6af56bc8e9aa78a829f80fc9788e286f578f56",
+      "size": 2199,
+      "file": "libxcomposite.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcomposite/libxcomposite_0.4.5.orig.tar.gz",
+      "sha256": "581c7fc0f41a99af38b1c36b9be64bc13ef3f60091cd3f01105bbc7c01617d6c",
+      "size": 386513,
+      "file": "libxcomposite_0.4.5.orig.tar.gz"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcomposite/libxcomposite_0.4.5-1build3.diff.gz",
+      "sha256": "a9310699c92296e861555384ab52911c36920cbd076eb704120fda5a2a0c2435",
+      "size": 7840,
+      "file": "libxcomposite_0.4.5-1build3.diff.gz"
+    }
+  ],
+  "libusb-1.0": [
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libu/libusb-1.0/libusb-1.0_1.0.27-1.dsc",
+      "sha256": "8bb3b5e8ad48159cc562cc98b1d86ab78c0c24076bfaa25175855e332392503b",
+      "size": 2528,
+      "file": "libusb-1.0.dsc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libu/libusb-1.0/libusb-1.0_1.0.27.orig.tar.bz2",
+      "sha256": "ffaa41d741a8a3bee244ac8e54a72ea05bf2879663c098c82fc5757853441575",
+      "size": 643680,
+      "file": "libusb-1.0_1.0.27.orig.tar.bz2"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libu/libusb-1.0/libusb-1.0_1.0.27.orig.tar.bz2.asc",
+      "sha256": "1cd22bbfe4ce382ca9b091e2a6275c48f1c776253815cbb615da295ae0bfe687",
+      "size": 833,
+      "file": "libusb-1.0_1.0.27.orig.tar.bz2.asc"
+    },
+    {
+      "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libu/libusb-1.0/libusb-1.0_1.0.27-1.debian.tar.xz",
+      "sha256": "560bc02e704b8f28b04be3e6a551ccbf2b5c5cb0850864d6a5416ad05723f0b4",
+      "size": 17044,
+      "file": "libusb-1.0_1.0.27-1.debian.tar.xz"
+    }
+  ],
+  "proot": [
+    {
+      "url": "https://github.com/termux/proot/archive/v5.1.107.96.zip",
+      "sha256": "75f654fe60dea92dabff2bf083ae8bfe4f91baa6a1a374786a6bf391015eebaa",
+      "file": "proot.zip",
+      "size": 489963
+    }
+  ],
+  "libtalloc": [
+    {
+      "url": "https://www.samba.org/ftp/talloc/talloc-2.5.0.tar.gz",
+      "sha256": "912afa237510ae542a7733998eb18a12bcda35ab6729c8e2ddb43e8d0ebab007",
+      "file": "libtalloc.tar.gz",
+      "size": 690172
+    }
+  ],
+  "libandroid-shmem": [
+    {
+      "url": "https://github.com/termux/libandroid-shmem/archive/refs/tags/v0.7.tar.gz",
+      "sha256": "1e5ff8459bc0a8c229dd8a94b27d119987e09ef3414331c2b5ebfff20b98e867",
+      "file": "libandroid-shmem.tar.gz",
+      "size": 8891
+    }
+  ],
+  "box86": [
+    {
+      "url": "https://github.com/ptitSeb/box86/archive/refs/tags/v0.3.8.tar.gz",
+      "sha256": "454e5f7c57f7c7c4530d4f453bf6afd07b00bd93c92fe16a4305bacae0b6a93d",
+      "file": "box86.tar.gz",
+      "size": 3518627
+    }
+  ],
+  "termux-build": [
+    {
+      "url": "https://github.com/termux/termux-packages/archive/27da60be397a6e9eb898bba8d03bcd648782ccd5.tar.gz",
+      "sha256": "2c234f7fbba9b69411d1f099e93878d4496a538cf702a9ecdae389fe159dbedc",
+      "file": "termux-build.tar.gz",
+      "size": 9739007
+    }
+  ],
+  "wine": [
+    {
+      "url": "https://dl.winehq.org/wine/source/9.0/wine-9.0.tar.xz",
+      "sha256": "7cfd090a5395f5b76d95bb5defac8a312c8de4c070c1163b8b58da38330ca6ee",
+      "file": "wine.tar.xz",
+      "size": 30007216
+    }
+  ],
+  "wine-build": [
+    {
+      "url": "https://github.com/Kron4ek/Wine-Builds/archive/e73e7c66c85ed46d36234c775eb9495dedf310fd.tar.gz",
+      "sha256": "b1b57e1b50bfc0a91c1e4de58ac420e8b3a922f27e153481f56287edaf2dcf69",
+      "file": "wine-build.tar.gz",
+      "size": 10225
+    }
+  ],
+  "xkeyboard-config": [
+    {
+      "url": "https://gitlab.freedesktop.org/xkeyboard-config/xkeyboard-config/-/archive/xkeyboard-config-2.48/xkeyboard-config-xkeyboard-config-2.48.tar.gz",
+      "sha256": "1e304d3c7a74bfbad0bae16b25d4c2b2eda06714b988953607a06cc013bf3077",
+      "file": "xkeyboard-config.tar.gz",
+      "size": 1797903
+    }
+  ]
+}

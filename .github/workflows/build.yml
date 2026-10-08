@@ -1,0 +1,91 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            platform: Windows
+            artifact: Windows
+          - os: ubuntu-22.04
+            platform: Linux
+            artifact: Linux
+          - os: macos-latest
+            platform: Mac
+            artifact: Mac
+          - os: macos-26-intel
+            platform: Mac
+            artifact: Mac-Intel
+          - os: macos-15-intel
+            platform: Mac
+            artifact: Mac-Intel-15
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Windows native toolchain
+        if: runner.os == 'Windows'
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe"
+          $installation = & $vswhere -latest -version '[17.0,18.0)' -products '*' -property installationPath
+          if (-not $installation) { throw 'Visual Studio 2022 is required for the Windows XP toolchain.' }
+          $installer = "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/setup.exe"
+          $arguments = @('modify', '--installPath', ('"' + $installation + '"'), '--add', 'Microsoft.VisualStudio.Component.VC.v141.x86.x64', '--add', 'Microsoft.VisualStudio.Component.WinXP', '--add', 'Microsoft.Component.VC.Runtime.UCRTSDK', '--quiet', '--norestart')
+          $process = Start-Process -FilePath $installer -ArgumentList $arguments -WindowStyle Hidden -Wait -PassThru
+          if ($process.ExitCode -notin @(0, 3010)) { throw "Native toolchain setup failed: $($process.ExitCode)" }
+          $crt = "${env:ProgramFiles(x86)}/Windows Kits/10/Lib/10.0.10240.0/ucrt/x86/libucrt.lib"
+          if (-not (Test-Path -LiteralPath $crt)) { throw 'Windows XP static CRT setup did not finish.' }
+      - run: ./Build/Package-Launcher.ps1 -Platform ${{ matrix.platform }}
+        timeout-minutes: 15
+      - name: Packaged startup
+        run: |
+          if ($IsWindows) {
+            $executable = Join-Path $PWD 'artifacts/DungeonRunnersLauncher.exe'
+            foreach ($arguments in @(@('--licenses', "$PWD/artifacts/notices.txt"), @('--verify-feed', "$PWD/artifacts/manifest.json"), @('--legacy', '--smoke-test'), @('--smoke-test'))) {
+              $process = Start-Process -FilePath $executable -ArgumentList $arguments -WindowStyle Hidden -Wait -PassThru
+              if ($process.ExitCode -ne 0) { throw "Packaged startup failed: $($process.ExitCode)" }
+            }
+          } else {
+            $architecture = [Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
+            $platform = if ($IsMacOS) { 'osx' } else { 'linux' }
+            $executable = Join-Path $PWD "artifacts/DungeonRunnersLauncher-$platform-$architecture"
+            & chmod 755 $executable
+            if ($LASTEXITCODE -ne 0) { throw 'Launcher permissions failed.' }
+            if ($IsLinux) { & xvfb-run -a $executable --smoke-test } else { & $executable --smoke-test }
+            if ($LASTEXITCODE -ne 0) { throw 'Packaged startup failed.' }
+          }
+      - uses: actions/upload-artifact@v4
+        if: failure() && runner.os == 'macOS'
+        with:
+          name: Runtime-diagnostics-${{ matrix.artifact }}
+          path: artifacts/runtime
+          if-no-files-found: ignore
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dungeon-Runners-Launcher-${{ matrix.artifact }}
+          path: |
+            artifacts/DungeonRunnersLauncher.exe
+            artifacts/DungeonRunnersLauncher-linux-*
+            artifacts/DungeonRunnersLauncher-osx-*
+            artifacts/Dungeon-Runners-Launcher-Mac.dmg
+            artifacts/Dungeon-Runners-Launcher-Linux*.AppImage
+            artifacts/Dungeon-Runners-Launcher-Linux.run
+            artifacts/Dungeon-Runners-Launcher-SteamDeck.run
+          retention-days: 14

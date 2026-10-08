@@ -1,0 +1,29 @@
+--- a/src/tracee/seccomp.c
++++ b/src/tracee/seccomp.c
+@@ -7,6 +7,7 @@
+ #include <linux/net.h> /* SYS_SENDMMSG */
+ #include <assert.h>    /* assert(3), */
+ #include <time.h>      /* time(2), */
++#include <sys/ptrace.h>
+ 
+ #include "extension/extension.h"
+ #include "cli/note.h"
+@@ -106,10 +107,16 @@
+ 	/* X86 uses orig_rax when selecting syscall,
+ 	 * however at this point we are after syscall has been rejected
+ 	 * and orig_rax was reset to -1.  */
++#if defined(ARCH_X86_64) || defined(ARCH_X86)
++	siginfo_t info = {};
++	if (ptrace(PTRACE_GETSIGINFO, tracee->pid, NULL, &info) < 0
++	    || info.si_code != SYS_SECCOMP)
++		return SIGSYS;
++#endif
+ #if defined(ARCH_X86_64)
+-	tracee->_regs[CURRENT].orig_rax = tracee->_regs[CURRENT].rax;
++	tracee->_regs[CURRENT].orig_rax = info.si_syscall;
+ #elif defined(ARCH_X86)
+-	tracee->_regs[CURRENT].orig_eax = tracee->_regs[CURRENT].eax;
++	tracee->_regs[CURRENT].orig_eax = info.si_syscall;
+ #endif
+ 
+ 	print_current_regs(tracee, 3, "seccomp SIGSYS");
