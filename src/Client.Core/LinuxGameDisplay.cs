@@ -137,7 +137,7 @@ public static class LinuxGameDisplay
             if (window is not null)
             {
                 var area = monitor.WorkArea;
-                if (window.X >= area.X && window.Y >= area.Y && (long)window.X + window.Width <= area.X + area.Width - 16 && (long)window.Y + window.Height <= area.Y + area.Height - 32)
+                if (window.X >= area.X && window.Y >= area.Y && (long)window.X + window.Width <= area.X + area.Width && (long)window.Y + window.Height <= area.Y + area.Height)
                 {
                     if (settled == TimeSpan.Zero) settled = timer.Elapsed;
                     if (timer.Elapsed - settled >= TimeSpan.FromMilliseconds(500)) return;

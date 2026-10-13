@@ -40,6 +40,26 @@ try
     Check(initial.Skip(1).SequenceEqual(unchanged.Skip(1)), "An existing game window was moved.");
     Console.WriteLine("PASS game monitor placement: oversized window fitted, selected display used, existing instance preserved.");
 }
+catch
+{
+    if (OperatingSystem.IsLinux())
+    {
+        Console.WriteLine("CHECK displays: " + string.Join("; ", LinuxGameDisplay.Monitors().Select(monitor => monitor.Id + " " + monitor.WorkArea)));
+        var command = Dependencies.Command(Dependencies.MonitorTool()!, "-lpGx");
+        using var process = Process.Start(command)!;
+        var text = await process.StandardOutput.ReadToEndAsync();
+        await process.WaitForExitAsync();
+        foreach (var window in LinuxGameDisplay.ParseWindows(text).Where(window => window.Class.Contains("dungeonrunners", StringComparison.OrdinalIgnoreCase)))
+        {
+            Console.WriteLine("CHECK fixture: " + window);
+            Console.WriteLine("CHECK cwd: " + new DirectoryInfo("/proc/" + window.ProcessId + "/cwd").ResolveLinkTarget(true)?.FullName);
+            Console.WriteLine("CHECK parents: " + File.ReadAllText("/proc/" + window.ProcessId + "/stat"));
+        }
+        Console.WriteLine("CHECK session IDs: " + string.Join(",", processes.Select(process => process.Id)));
+        foreach (var path in Directory.GetFiles(root, "state-*.txt")) Console.WriteLine("CHECK actual geometry: " + File.ReadAllText(path));
+    }
+    throw;
+}
 finally
 {
     File.WriteAllText(Path.Combine(root, "stop"), "");
