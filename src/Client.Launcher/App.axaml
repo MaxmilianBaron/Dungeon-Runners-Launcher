@@ -44,5 +44,6 @@
     <Style Selector="Button"><Setter Property="Theme" Value="{StaticResource GameButton}" /></Style>
     <Style Selector="CheckBox"><Setter Property="Theme" Value="{StaticResource GameCheckBox}" /></Style>
     <Style Selector="TextBox"><Setter Property="Background" Value="#BB090806" /><Setter Property="Foreground" Value="#EFE6CF" /><Setter Property="BorderBrush" Value="#6D5638" /><Setter Property="BorderThickness" Value="1" /><Setter Property="Padding" Value="8,5" /><Setter Property="FontFamily" Value="{StaticResource GameFont}" /><Setter Property="FontSize" Value="13" /><Setter Property="VerticalContentAlignment" Value="Center" /><Setter Property="SelectionBrush" Value="#8E713E" /></Style>
+    <Style Selector="ComboBox"><Setter Property="Background" Value="#BB090806" /><Setter Property="Foreground" Value="#EFE6CF" /><Setter Property="BorderBrush" Value="#6D5638" /><Setter Property="FontFamily" Value="{StaticResource GameFont}" /></Style>
   </Application.Styles>
 </Application>

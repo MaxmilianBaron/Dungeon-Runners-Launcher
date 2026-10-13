@@ -70,8 +70,8 @@ try {
             homepage = 'https://github.com/MaxmilianBaron/Dungeon-Runners-Launcher'
             description = 'Install, update and play Dungeon Runners Reborn'; contents = $files.ToArray()
             overrides = @{
-                deb = @{ depends = @('libc6 (>= 2.31)', 'libgcc-s1', 'libstdc++6', 'libfontconfig1', 'libice6', 'libsm6', 'libx11-6', 'libssl3t64 | libssl3 | libssl1.1') }
-                rpm = @{ depends = @('glibc >= 2.31', 'libgcc_s.so.1()(64bit)', 'libstdc++.so.6()(64bit)', 'libfontconfig.so.1()(64bit)', 'libICE.so.6()(64bit)', 'libSM.so.6()(64bit)', 'libX11.so.6()(64bit)', '(libssl.so.3()(64bit) or libssl.so.1.1()(64bit))') }
+                deb = @{ depends = @('libc6 (>= 2.31)', 'libgcc-s1', 'libstdc++6', 'libfontconfig1', 'libice6', 'libsm6', 'libx11-6', 'libxrandr2', 'wmctrl', 'libssl3t64 | libssl3 | libssl1.1') }
+                rpm = @{ depends = @('glibc >= 2.31', 'libgcc_s.so.1()(64bit)', 'libstdc++.so.6()(64bit)', 'libfontconfig.so.1()(64bit)', 'libICE.so.6()(64bit)', 'libSM.so.6()(64bit)', 'libX11.so.6()(64bit)', 'libXrandr.so.2()(64bit)', 'wmctrl', '(libssl.so.3()(64bit) or libssl.so.1.1()(64bit))') }
             }
             deb = @{ compression = 'gzip' }; rpm = @{ compression = 'gzip' }
         }

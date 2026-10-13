@@ -125,6 +125,35 @@ public static class Dependencies
         if (FindOnPath("python3") is null) throw new IOException("Python installation did not finish. Select Addons to retry.");
     }
 
+    public static string? MonitorTool() => FindOnPath("wmctrl");
+
+    public static ProcessStartInfo LinuxMonitorInstallCommand(string manager)
+    {
+        var script = manager switch
+        {
+            "apt-get" => "set -eu; export DEBIAN_FRONTEND=noninteractive; /usr/bin/apt-get update; /usr/bin/apt-get install -y wmctrl",
+            "dnf" => "set -eu; /usr/bin/dnf -y install wmctrl",
+            "zypper" => "set -eu; /usr/bin/zypper --non-interactive install wmctrl",
+            "pacman" => "set -eu; /usr/bin/pacman -S --needed --noconfirm wmctrl",
+            _ => throw new IOException("The Linux monitor tool is unavailable for this package manager.")
+        };
+        return Command("/usr/bin/pkexec", "/bin/sh", "-c", script);
+    }
+
+    public static async Task EnsureMonitorToolAsync(IProgress<ProgressInfo>? progress, Action committing, CancellationToken token)
+    {
+        if (!OperatingSystem.IsLinux() || MonitorTool() is not null) return;
+        var manager = new[] { "apt-get", "dnf", "zypper", "pacman" }.FirstOrDefault(name => File.Exists("/usr/bin/" + name))
+            ?? throw new IOException("The Linux monitor tool is missing. Install wmctrl through the software manager.");
+        var command = LinuxMonitorInstallCommand(manager);
+        if (!File.Exists(command.FileName)) throw new IOException("The desktop authorization service is missing. Install polkit through the software manager.");
+        progress?.Report(new("Preparing game monitor", "Installing monitor support. Approve the system authorization dialog."));
+        token.ThrowIfCancellationRequested();
+        committing();
+        await RunAsync(command, CancellationToken.None);
+        if (MonitorTool() is null) throw new IOException("Monitor support was not installed. Select Play to retry.");
+    }
+
     public static bool HasDirectXLibraries(string folder) => DirectXLibraries.All(name => IsX86Library(Path.Combine(folder, name)));
 
     private static bool IsX86Library(string path)

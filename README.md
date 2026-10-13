@@ -13,6 +13,8 @@ Desktop [Addons](https://github.com/MaxmilianBaron/Dungeon-Runners-Addons): `Ins
 
 Launch additional clients with `Play`. The launcher reopens after its updates.
 
+On Windows and Linux, select **Game monitor** to choose where the game opens. The launcher remembers the selection and fits the game window to that monitor. Selecting a monitor uses windowed mode; **Use game settings** keeps the game's own display settings. Linux monitor placement uses Wine with X11/XWayland.
+
 Launcher links: `Website` · `Armory` · `Leaderboard` · `Discord` · `Desync Report`.
 
 `Windows`: modern UI or native UI for `XP`, `Vista`, `7`, `8`, `8.1`; both support addons.

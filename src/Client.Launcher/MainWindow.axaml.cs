@@ -56,6 +56,9 @@ public partial class MainWindow : Window
     private bool rememberedFolder;
     private int headerLayout = -1;
     private string Mode = "install";
+    private sealed record MonitorChoice(string Id, string Label) { public override string ToString() => Label; }
+    private string monitorSelection = "";
+    private bool loadingMonitors;
     private static string LocalData => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify);
 
     public MainWindow() : this(false) { }
@@ -86,6 +89,7 @@ public partial class MainWindow : Window
             if (installed is not null) { folder = installed; rememberedFolder = true; }
         }
         Folder.Text = folder;
+        monitorSelection = preview ? "" : GameDisplay.Read();
         Status.PropertyChanged += (_, e) => { if (e.Property == TextBlock.TextProperty) RefreshStatusVisibility(); };
         Detail.PropertyChanged += (_, e) => { if (e.Property == TextBlock.TextProperty) RefreshStatusVisibility(); };
         ContentGrid.SizeChanged += (_, _) => UpdateResponsiveLayout();
@@ -107,6 +111,8 @@ public partial class MainWindow : Window
 
     private async void OnLoaded(object? sender, EventArgs e)
     {
+        RefreshMonitors();
+        Screens.Changed += MonitorsChanged;
         FitToScreen();
         timer.Start();
         await AdvanceArtworkAsync();
@@ -167,6 +173,51 @@ public partial class MainWindow : Window
             Position = new PixelPoint(Math.Clamp(Position.X, screen.WorkingArea.X, right), Math.Clamp(Position.Y, screen.WorkingArea.Y, bottom));
         }
     }
+
+    private IReadOnlyList<GameMonitor> GameMonitors()
+    {
+        if (preview) return new[] { new GameMonitor("preview-small", "Monitor 1", new(0, 0, 1920, 1080), new(0, 0, 1920, 1040), true), new GameMonitor("preview-wide", "Monitor 2", new(1920, 0, 5120, 1440), new(1920, 0, 5120, 1400), false) };
+        if (OperatingSystem.IsWindows()) return WindowsGameDisplay.Monitors();
+        if (OperatingSystem.IsLinux()) return LinuxGameDisplay.Monitors();
+        return Array.Empty<GameMonitor>();
+    }
+
+    private void RefreshMonitors()
+    {
+        DisplayPanel.IsVisible = preview || OperatingSystem.IsWindows() || OperatingSystem.IsLinux();
+        if (!DisplayPanel.IsVisible) return;
+        var monitors = GameMonitors();
+        var choices = new List<MonitorChoice> { new("", "Use game settings") };
+        choices.AddRange(monitors.Select(monitor => new MonitorChoice(monitor.Id, monitor.ToString())));
+        var selected = choices.FirstOrDefault(choice => choice.Id == monitorSelection);
+        if (selected is null && GameDisplay.Resolve(monitorSelection, monitors) is { } fallback)
+        {
+            selected = new(monitorSelection, fallback + " (saved monitor unavailable)");
+            choices.Add(selected);
+        }
+        loadingMonitors = true;
+        try { GameMonitor.ItemsSource = choices; GameMonitor.SelectedItem = selected ?? choices[0]; }
+        finally { loadingMonitors = false; }
+        GameMonitor.IsEnabled = operation is null && monitors.Count > 0;
+        MonitorHint.Text = monitors.Count == 0 ? "Monitor selection needs X11/XWayland on Linux."
+            : monitorSelection.Length == 0 ? "Uses the game's saved display settings."
+            : selected?.Label.Contains("unavailable", StringComparison.Ordinal) == true ? "Saved monitor unavailable; using the primary monitor."
+            : "Windowed mode; fits the game to this monitor.";
+    }
+
+    private void MonitorChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (loadingMonitors || GameMonitor.SelectedItem is not MonitorChoice choice) return;
+        try
+        {
+            if (!preview) GameDisplay.Save(choice.Id);
+            monitorSelection = choice.Id;
+            RefreshMonitors();
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { Status.Text = "Monitor selection could not be saved"; Detail.Text = error.Message; }
+    }
+
+    private void MonitorsChanged(object? sender, EventArgs e) => RefreshMonitors();
 
     private async Task CheckInBackgroundAsync()
     {
@@ -342,6 +393,7 @@ public partial class MainWindow : Window
         InstallationPanel.IsVisible = !gamePresent;
         Folder.IsEnabled = !busy;
         Browse.IsEnabled = !busy;
+        GameMonitor.IsEnabled = !busy && GameMonitors().Count > 0;
         RefreshStatusVisibility();
     }
 
@@ -547,22 +599,38 @@ public partial class MainWindow : Window
             Detail.Text = "Checking the client and connection settings…";
             if (!IsRunning(root)) await InstallEntryPointsAsync(root, false);
             InstallationLocation.Save(root); rememberedFolder = true;
+            var monitor = GameDisplay.Resolve(monitorSelection, GameMonitors());
+            if (monitorSelection.Length > 0 && monitor is null) throw new IOException("The selected game monitor is unavailable. Choose Use game settings or reconnect the monitor.");
             if (requirements.Wine is not null)
             {
                 await Task.Run(() => installer.PreparePlayAsync(root, manifest, token), token);
+                LinuxGameDisplay.Snapshot? before = null;
+                if (OperatingSystem.IsLinux() && monitor is not null)
+                {
+                    var progress = new Progress<ProgressInfo>(value => { Status.Text = value.Phase; Detail.Text = value.Detail; });
+                    await Dependencies.EnsureMonitorToolAsync(progress, () => Dispatcher.UIThread.Invoke(() => { committing = true; Cancel.IsEnabled = false; }), token);
+                    before = await LinuxGameDisplay.CaptureAsync(token);
+                }
+                await Task.Run(() => GameDisplay.Prepare(root, monitor, token), token);
                 token.ThrowIfCancellationRequested();
                 committing = true; Cancel.IsEnabled = false;
-                try { await GameSession.StartAsync(root, requirements.Wine); }
+                try
+                {
+                    var session = await GameSession.StartAsync(root, requirements.Wine, x11Monitor: OperatingSystem.IsLinux() && monitor is not null);
+                    if (OperatingSystem.IsLinux() && monitor is not null && before is not null) await LinuxGameDisplay.PlaceAsync(session, root, monitor, before, token);
+                }
                 finally { OpenGameLog.IsVisible = GameSession.LatestLog(root) is not null; }
                 return;
             }
             Process? process = null;
             try
             {
+                await Task.Run(() => GameDisplay.Prepare(root, monitor, token), token);
                 await Task.Run(() => installer.PreparePlayAsync(root, manifest, token, game =>
                 {
                     process = Process.Start(GameLaunch.Command(game, requirements.Wine)) ?? throw new IOException("The game could not be started.");
                 }), token);
+                if (OperatingSystem.IsWindows() && monitor is not null) await WindowsGameDisplay.PlaceAsync(process!, root, monitor, token);
                 await GameTaskbar.ConfigureAsync(process!, root);
             }
             finally { process?.Dispose(); }
@@ -789,6 +857,7 @@ public partial class MainWindow : Window
             return;
         }
         timer.Stop();
+        Screens.Changed -= MonitorsChanged;
         closed = true;
         updateCheck?.Cancel();
         artworkTimer.Stop();

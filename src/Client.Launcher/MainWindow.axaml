@@ -5,7 +5,7 @@
       <Border.Background><ImageBrush Source="avares://DungeonRunnersLauncher/Assets/AdBackground.png" Stretch="Fill" /></Border.Background>
       <Grid Margin="8,0" ColumnDefinitions="11*,78*,11*">
         <ScrollViewer x:Name="PageScroll" Grid.Column="1" Margin="0,8,0,12" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <Grid x:Name="ContentGrid" MinHeight="{Binding Bounds.Height, ElementName=PageScroll}" RowDefinitions="Auto,*,Auto,Auto,Auto">
+        <Grid x:Name="ContentGrid" MinHeight="{Binding Bounds.Height, ElementName=PageScroll}" RowDefinitions="Auto,*,Auto,Auto,Auto,Auto">
           <Grid x:Name="Header" ColumnDefinitions="150,*,150" RowDefinitions="78">
             <StackPanel x:Name="WebsiteLinks" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center" Spacing="6">
               <StackPanel Orientation="Horizontal">
@@ -51,14 +51,19 @@
             <Grid ColumnDefinitions="*,Auto"><TextBox x:Name="Folder" AutomationProperties.Name="Installation folder" TextChanged="FolderChanged" Padding="8,5" /><Button x:Name="Browse" Grid.Column="1" Content="Browse" Margin="10,0,0,0" Click="BrowseClick" FontSize="12" MinHeight="30" Padding="10,2" /></Grid>
             <CheckBox x:Name="DesktopShortcut" Content="Create a desktop shortcut" IsChecked="True" Margin="0,7,0,8" />
           </StackPanel>
-          <Border x:Name="StatusPanel" Grid.Row="3" Background="#CA090806" BorderBrush="#56422C" BorderThickness="1" Padding="12,7" Margin="0,0,0,10">
+          <StackPanel x:Name="DisplayPanel" Grid.Row="3" Margin="0,0,0,10" Spacing="4">
+            <TextBlock Text="Game monitor" Foreground="{StaticResource Accent}" FontSize="14" />
+            <ComboBox x:Name="GameMonitor" AutomationProperties.Name="Game monitor" SelectionChanged="MonitorChanged" HorizontalAlignment="Stretch" FontSize="13" MinHeight="30" />
+            <TextBlock x:Name="MonitorHint" FontSize="11" Foreground="{StaticResource Muted}" TextWrapping="Wrap" />
+          </StackPanel>
+          <Border x:Name="StatusPanel" Grid.Row="4" Background="#CA090806" BorderBrush="#56422C" BorderThickness="1" Padding="12,7" Margin="0,0,0,10">
             <Grid RowDefinitions="Auto,Auto,Auto">
               <DockPanel><Button x:Name="Cancel" Content="Cancel" DockPanel.Dock="Right" Click="CancelClick" IsVisible="False" Padding="9,1" MinHeight="24" FontSize="12" Margin="12,0,0,0" /><Button x:Name="OpenGameLog" Content="Open log" DockPanel.Dock="Right" Click="OpenGameLogClick" IsVisible="False" Padding="9,1" MinHeight="24" FontSize="12" Margin="12,0,0,0" /><TextBlock x:Name="Status" Text="Checking for updates" FontSize="17" Foreground="{StaticResource Accent}" VerticalAlignment="Center" TextWrapping="Wrap" /></DockPanel>
               <TextBlock x:Name="Detail" Grid.Row="1" Text="Connecting to the release service…" Foreground="{StaticResource Muted}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" FontSize="14" MaxHeight="44" ToolTip.Tip="{Binding Text, RelativeSource={RelativeSource Self}}" />
               <DockPanel x:Name="TransferRow" Grid.Row="2" IsVisible="False" Margin="0,5,0,0"><TextBlock x:Name="Transfer" DockPanel.Dock="Right" Text="" Foreground="{StaticResource Muted}" FontSize="11" Margin="12,0,0,0" /><ProgressBar x:Name="Progress" Height="5" Foreground="{StaticResource Accent}" Background="#302619" BorderThickness="0" Minimum="0" Maximum="100" IsVisible="False" VerticalAlignment="Center" /></DockPanel>
             </Grid>
           </Border>
-          <WrapPanel x:Name="Actions" Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center"><Button x:Name="Primary" Content="Install game" Click="PrimaryClick" FontSize="14" MinWidth="124" MinHeight="34" Padding="10,2" Margin="0,3,10,3" /><Button x:Name="Update" Content="Update" Click="UpdateClick" FontSize="14" MinWidth="104" MinHeight="34" Padding="10,2" Margin="0,3,10,3" /><Button x:Name="Addons" Content="Addons" Click="AddonsClick" FontSize="14" MinWidth="104" MinHeight="34" Padding="10,2" Margin="0,3,18,3" /><Button x:Name="Repair" Content="Repair" Click="RepairClick" VerticalAlignment="Center" FontSize="12" MinHeight="28" Padding="8,2" Margin="0,3" ToolTip.Tip="Verify and restore game files" /></WrapPanel>
+          <WrapPanel x:Name="Actions" Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center"><Button x:Name="Primary" Content="Install game" Click="PrimaryClick" FontSize="14" MinWidth="124" MinHeight="34" Padding="10,2" Margin="0,3,10,3" /><Button x:Name="Update" Content="Update" Click="UpdateClick" FontSize="14" MinWidth="104" MinHeight="34" Padding="10,2" Margin="0,3,10,3" /><Button x:Name="Addons" Content="Addons" Click="AddonsClick" FontSize="14" MinWidth="104" MinHeight="34" Padding="10,2" Margin="0,3,18,3" /><Button x:Name="Repair" Content="Repair" Click="RepairClick" VerticalAlignment="Center" FontSize="12" MinHeight="28" Padding="8,2" Margin="0,3" ToolTip.Tip="Verify and restore game files" /></WrapPanel>
         </Grid>
         </ScrollViewer>
       </Grid>

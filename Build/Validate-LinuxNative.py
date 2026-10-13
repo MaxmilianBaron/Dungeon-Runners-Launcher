@@ -131,6 +131,7 @@ def validate(path, binary, architecture):
     require(not any(name.endswith((".sh", ".run")) for name in files), "native installer contains a shell entry point")
     require(b"MIT License" in files[COPYRIGHT][3], "product license missing")
     require("libssl" in fields["Depends"] and ("libx11" in fields["Depends"] or "libX11" in fields["Depends"]), "runtime dependencies missing")
+    require("wmctrl" in fields["Depends"] and ("libxrandr" in fields["Depends"] or "libXrandr" in fields["Depends"]), "monitor support dependencies missing")
     print("PASS", path.name, fields["Version"], expected_arch, "native executable, menu, icon, permissions, ownership, libraries and exact payload")
 
 

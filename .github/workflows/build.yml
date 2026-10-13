@@ -81,6 +81,17 @@ jobs:
             if ($IsLinux) { & xvfb-run -a $executable --smoke-test } else { & $executable --smoke-test }
             if ($LASTEXITCODE -ne 0) { throw 'Packaged startup failed.' }
           }
+      - name: Game monitor placement
+        if: runner.os == 'Windows' || runner.os == 'Linux'
+        run: |
+          if ($IsLinux) {
+            & sudo apt-get install -y libx11-dev openbox
+            if ($LASTEXITCODE -ne 0) { throw 'Monitor check dependencies failed.' }
+            & xvfb-run -a /bin/sh -c 'openbox >/dev/null 2>&1 & exec pwsh -File ./Build/Check-GameDisplay.ps1'
+          } else {
+            & ./Build/Check-GameDisplay.ps1
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'Game monitor placement check failed.' }
       - uses: actions/upload-artifact@v4
         if: failure() && runner.os == 'macOS'
         with:

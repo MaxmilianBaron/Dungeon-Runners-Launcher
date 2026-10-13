@@ -180,6 +180,6 @@ void play(const Path& root,const Progress& progress) {
       }
       runtime_folders(root);Path config=under(root,"config/DungeonRunners.cfg");Bytes original=exists(config)?read(config,65536):Bytes{},connected=connection_config(original);if(original!=connected){game_closed();atomic_write(config,connected);}if(!exists(saved))atomic_write(saved,signed_bytes);
     }
-    requirements(root,progress);check_cancelled();start(under(root,"DungeonRunners.exe"),{L"ran_from_launcher"},root,false);
+    requirements(root,progress);check_cancelled();launch_game(root);
 }
 }

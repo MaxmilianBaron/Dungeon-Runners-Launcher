@@ -64,13 +64,18 @@ public static class GameLaunch
         return null;
     }
 
-    public static ProcessStartInfo Command(string root, string? wine)
+    public static ProcessStartInfo Command(string root, string? wine, bool x11Monitor = false)
     {
         var executable = SafeFiles.Under(root, "DungeonRunners.exe");
         var start = new ProcessStartInfo(wine ?? executable) { WorkingDirectory = root, UseShellExecute = false };
         if (wine is not null) start.ArgumentList.Add(executable);
         start.ArgumentList.Add("ran_from_launcher");
         if (wine is not null) ConfigureWine(start, root, wine);
+        if (wine is not null && x11Monitor)
+        {
+            start.Environment.TryGetValue("WINEDLLOVERRIDES", out var overrides);
+            start.Environment["WINEDLLOVERRIDES"] = LibraryOverrides(overrides, "", new[] { "winewayland.drv" });
+        }
         if (wine is not null && File.Exists(SafeFiles.Under(root, "Addons/Runtime/Addons.dll")))
         {
             start.Environment.TryGetValue("WINEDLLOVERRIDES", out var overrides);
@@ -112,6 +117,9 @@ public static class GameLaunch
     public static string AddonOverrides(string? current) => LibraryOverrides(current, "d3d9");
 
     private static string LibraryOverrides(string? current, params string[] libraries)
+        => LibraryOverrides(current, "n,b", libraries);
+
+    private static string LibraryOverrides(string? current, string order, string[] libraries)
     {
         var result = new List<string>();
         foreach (var part in (current ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries))
@@ -122,7 +130,7 @@ public static class GameLaunch
             var remaining = string.Join(',', names);
             if (remaining.Length > 0) result.Add(remaining + "=" + pair[1]);
         }
-        result.Add(string.Join(',', libraries) + "=n,b");
+        result.Add(string.Join(',', libraries) + "=" + order);
         return string.Join(';', result);
     }
 }

@@ -5,6 +5,8 @@ using System.Text.Json;
 
 namespace DungeonRunners.Client;
 
+public sealed record GameSessionProcess(int Id, long Started);
+
 public static class GameSession
 {
     private sealed record Owner(int Id, long Started);
@@ -20,12 +22,12 @@ public static class GameSession
         return File.Exists(log) ? log : null;
     }
 
-    public static async Task StartAsync(string root, string wine, TimeSpan? startupWindow = null)
+    public static async Task<GameSessionProcess> StartAsync(string root, string wine, TimeSpan? startupWindow = null, bool x11Monitor = false)
     {
-        await ObserveAsync(root, GameLaunch.Command(root, wine), startupWindow ?? TimeSpan.FromSeconds(5));
+        return await ObserveAsync(root, GameLaunch.Command(root, wine, x11Monitor), startupWindow ?? TimeSpan.FromSeconds(5));
     }
 
-    public static async Task ObserveAsync(string root, ProcessStartInfo command, TimeSpan startupWindow)
+    public static async Task<GameSessionProcess> ObserveAsync(string root, ProcessStartInfo command, TimeSpan startupWindow)
     {
         if (OperatingSystem.IsWindows()) throw new PlatformNotSupportedException();
         if (startupWindow < TimeSpan.Zero || startupWindow > TimeSpan.FromSeconds(30)) throw new ArgumentOutOfRangeException(nameof(startupWindow));
@@ -46,9 +48,11 @@ public static class GameSession
         foreach (var value in command.Environment) wrapper.Environment[value.Key] = value.Value;
         wrapper.Environment["WINEDEBUG"] = "-all,err+all,warn+module";
         using var process = Process.Start(wrapper) ?? throw new IOException("The game could not be started.");
+        var session = new GameSessionProcess(process.Id, 0);
         try
         {
-            var owner = new Owner(process.Id, LauncherReplacement.ProcessStamp(process));
+            session = new(process.Id, LauncherReplacement.ProcessStamp(process));
+            var owner = new Owner(session.Id, session.Started);
             SafeFiles.WriteAtomic(SafeFiles.Under(root, relative + "/owner.json"), JsonSerializer.SerializeToUtf8Bytes(owner));
         }
         catch (Exception error) when (error is InvalidOperationException or System.ComponentModel.Win32Exception or IOException or UnauthorizedAccessException) { }
@@ -64,6 +68,7 @@ public static class GameSession
             }
             await Task.Delay(100);
         }
+        return session;
     }
 
     public static void Prune(string root, string current)
