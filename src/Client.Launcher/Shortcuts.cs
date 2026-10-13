@@ -36,6 +36,7 @@ public static class Shortcuts
             var current = await Catalog.HashAsync(target);
             if (current == hash)
             {
+                EnsureExecutable(target);
                 SafeFiles.WriteAtomic(marker, Encoding.ASCII.GetBytes(hash));
                 return;
             }
@@ -43,8 +44,13 @@ public static class Shortcuts
                 throw new IOException("An unknown launcher already exists in the game folder. It was preserved.");
         }
         SafeFiles.WriteAtomic(target, await File.ReadAllBytesAsync(source));
-        if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(target, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute | UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+        EnsureExecutable(target);
         SafeFiles.WriteAtomic(marker, Encoding.ASCII.GetBytes(hash));
+    }
+
+    private static void EnsureExecutable(string path)
+    {
+        if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute | UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
     }
 
     private static async Task RetirePreviousEntriesAsync(string root, string launcher)
@@ -63,11 +69,11 @@ public static class Shortcuts
         }
     }
 
-    public static string Create(string launcher, string root, string desktop)
+    public static string Create(string launcher, string root, string desktop, string? applications = null)
     {
         SafeFiles.NoLinks(desktop);
         Directory.CreateDirectory(desktop);
-        if (!OperatingSystem.IsWindows()) return CreateUnix(launcher, root, desktop);
+        if (!OperatingSystem.IsWindows()) return CreateUnix(launcher, root, desktop, applications);
         var type = Type.GetTypeFromProgID("WScript.Shell") ?? throw new IOException("Windows shortcuts are unavailable.");
         var shell = Activator.CreateInstance(type) ?? throw new IOException("Windows shortcuts are unavailable.");
         try
@@ -95,7 +101,7 @@ public static class Shortcuts
         finally { Marshal.FinalReleaseComObject(shell); }
     }
 
-    private static string CreateUnix(string launcher, string root, string desktop)
+    private static string CreateUnix(string launcher, string root, string desktop, string? applications)
     {
         if (OperatingSystem.IsWindows()) throw new PlatformNotSupportedException();
         if (launcher.IndexOfAny(new[] { '\r', '\n', '\0' }) >= 0 || root.IndexOfAny(new[] { '\r', '\n', '\0' }) >= 0) throw new IOException("The shortcut path contains unsupported characters.");
@@ -106,20 +112,70 @@ public static class Shortcuts
         var icon = SafeFiles.Under(root, ".dr-client/launcher.png");
         SafeFiles.WriteAtomic(icon, IconData("png"));
         var contents = "[Desktop Entry]\nType=Application\nName=Dungeon Runners Reborn\nExec=" + DesktopArgument(launcher) + "\nPath=" + DesktopValue(root) + "\nIcon=" + DesktopValue(icon) + "\nTerminal=false\nCategories=Game;\n";
+        var localData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (string.IsNullOrEmpty(localData)) localData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share");
+        var applicationRoot = applications ?? Path.Combine(localData, "applications");
+        InstallLinuxApplicationEntry(contents, applicationRoot);
         for (var i = 1; i <= 50; i++)
         {
             var name = "Dungeon Runners Reborn" + (i == 1 ? "" : $" ({i})") + ".desktop";
             var path = SafeFiles.Under(desktop, name);
             if (File.Exists(path))
             {
-                if (new FileInfo(path).Length < 32768 && File.ReadAllText(path) == contents) return path;
+                if (new FileInfo(path).Length < 32768 && File.ReadAllText(path) == contents)
+                {
+                    PrepareLinuxDesktopEntry(path);
+                    return path;
+                }
                 continue;
             }
             using (var file = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None)) file.Write(Encoding.UTF8.GetBytes(contents));
-            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute | UnixFileMode.GroupRead | UnixFileMode.OtherRead);
+            PrepareLinuxDesktopEntry(path);
             return path;
         }
         throw new IOException("Could not choose a desktop shortcut name.");
+    }
+
+    private static void InstallLinuxApplicationEntry(string contents, string directory)
+    {
+        if (!OperatingSystem.IsLinux()) throw new PlatformNotSupportedException();
+        SafeFiles.NoLinks(directory);
+        Directory.CreateDirectory(directory);
+        for (var i = 1; i <= 50; i++)
+        {
+            var path = SafeFiles.Under(directory, "dungeon-runners-launcher" + (i == 1 ? "" : "-" + i) + ".desktop");
+            if (File.Exists(path))
+            {
+                if (new FileInfo(path).Length >= 32768 || File.ReadAllText(path) != contents) continue;
+            }
+            else
+            {
+                using var file = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                file.Write(Encoding.UTF8.GetBytes(contents));
+            }
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.GroupRead | UnixFileMode.OtherRead);
+            return;
+        }
+        throw new IOException("Could not choose an application menu entry name.");
+    }
+
+    private static void PrepareLinuxDesktopEntry(string path)
+    {
+        if (!OperatingSystem.IsLinux()) throw new PlatformNotSupportedException();
+        File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute | UnixFileMode.GroupRead | UnixFileMode.OtherRead);
+        var start = new System.Diagnostics.ProcessStartInfo("gio") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
+        foreach (var argument in new[] { "set", path, "metadata::trusted", "true" }) start.ArgumentList.Add(argument);
+        try
+        {
+            using var process = System.Diagnostics.Process.Start(start);
+            if (process is null) return;
+            var output = process.StandardOutput.ReadToEndAsync();
+            var error = process.StandardError.ReadToEndAsync();
+            if (!process.WaitForExit(3000)) process.Kill(true);
+            Task.WaitAll(new Task[] { output, error }, 1000);
+        }
+        catch (System.ComponentModel.Win32Exception) { }
+        catch (InvalidOperationException) { }
     }
 
     private static byte[] IconData(string extension)

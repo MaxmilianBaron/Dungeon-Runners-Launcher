@@ -53,6 +53,17 @@ jobs:
           if (-not (Test-Path -LiteralPath $crt)) { throw 'Windows XP static CRT setup did not finish.' }
       - run: ./Build/Package-Launcher.ps1 -Platform ${{ matrix.platform }}
         timeout-minutes: 15
+      - name: Native Linux package contents
+        if: runner.os == 'Linux'
+        run: |
+          python3 ./Build/Validate-LinuxNative.py ./artifacts
+          if ($LASTEXITCODE -ne 0) { throw 'Native Linux package validation failed.' }
+          & sudo apt-get update
+          if ($LASTEXITCODE -ne 0) { throw 'Linux package repository refresh failed.' }
+          & sudo apt-get install -y ./artifacts/Dungeon-Runners-Launcher-Linux.deb
+          if ($LASTEXITCODE -ne 0) { throw 'Native Linux package installation failed.' }
+          & xvfb-run -a /usr/lib/dungeon-runners-launcher/DungeonRunnersLauncher --smoke-test
+          if ($LASTEXITCODE -ne 0) { throw 'Installed native Linux launcher failed.' }
       - name: Packaged startup
         run: |
           if ($IsWindows) {
@@ -86,6 +97,8 @@ jobs:
             artifacts/DungeonRunnersLauncher-osx-*
             artifacts/Dungeon-Runners-Launcher-Mac.dmg
             artifacts/Dungeon-Runners-Launcher-Linux*.AppImage
+            artifacts/Dungeon-Runners-Launcher-Linux*.deb
+            artifacts/Dungeon-Runners-Launcher-Linux*.rpm
             artifacts/Dungeon-Runners-Launcher-Linux.run
             artifacts/Dungeon-Runners-Launcher-SteamDeck.run
           retention-days: 14

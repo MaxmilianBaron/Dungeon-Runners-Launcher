@@ -136,6 +136,10 @@ try {
         }
     }
     if ($Platform -eq 'Linux') {
+        & (Join-Path $PSScriptRoot 'Package-LinuxNative.ps1') -OutputDirectory $outputRoot
+        foreach ($suffix in @('', '-arm64')) {
+            foreach ($format in @('deb', 'rpm')) { $outputs += Join-Path $outputRoot "Dungeon-Runners-Launcher-Linux$suffix.$format" }
+        }
         & (Join-Path $PSScriptRoot 'Package-LinuxInstaller.ps1') -OutputDirectory $outputRoot
         $outputs += Join-Path $outputRoot 'Dungeon-Runners-Launcher-Linux.run'
         $outputs += Join-Path $outputRoot 'Dungeon-Runners-Launcher-SteamDeck.run'

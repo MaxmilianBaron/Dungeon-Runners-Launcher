@@ -15,7 +15,11 @@ public partial class App : Application
             var smoke = desktop.Args?.Contains("--smoke-test") == true;
             var preview = smoke || desktop.Args?.Contains("--preview") == true;
             desktop.MainWindow = new MainWindow(preview);
-            if (smoke) desktop.MainWindow.Opened += async (_, _) => { await Task.Delay(2000); desktop.Shutdown(0); };
+            if (smoke) desktop.MainWindow.Opened += async (_, _) =>
+            {
+                try { await LinuxInstallationCheck.RunAsync(); await Task.Delay(2000); desktop.Shutdown(0); }
+                catch (Exception error) { Console.Error.WriteLine(error); desktop.Shutdown(1); }
+            };
         }
         base.OnFrameworkInitializationCompleted();
     }
