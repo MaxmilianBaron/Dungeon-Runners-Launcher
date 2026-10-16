@@ -1,0 +1,41 @@
+name: Android
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - run: dotnet workload install android
+      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358'
+      - run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-i686
+      - run: python3 -m pip install Pillow meson ninja
+      - run: python3 Build/Build-AndroidRuntime.py
+      - run: dotnet build src/Client.Android -c Release -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME"
+      - run: python3 Build/Verify-AndroidRuntime.py src/Client.Android/bin/Release/net10.0-android36.0/com.aardvarkland.dungeonrunners-Signed.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dungeon-Runners-Launcher-Android-development
+          path: src/Client.Android/bin/Release/net10.0-android36.0/*-Signed.apk
+          retention-days: 14

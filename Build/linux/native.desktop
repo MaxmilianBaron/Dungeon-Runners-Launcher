@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Dungeon Runners Launcher
+Comment=Install, update and play Dungeon Runners Reborn
+Exec=/usr/lib/dungeon-runners-launcher/DungeonRunnersLauncher
+Icon=dungeon-runners-launcher
+Terminal=false
+Categories=Game;
+StartupWMClass=DungeonRunnersLauncher

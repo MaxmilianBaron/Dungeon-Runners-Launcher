@@ -1,0 +1,53 @@
+{
+  "pkiSha256": "312d07ca4ff62049ee518e252b2836b06228ec5406507b0987f261e83d8be51f",
+  "entries": [
+    {
+      "entry_id": 3480,
+      "type_code": 2,
+      "name": "Item_Icon_MajorHealthPotion",
+      "package_offset": 120254838,
+      "stored_size": 885,
+      "decoded_size": 1520,
+      "flags": 1,
+      "storedSha256": "deb9fe56dfd93c7ee4b3e50751997df8c25dd486da8bfa28c3c783516ee87b62",
+      "decodedSha256": "70c1ea73bf6041555860d3b39469894bb9d81197a80cbdd17c702475f402ee1f",
+      "size": [
+        32,
+        32
+      ],
+      "output": "health"
+    },
+    {
+      "entry_id": 3481,
+      "type_code": 2,
+      "name": "Item_Icon_MajorManaPotion",
+      "package_offset": 120255723,
+      "stored_size": 869,
+      "decoded_size": 1520,
+      "flags": 1,
+      "storedSha256": "9addeb1a19af3757091483d6a516f466bb253d05c947a2f6b94a633022284b8e",
+      "decodedSha256": "ba837bca41a6027dfa828a29371d502b3662cb33ff30f69e2d89ce68edc88d20",
+      "size": [
+        32,
+        32
+      ],
+      "output": "mana"
+    },
+    {
+      "entry_id": 4835,
+      "type_code": 2,
+      "name": "Scroll_Icon_01",
+      "package_offset": 159410058,
+      "stored_size": 844,
+      "decoded_size": 1520,
+      "flags": 1,
+      "storedSha256": "382e2871aa7eb7a3195d4e3a4861643a642e278d08ea39f81342b1100afd8cb3",
+      "decodedSha256": "52d2099cc718afe3b280af19776e7cf057568190a430c185141c3d93c493aa0f",
+      "size": [
+        32,
+        32
+      ],
+      "output": "scroll"
+    }
+  ]
+}
