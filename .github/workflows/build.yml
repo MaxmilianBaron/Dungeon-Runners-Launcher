@@ -5,12 +5,19 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing draft release tag
+        type: string
+        default: ''
 
 permissions:
   contents: read
 
 jobs:
   desktop:
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -39,6 +46,18 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+      - name: Installation filesystem free space
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          probe_root=$(mktemp -d "$RUNNER_TEMP/dr-storage.XXXXXX")
+          small="$probe_root/small volume"
+          normal="$probe_root/normal volume"
+          mkdir "$small" "$normal"
+          trap 'if mountpoint -q "$small"; then sudo umount "$small"; fi; rmdir "$small" "$normal" "$probe_root"' EXIT
+          sudo mount -t tmpfs -o size=16m,mode=1777 tmpfs "$small"
+          dotnet run --project Build/Client.StorageCheck -c Release -- "$small" "$normal"
       - name: Windows native toolchain
         if: runner.os == 'Windows'
         run: |
@@ -100,7 +119,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v4
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && inputs.release_tag == ''
         with:
           name: Dungeon-Runners-Launcher-${{ matrix.artifact }}
           path: |
@@ -114,3 +133,21 @@ jobs:
             artifacts/Dungeon-Runners-Launcher-Linux.run
             artifacts/Dungeon-Runners-Launcher-SteamDeck.run
           retention-days: 1
+      - name: Draft release installers
+        if: github.event_name == 'workflow_dispatch' && inputs.release_tag != '' && (matrix.platform != 'Mac' || matrix.os == 'macos-latest')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          $version = ([xml](Get-Content -LiteralPath 'Directory.Build.props' -Raw)).Project.PropertyGroup.Version
+          if ($env:RELEASE_TAG -cne "v$version") { throw 'Release tag does not match the launcher version.' }
+          $release = & gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --json isDraft,targetCommitish,tagName | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or -not $release.isDraft -or $release.targetCommitish -ne $env:GITHUB_SHA) { throw 'An existing draft release for this exact commit is required.' }
+          $names = switch ('${{ matrix.platform }}') {
+            Windows { @('DungeonRunnersLauncher.exe') }
+            Mac { @('DungeonRunnersLauncher-osx-x64', 'DungeonRunnersLauncher-osx-arm64', 'Dungeon-Runners-Launcher-Mac.dmg') }
+            Linux { @('DungeonRunnersLauncher-linux-x64', 'DungeonRunnersLauncher-linux-arm64', 'Dungeon-Runners-Launcher-Linux.AppImage', 'Dungeon-Runners-Launcher-Linux-arm64.AppImage', 'Dungeon-Runners-Launcher-Linux.deb', 'Dungeon-Runners-Launcher-Linux-arm64.deb', 'Dungeon-Runners-Launcher-Linux.rpm', 'Dungeon-Runners-Launcher-Linux-arm64.rpm', 'Dungeon-Runners-Launcher-Linux.run', 'Dungeon-Runners-Launcher-SteamDeck.run') }
+          }
+          $files = @($names | ForEach-Object { (Get-Item -LiteralPath (Join-Path 'artifacts' $_) -ErrorAction Stop).FullName })
+          & gh release upload $env:RELEASE_TAG @files --repo $env:GITHUB_REPOSITORY
+          if ($LASTEXITCODE -ne 0) { throw 'Draft installer upload failed.' }

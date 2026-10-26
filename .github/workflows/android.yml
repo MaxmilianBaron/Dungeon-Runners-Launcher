@@ -29,7 +29,18 @@ jobs:
           log-accepted-android-sdk-licenses: false
       - run: dotnet workload install android
       - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358'
-      - run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-i686
+      - name: Windows cross compiler
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          for source in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+            if [ -f "$source" ]; then
+              sudo sed -i 's|http[s]\?://azure\.archive\.ubuntu\.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' "$source"
+            fi
+          done
+          options=(-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+          sudo apt-get "${options[@]}" update
+          sudo apt-get "${options[@]}" install -y gcc-mingw-w64-i686
       - run: python3 -m pip install Pillow meson ninja
       - run: python3 Build/Build-AndroidRuntime.py
       - run: dotnet build src/Client.Android -c Release -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME"
