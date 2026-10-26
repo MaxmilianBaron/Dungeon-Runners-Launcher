@@ -141,8 +141,8 @@ jobs:
         run: |
           $version = ([xml](Get-Content -LiteralPath 'Directory.Build.props' -Raw)).Project.PropertyGroup.Version
           if ($env:RELEASE_TAG -cne "v$version") { throw 'Release tag does not match the launcher version.' }
-          $release = & gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
-          if ($LASTEXITCODE -ne 0 -or -not $release.draft -or $release.target_commitish -ne $env:GITHUB_SHA) { throw 'An existing draft release for this exact commit is required.' }
+          $release = & gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --json isDraft,targetCommitish,tagName | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or -not $release.isDraft -or $release.targetCommitish -ne $env:GITHUB_SHA) { throw 'An existing draft release for this exact commit is required.' }
           $names = switch ('${{ matrix.platform }}') {
             Windows { @('DungeonRunnersLauncher.exe') }
             Mac { @('DungeonRunnersLauncher-osx-x64', 'DungeonRunnersLauncher-osx-arm64', 'Dungeon-Runners-Launcher-Mac.dmg') }
