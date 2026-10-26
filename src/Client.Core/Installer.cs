@@ -100,7 +100,7 @@ public sealed class Installer
         var need = selected.Sum(p => p.Size + p.Files.Sum(f => f.Size)) + pending.Sum(p => File.Exists(SafeFiles.Under(root, p)) ? new FileInfo(SafeFiles.Under(root, p)).Length : 0L) + 32L * 1024 * 1024;
         long? free;
         if (availableSpace is not null) free = availableSpace(root);
-        else { var drive = new DriveInfo(Path.GetPathRoot(root)!); free = drive.IsReady ? drive.AvailableFreeSpace : null; }
+        else { var drive = new DriveInfo(OperatingSystem.IsWindows() ? Path.GetPathRoot(root)! : root); free = drive.IsReady ? drive.AvailableFreeSpace : null; }
         if (free < need) throw new IOException("Not enough free disk space for a safe update.");
         var transaction = SafeFiles.Under(work, "transaction");
         Directory.CreateDirectory(transaction);
