@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     private ImageBrush ArtworkBack => (ImageBrush)ArtworkRear.Fill!;
     private ImageBrush ArtworkImage => (ImageBrush)ArtworkFront.Fill!;
     private bool closed;
+    private bool quitRequested;
     private AddonUpdate? addonUpdate;
     private string? addonRoot;
     private string? addonCheckError;
@@ -484,7 +485,7 @@ public partial class MainWindow : Window
             Transfer.Text = "";
             RefreshActions();
         }
-        if (succeeded && (closeOnSuccess || restartPending)) Close();
+        if (quitRequested || succeeded && (closeOnSuccess || restartPending)) Close();
     }
 
     private void ShowConflict(ClientConflictException error, Func<CancellationToken, Task> action, bool closeOnSuccess)
@@ -844,6 +845,13 @@ public partial class MainWindow : Window
         if (IsRunning(root)) throw new IOException("Close Dungeon Runners before changing this installation.");
     }
 
+    private void QuitClick(object sender, RoutedEventArgs e)
+    {
+        quitRequested = true;
+        Quit.IsEnabled = false;
+        Close();
+    }
+
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
         if (operation is not null)
@@ -852,8 +860,9 @@ public partial class MainWindow : Window
             if (!committing)
             {
                 operation.Cancel();
-                Detail.Text = "Cancelling safely. You can close the launcher when this finishes.";
+                Detail.Text = quitRequested ? "Cancelling safely before closing…" : "Cancelling safely. You can close the launcher when this finishes.";
             }
+            else if (quitRequested) Detail.Text = "Finishing the update before closing…";
             return;
         }
         timer.Stop();

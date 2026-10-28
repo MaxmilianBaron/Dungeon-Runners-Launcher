@@ -10,6 +10,6 @@
   {"id":"cursor-circle","directory":"CursorCircle","name":"Cursor Circle","description":"Highlights the cursor during combat. Adjustable size and color.","legacyDirectories":[]},
   {"id":"loadouts","directory":"Loadouts","name":"Loadouts & Sorting","description":"Gear and hotbar saves. Sort Inventory or selected bank pages by item type, appearance and armor set.","legacyDirectories":["SortBankPages"]},
   {"id":"leaderboard","directory":"Leaderboard","name":"Leaderboard","description":"Official Reborn rankings inside the game. Open ESC > Leaderboard.","legacyDirectories":[]},
-  {"id":"controller","directory":"Controller","name":"Controller","description":"XInput movement, aiming, skills, consumables and menus. Steam Deck uses the Steam Input Gamepad template.","legacyDirectories":[]},
+  {"id":"controller","directory":"Controller","name":"Controller","description":"Xbox/XInput and PS5 DualSense movement, aiming, skills, consumables and menus, with PlayStation button labels. Steam Deck uses the Steam Input Gamepad template.","legacyDirectories":[]},
   {"id":"enhanced-settings","directory":"EnhancedSettings","name":"Enhanced Settings","description":"Right-button mouse look, left-click attack control and an adjustable low-HP warning.","legacyDirectories":["LowHPWarning","UnbindLeftClick"]}
 ]

@@ -3,7 +3,7 @@
 #include <gdiplus.h>
 
 namespace dr {
-static HWND window=nullptr,primary=nullptr,update=nullptr,repair=nullptr,folder=nullptr,browse=nullptr,cancel=nullptr,addons=nullptr,addonInstall=nullptr,addonRemove=nullptr,addonClose=nullptr,addonList=nullptr,addonDescription=nullptr,website=nullptr,armory=nullptr,discord=nullptr,leaderboard=nullptr,desync=nullptr,gameMonitor=nullptr,monitorLabel=nullptr;
+static HWND window=nullptr,primary=nullptr,update=nullptr,repair=nullptr,folder=nullptr,browse=nullptr,cancel=nullptr,quit=nullptr,addons=nullptr,addonInstall=nullptr,addonRemove=nullptr,addonClose=nullptr,addonList=nullptr,addonDescription=nullptr,website=nullptr,armory=nullptr,discord=nullptr,leaderboard=nullptr,desync=nullptr,gameMonitor=nullptr,monitorLabel=nullptr;
 static std::vector<GameMonitor> monitors;
 static HFONT font=nullptr;
 static HBRUSH fieldBrush=nullptr;
@@ -65,7 +65,7 @@ static void run(int action) {
 static void layout(HWND hwnd) {
     RECT r;GetClientRect(hwnd,&r);int width=r.right,height=r.bottom,left=std::max(18,width/8),content=width-left*2;
     MoveWindow(folder,left,height-223,content-86,25,TRUE);MoveWindow(browse,left+content-78,height-223,78,25,TRUE);
-    MoveWindow(monitorLabel,left,height-185,132,25,TRUE);MoveWindow(gameMonitor,left+132,height-187,std::max(80,content-132),200,TRUE);int middle=width/2;MoveWindow(primary,middle-227,height-49,126,32,TRUE);MoveWindow(update,middle-91,height-49,108,32,TRUE);MoveWindow(addons,middle+27,height-49,108,32,TRUE);MoveWindow(repair,middle+145,height-46,82,28,TRUE);MoveWindow(cancel,left+content-80,height-127,80,27,TRUE);
+    MoveWindow(monitorLabel,left,height-185,132,25,TRUE);MoveWindow(gameMonitor,left+132,height-187,std::max(80,content-132),200,TRUE);int middle=width/2;MoveWindow(primary,middle-267,height-49,126,32,TRUE);MoveWindow(update,middle-131,height-49,108,32,TRUE);MoveWindow(addons,middle-13,height-49,108,32,TRUE);MoveWindow(repair,middle+105,height-46,82,28,TRUE);MoveWindow(quit,middle+197,height-49,70,32,TRUE);MoveWindow(cancel,left+content-80,height-127,80,27,TRUE);
     const int addonBottom=height-(statusVisible()?151:61);
     MoveWindow(addonClose,left+content-92,165,70,28,TRUE);MoveWindow(addonList,left+22,201,content-44,230,TRUE);MoveWindow(addonDescription,left+22,238,content-44,std::max(32,addonBottom-289),TRUE);MoveWindow(addonInstall,left+22,addonBottom-39,94,28,TRUE);MoveWindow(addonRemove,left+126,addonBottom-39,102,28,TRUE);
     const int linksTop=width<760?86:54;MoveWindow(website,left,linksTop,70,28,TRUE);MoveWindow(armory,left+76,linksTop,70,28,TRUE);MoveWindow(discord,left+content-70,linksTop,70,28,TRUE);InvalidateRect(hwnd,nullptr,FALSE);
@@ -94,6 +94,7 @@ static LRESULT CALLBACK procedure(HWND hwnd,UINT message,WPARAM wp,LPARAM lp) {
             if(item->CtlType!=ODT_BUTTON)break;HBRUSH fill=CreateSolidBrush((item->itemState&ODS_SELECTED)?RGB(103,35,14):RGB(49,13,5));FillRect(item->hDC,&r,fill);DeleteObject(fill);HBRUSH frame=CreateSolidBrush(RGB(160,115,51));FrameRect(item->hDC,&r,frame);DeleteObject(frame);wchar_t label[80];GetWindowTextW(item->hwndItem,label,80);text(item->hDC,label,r,(item->itemState&ODS_DISABLED)?RGB(126,107,75):RGB(241,201,122),DT_CENTER|DT_VCENTER|DT_SINGLELINE);return TRUE;}
         case WM_DISPLAYCHANGE:monitor_choices();refresh();return 0;
         case WM_COMMAND:
+            if(LOWORD(wp)==17&&HIWORD(wp)==BN_CLICKED){SendMessageW(hwnd,WM_CLOSE,0,0);return 0;}
             if(LOWORD(wp)==16&&HIWORD(wp)==CBN_SELCHANGE){int choice=static_cast<int>(SendMessageW(gameMonitor,CB_GETCURSEL,0,0));try{save_monitor(choice>0&&static_cast<size_t>(choice)<=monitors.size()?utf8(monitors[choice-1].id):std::string{});detail=choice>0?L"The game opens in windowed mode and fits this monitor.":L"Using saved game display settings.";}catch(const std::exception& error){detail=wide(error.what());}refresh();InvalidateRect(hwnd,nullptr,FALSE);return 0;}
             if(LOWORD(wp)==15&&HIWORD(wp)==BN_CLICKED){ShellExecuteW(hwnd,L"open",L"https://play.dungeonrunnersreborn.com/report-desync",nullptr,nullptr,SW_SHOWNORMAL);return 0;}
             if(LOWORD(wp)==13&&HIWORD(wp)==BN_CLICKED){ShellExecuteW(hwnd,L"open",L"https://play.dungeonrunnersreborn.com/",nullptr,nullptr,SW_SHOWNORMAL);return 0;}
@@ -128,7 +129,7 @@ int legacy_ui(bool smoke,const Path& previews) {
     auto button=[&](int id,const wchar_t* label){return CreateWindowExW(0,L"BUTTON",label,WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,100,30,window,reinterpret_cast<HMENU>(static_cast<intptr_t>(id)),cls.hInstance,nullptr);};
     primary=button(1,L"Install game");update=button(2,L"Update");repair=button(3,L"Repair");browse=button(4,L"Browse");cancel=button(5,L"Cancel");addons=button(6,L"Addons");addonInstall=button(7,L"Install addons");addonRemove=button(8,L"Uninstall addons");addonClose=button(9,L"Close");website=button(10,L"Website");armory=button(11,L"Armory");discord=button(12,L"Discord");folder=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",root.c_str(),WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,0,0,100,25,window,nullptr,cls.hInstance,nullptr);SendMessageW(folder,WM_SETFONT,reinterpret_cast<WPARAM>(font),TRUE);
     leaderboard=button(13,L"Leaderboard");
-    desync=button(15,L"Desync Report");
+    desync=button(15,L"Desync Report");quit=button(17,L"Quit");
     addonList=CreateWindowExW(0,L"COMBOBOX",L"",WS_CHILD|WS_TABSTOP|CBS_DROPDOWNLIST|CBS_OWNERDRAWFIXED|CBS_HASSTRINGS|WS_VSCROLL,0,0,100,230,window,reinterpret_cast<HMENU>(14),cls.hInstance,nullptr);
     addonDescription=CreateWindowExW(0,L"EDIT",L"",WS_CHILD|ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL|WS_VSCROLL,0,0,100,80,window,nullptr,cls.hInstance,nullptr);
     SendMessageW(addonList,WM_SETFONT,reinterpret_cast<WPARAM>(font),TRUE);SendMessageW(addonDescription,WM_SETFONT,reinterpret_cast<WPARAM>(font),TRUE);

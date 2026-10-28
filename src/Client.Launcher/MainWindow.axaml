@@ -63,7 +63,7 @@
               <DockPanel x:Name="TransferRow" Grid.Row="2" IsVisible="False" Margin="0,5,0,0"><TextBlock x:Name="Transfer" DockPanel.Dock="Right" Text="" Foreground="{StaticResource Muted}" FontSize="11" Margin="12,0,0,0" /><ProgressBar x:Name="Progress" Height="5" Foreground="{StaticResource Accent}" Background="#302619" BorderThickness="0" Minimum="0" Maximum="100" IsVisible="False" VerticalAlignment="Center" /></DockPanel>
             </Grid>
           </Border>
-          <WrapPanel x:Name="Actions" Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center"><Button x:Name="Primary" Content="Install game" Click="PrimaryClick" FontSize="14" MinWidth="124" MinHeight="34" Padding="10,2" Margin="0,3,10,3" /><Button x:Name="Update" Content="Update" Click="UpdateClick" FontSize="14" MinWidth="104" MinHeight="34" Padding="10,2" Margin="0,3,10,3" /><Button x:Name="Addons" Content="Addons" Click="AddonsClick" FontSize="14" MinWidth="104" MinHeight="34" Padding="10,2" Margin="0,3,18,3" /><Button x:Name="Repair" Content="Repair" Click="RepairClick" VerticalAlignment="Center" FontSize="12" MinHeight="28" Padding="8,2" Margin="0,3" ToolTip.Tip="Verify and restore game files" /></WrapPanel>
+          <WrapPanel x:Name="Actions" Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center"><Button x:Name="Primary" Content="Install game" Click="PrimaryClick" FontSize="14" MinWidth="124" MinHeight="34" Padding="10,2" Margin="0,3,10,3" /><Button x:Name="Update" Content="Update" Click="UpdateClick" FontSize="14" MinWidth="104" MinHeight="34" Padding="10,2" Margin="0,3,10,3" /><Button x:Name="Addons" Content="Addons" Click="AddonsClick" FontSize="14" MinWidth="104" MinHeight="34" Padding="10,2" Margin="0,3,18,3" /><Button x:Name="Repair" Content="Repair" Click="RepairClick" VerticalAlignment="Center" FontSize="12" MinHeight="28" Padding="8,2" Margin="0,3" ToolTip.Tip="Verify and restore game files" /><Button x:Name="Quit" Content="Quit" Click="QuitClick" AutomationProperties.Name="Quit launcher" FontSize="14" MinWidth="76" MinHeight="34" Padding="10,2" Margin="18,3,0,3" ToolTip.Tip="Close the launcher safely" /></WrapPanel>
         </Grid>
         </ScrollViewer>
       </Grid>
@@ -77,6 +77,7 @@
           <WrapPanel>
             <Button x:Name="KeepChanges" Content="Keep my changes" Click="KeepChangesClick" FontSize="13" Padding="8,4" Margin="0,0,8,8" />
             <Button x:Name="RestoreRequired" Content="Restore required parts" Click="RestoreRequiredClick" FontSize="13" Padding="8,4" Margin="0,0,0,8" />
+            <Button x:Name="QuitConflict" Content="Quit" Click="QuitClick" FontSize="13" Padding="8,4" Margin="8,0,0,8" />
           </WrapPanel>
         </StackPanel>
       </ScrollViewer>
