@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="134" height="28" viewBox="0 0 134 28" role="img" aria-label="Windows Installer">
+  <title>Windows Installer</title>
+  <g shape-rendering="crispEdges">
+    <path fill="#555" d="M0 0h36v28H0z"/>
+    <path fill="#2563eb" d="M36 0h98v28H36z"/>
+    <path fill="#fff" d="M10 6h7v7h-7zM19 6h7v7h-7zM10 15h7v7h-7zM19 15h7v7h-7z"/>
+  </g>
+  <text x="85" y="17.5" fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="10" font-weight="bold" letter-spacing="1.5">INSTALLER</text>
+</svg>

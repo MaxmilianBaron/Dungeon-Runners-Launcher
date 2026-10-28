@@ -1,0 +1,9 @@
+android.compileSdkVersion 36
+android.packagingOptions.jniLibs.keepDebugSymbols.add('**/*.so')
+
+tasks.register('exportRuntime', Copy) {
+    dependsOn 'assembleRelease'
+    into project.findProperty('runtimeOutput') ?: rootProject.file('../android-runtime/library')
+    from configurations.releaseRuntimeClasspath
+    from layout.buildDirectory.file('outputs/aar/lorie-release.aar')
+}

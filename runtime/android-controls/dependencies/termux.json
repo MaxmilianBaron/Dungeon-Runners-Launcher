@@ -1,0 +1,26 @@
+{
+  "libandroid-shmem": {
+    "version": "0.7",
+    "url": "https://packages.termux.dev/apt/termux-main/pool/main/liba/libandroid-shmem/libandroid-shmem_0.7_arm.deb",
+    "size": 6940,
+    "sha256": "5832fd11dca9be2a288dd8fbc2b2799b289c812c7a8764f1f8234c425aa64ce5"
+  },
+  "libtalloc": {
+    "version": "2.5.0",
+    "url": "https://packages.termux.dev/apt/termux-main/pool/main/libt/libtalloc/libtalloc_2.5.0_arm.deb",
+    "size": 32144,
+    "sha256": "98ace4f1fcbb04b75e859a12b689a9ae4ac91ff8fd34ab221e5359c95ba47f52"
+  },
+  "proot": {
+    "version": "5.1.107.96",
+    "url": "https://packages.termux.dev/apt/termux-main/pool/main/p/proot/proot_5.1.107.96_arm.deb",
+    "size": 91620,
+    "sha256": "19cd0aa78583e46075381398f23f8ee3647e61f166b5d02a487d99312d4ea51d"
+  },
+  "xkeyboard-config": {
+    "version": "2.48-1",
+    "url": "https://packages.termux.dev/apt/termux-x11/pool/main/x/xkeyboard-config/xkeyboard-config_2.48-1_all.deb",
+    "size": 356888,
+    "sha256": "5e7317d47130aee16d8e18014423f1b1ab23601ca57cea81cd160ec4c1424167"
+  }
+}

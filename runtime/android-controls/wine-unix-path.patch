@@ -1,0 +1,13 @@
+--- a/dlls/ntdll/unix/file.c
++++ b/dlls/ntdll/unix/file.c
+@@ -4377,1 +4377,1 @@
+-    if (name[0] == '/' && !find_drive_nt_root( name, strlen(name), &ret, FILE_OPEN )) goto done;
++    if (name[0] == '/' && !find_drive_nt_root( name, strlen(name), &ret, FILE_OPEN ) && ret) goto done;
+@@ -4400,1 +4400,6 @@
+-    else if (IS_SEPARATOR(name[0]))  /* absolute path */
++    else if (name[0] == '/')
++    {
++        memcpy( ret, unix_prefixW, sizeof(unix_prefixW) );
++        prefix_len = ARRAY_SIZE(unix_prefixW);
++    }
++    else if (name[0] == '\\')
