@@ -1,0 +1,44 @@
+--- a/dlls/wow64cpu/cpu.c
++++ b/dlls/wow64cpu/cpu.c
+@@ -39,6 +39,8 @@
+     DWORD op;
+     DWORD addr;
+     WORD  cs;
++    BYTE  trampoline[9];
++    ULONG64 target;
+ };
+ struct thunk_opcodes
+ {
+@@ -304,6 +306,7 @@
+  */
+ NTSTATUS WINAPI BTCpuProcessInit(void)
+ {
++    static const BYTE trampoline[] = {0x83, 0xc4, 0x08, 0xff, 0x25, 0, 0, 0, 0};
+     struct thunk_opcodes *thunk = (struct thunk_opcodes *)code_buffer;
+     SIZE_T size = sizeof(*thunk);
+     ULONG old_prot;
+@@ -337,16 +340,20 @@
+     ss32_sel = context_i386.SegSs;
+ 
+     thunk->syscall_thunk.ljmp  = 0xff;
+-    thunk->syscall_thunk.modrm = 0x2d;
++    thunk->syscall_thunk.modrm = 0x1d;
+     thunk->syscall_thunk.op    = PtrToUlong( &thunk->syscall_thunk.addr );
+-    thunk->syscall_thunk.addr  = PtrToUlong( syscall_32to64 );
++    thunk->syscall_thunk.addr  = PtrToUlong( thunk->syscall_thunk.trampoline );
+     thunk->syscall_thunk.cs    = cs64_sel;
++    memcpy( thunk->syscall_thunk.trampoline, trampoline, sizeof(trampoline) );
++    thunk->syscall_thunk.target = (ULONG_PTR)syscall_32to64;
+ 
+     thunk->unix_thunk.ljmp  = 0xff;
+-    thunk->unix_thunk.modrm = 0x2d;
++    thunk->unix_thunk.modrm = 0x1d;
+     thunk->unix_thunk.op    = PtrToUlong( &thunk->unix_thunk.addr );
+-    thunk->unix_thunk.addr  = PtrToUlong( unix_call_32to64 );
++    thunk->unix_thunk.addr  = PtrToUlong( thunk->unix_thunk.trampoline );
+     thunk->unix_thunk.cs    = cs64_sel;
++    memcpy( thunk->unix_thunk.trampoline, trampoline, sizeof(trampoline) );
++    thunk->unix_thunk.target = (ULONG_PTR)unix_call_32to64;
+ 
+     NtProtectVirtualMemory( GetCurrentProcess(), (void **)&thunk, &size, PAGE_EXECUTE_READ, &old_prot );
+     return STATUS_SUCCESS;

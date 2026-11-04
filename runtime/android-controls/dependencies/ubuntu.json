@@ -1,0 +1,945 @@
+{
+  "bash": {
+    "version": "5.2.21-2ubuntu4",
+    "source": "bash",
+    "section": "shells",
+    "paths": [
+      "usr/bin/bash"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/b/bash/bash_5.2.21-2ubuntu4_armhf.deb",
+    "size": 667664,
+    "component": "main",
+    "sha256": "09e26292c6ebc2edc2187f78b15c342c9c8938bed4145ebaf1ae90372cf4cbd6"
+  },
+  "coreutils": {
+    "version": "9.4-3ubuntu6.3",
+    "source": "coreutils",
+    "section": "utils",
+    "paths": [
+      "usr/bin/env"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/c/coreutils/coreutils_9.4-3ubuntu6.3_armhf.deb",
+    "size": 1281298,
+    "component": "main",
+    "sha256": "4ca74bdcb80443ac37a14333fda6178813e1d43646666ca953ab248d3c0c4162"
+  },
+  "libgl1-mesa-dri": {
+    "version": "25.2.8-0ubuntu0.24.04.4",
+    "source": "mesa",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/dri/swrast_dri.so"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/m/mesa/libgl1-mesa-dri_25.2.8-0ubuntu0.24.04.4_armhf.deb",
+    "size": 33698,
+    "component": "main",
+    "sha256": "ded3523697ec6d1a9b25b6c8375ff3f6aede8970aed7a7d203bec4baeaf768ae"
+  },
+  "libc6": {
+    "version": "2.39-0ubuntu8.9",
+    "source": "glibc",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/ld-linux-armhf.so.3",
+      "usr/lib/arm-linux-gnueabihf/libc.so.6",
+      "usr/lib/arm-linux-gnueabihf/libm.so.6",
+      "usr/lib/arm-linux-gnueabihf/libdl.so.2",
+      "usr/lib/arm-linux-gnueabihf/librt.so.1",
+      "usr/lib/arm-linux-gnueabihf/libpthread.so.0",
+      "usr/lib/arm-linux-gnueabihf/libresolv.so.2",
+      "usr/lib/arm-linux-gnueabihf/libnss_files.so.2",
+      "usr/lib/arm-linux-gnueabihf/libnss_dns.so.2"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/g/glibc/libc6_2.39-0ubuntu8.9_armhf.deb",
+    "size": 2829580,
+    "component": "main",
+    "sha256": "45747d81f8fe7947308248933f0a2551270264e4a127bcb7632cfe826dcdc7f1"
+  },
+  "libgl1": {
+    "version": "1.7.0-1build1",
+    "source": "libglvnd",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libGL.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libglvnd/libgl1_1.7.0-1build1_armhf.deb",
+    "size": 104546,
+    "component": "main",
+    "sha256": "8aad5bb7c2fe03a7de556edc9cb9ee90605acb5a71ae74cfa610907e19504b87"
+  },
+  "libglx-mesa0": {
+    "version": "25.2.8-0ubuntu0.24.04.4",
+    "source": "mesa",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libGLX_mesa.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/m/mesa/libglx-mesa0_25.2.8-0ubuntu0.24.04.4_armhf.deb",
+    "size": 86768,
+    "component": "main",
+    "sha256": "743116b52b7650874ed02c50bd771199474f89bc492d8d83050ce67277d2b4b7"
+  },
+  "libegl1": {
+    "version": "1.7.0-1build1",
+    "source": "libglvnd",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libEGL.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libglvnd/libegl1_1.7.0-1build1_armhf.deb",
+    "size": 29794,
+    "component": "main",
+    "sha256": "22bed0b825cab9b765541e66555a2b98059d5639414d2b41408681be3c4d8e6a"
+  },
+  "libx11-6": {
+    "version": "2:1.8.7-1build1",
+    "source": "libx11",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libX11.so.6"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libx11/libx11-6_1.8.7-1build1_armhf.deb",
+    "size": 583302,
+    "component": "main",
+    "sha256": "67257f720eee7a25f7d4ed9c3c1ab070de1404452377c8cc59bd51df09ea50f5"
+  },
+  "libxext6": {
+    "version": "2:1.3.4-1build2",
+    "source": "libxext",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libXext.so.6"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxext/libxext6_1.3.4-1build2_armhf.deb",
+    "size": 25286,
+    "component": "main",
+    "sha256": "88ad7c999c22eddd04e6b0a97e613bee6c32b9dbd0fdfab211a8bd1084670a45"
+  },
+  "libxrender1": {
+    "version": "1:0.9.10-1.1build1",
+    "source": "libxrender",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libXrender.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxrender/libxrender1_0.9.10-1.1build1_armhf.deb",
+    "size": 16008,
+    "component": "main",
+    "sha256": "913f463d14ca74283569a4622b033825f28cb387fa0be1b27470ca7dcd6aa045"
+  },
+  "libxrandr2": {
+    "version": "2:1.5.2-2build1",
+    "source": "libxrandr",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libXrandr.so.2"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxrandr/libxrandr2_1.5.2-2build1_armhf.deb",
+    "size": 15900,
+    "component": "main",
+    "sha256": "8136d738baf4a317899723450ee03b508ccce1ddb5bc47dfe052e5bdceedb66d"
+  },
+  "libxcursor1": {
+    "version": "1:1.2.1-1build1",
+    "source": "libxcursor",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libXcursor.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcursor/libxcursor1_1.2.1-1build1_armhf.deb",
+    "size": 17474,
+    "component": "main",
+    "sha256": "98cfcb952fa552f617745f2129784d487bb661c95dd881966d112905eaeff168"
+  },
+  "libxi6": {
+    "version": "2:1.8.1-1build1",
+    "source": "libxi",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libXi.so.6"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxi/libxi6_1.8.1-1build1_armhf.deb",
+    "size": 26576,
+    "component": "main",
+    "sha256": "48ed51c82bb98592f15c911bbd9d5124e0050682e15d043f3dea2015fff6aa70"
+  },
+  "libxinerama1": {
+    "version": "2:1.1.4-3build1",
+    "source": "libxinerama",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libXinerama.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxinerama/libxinerama1_1.1.4-3build1_armhf.deb",
+    "size": 5866,
+    "component": "main",
+    "sha256": "5aef318ff9ca3454dcc4c604d49d913a6874f391df4d462bbeb34d84465c60e9"
+  },
+  "libfreetype6": {
+    "version": "2.13.2+dfsg-1ubuntu0.1",
+    "source": "freetype",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libfreetype.so.6"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/freetype/libfreetype6_2.13.2+dfsg-1ubuntu0.1_armhf.deb",
+    "size": 331188,
+    "component": "main",
+    "sha256": "abbc1664b8d1e0f2fc46665e9de1ca12ac0e63b87fd43e2a1126315e74d95b7a"
+  },
+  "libfontconfig1": {
+    "version": "2.15.0-1.1ubuntu2",
+    "source": "fontconfig",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libfontconfig.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/fontconfig/libfontconfig1_2.15.0-1.1ubuntu2_armhf.deb",
+    "size": 113164,
+    "component": "main",
+    "sha256": "ffb124f3f304185be575dfb65ec17411703b6ce4b964ab6209fad6276411c2e8"
+  },
+  "libasound2t64": {
+    "version": "1.2.11-1ubuntu0.3",
+    "source": "alsa-lib",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libasound.so.2"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/a/alsa-lib/libasound2t64_1.2.11-1ubuntu0.3_armhf.deb",
+    "size": 345382,
+    "component": "main",
+    "sha256": "addcf9956721c5d152e444036cd0672dbbe01d1da04f743302bc335ba66c935e"
+  },
+  "libpulse0": {
+    "version": "1:16.1+dfsg1-2ubuntu10.1",
+    "source": "pulseaudio",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libpulse.so.0",
+      "usr/lib/arm-linux-gnueabihf/pulseaudio/libpulsecommon-16.1.so"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/p/pulseaudio/libpulse0_16.1+dfsg1-2ubuntu10.1_armhf.deb",
+    "size": 272010,
+    "component": "main",
+    "sha256": "189695b356256cbb99f89943e984c386a92446a5ec76a2e441568cf05ddaaec1"
+  },
+  "libgcc-s1": {
+    "version": "14.2.0-4ubuntu2~24.04.1",
+    "source": "gcc-14",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libgcc_s.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/g/gcc-14/libgcc-s1_14.2.0-4ubuntu2~24.04.1_armhf.deb",
+    "size": 41510,
+    "component": "main",
+    "sha256": "0d1e93162ffa3d369e2b2452b5d4a98b298a9f64311de237d0080e46e6b72dac"
+  },
+  "libtinfo6": {
+    "version": "6.4+20240113-1ubuntu2.2",
+    "source": "ncurses",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libtinfo.so.6"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/n/ncurses/libtinfo6_6.4+20240113-1ubuntu2.2_armhf.deb",
+    "size": 91002,
+    "component": "main",
+    "sha256": "6c37ccf3809959b17c0313a6dc3ad04b0da8d4d4a3fbacfe92bbbf5c20c2dc14"
+  },
+  "libgbm1": {
+    "version": "25.2.8-0ubuntu0.24.04.4",
+    "source": "mesa",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libgbm.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/m/mesa/libgbm1_25.2.8-0ubuntu0.24.04.4_armhf.deb",
+    "size": 30548,
+    "component": "main",
+    "sha256": "b6749e4e205065c83eb72a6e5c56fee7b72768391a82777b3e3fa18c9c888d29"
+  },
+  "libglvnd0": {
+    "version": "1.7.0-1build1",
+    "source": "libglvnd",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libGLdispatch.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libglvnd/libglvnd0_1.7.0-1build1_armhf.deb",
+    "size": 83686,
+    "component": "main",
+    "sha256": "1e890d3e4b2f3c05ed87f353ffd9e1c8a265e882522990f343e8b85118974018"
+  },
+  "libglx0": {
+    "version": "1.7.0-1build1",
+    "source": "libglvnd",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libGLX.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libglvnd/libglx0_1.7.0-1build1_armhf.deb",
+    "size": 39318,
+    "component": "main",
+    "sha256": "8c4078c94af359681c04c9470f21bbefc9a263e3da38062abe0a5c2a54d1f724"
+  },
+  "mesa-libgallium": {
+    "version": "25.2.8-0ubuntu0.24.04.4",
+    "source": "mesa",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libgallium-25.2.8-0ubuntu0.24.04.4.so"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/m/mesa/mesa-libgallium_25.2.8-0ubuntu0.24.04.4_armhf.deb",
+    "size": 8548762,
+    "component": "main",
+    "sha256": "4bbe5ca076da6fe361e1669c76ed0dcf0e236caf710caedb6de8d2ad2b9621ea"
+  },
+  "libdrm2": {
+    "version": "2.4.125-1ubuntu0.1~24.04.2",
+    "source": "libdrm",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libdrm.so.2"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libd/libdrm/libdrm2_2.4.125-1ubuntu0.1~24.04.2_armhf.deb",
+    "size": 37242,
+    "component": "main",
+    "sha256": "3e50d7aca7c3fad98c8774d8ae1b6c017422eb0d2c6f0cc344d8c2a8ce54bca1"
+  },
+  "libxcb-glx0": {
+    "version": "1.15-1ubuntu2",
+    "source": "libxcb",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libxcb-glx.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcb/libxcb-glx0_1.15-1ubuntu2_armhf.deb",
+    "size": 22636,
+    "component": "main",
+    "sha256": "2a42f758004f9dcf55e22b9d7953d49ea3d4ae2c07f2632c2003bffa66bd94ec"
+  },
+  "libxcb1": {
+    "version": "1.15-1ubuntu2",
+    "source": "libxcb",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libxcb.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcb/libxcb1_1.15-1ubuntu2_armhf.deb",
+    "size": 45166,
+    "component": "main",
+    "sha256": "baedbfacb55cfa645471106cab52a066a123f52e9d670f2516c2902e271a3fa2"
+  },
+  "libx11-xcb1": {
+    "version": "2:1.8.7-1build1",
+    "source": "libx11",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libX11-xcb.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libx11/libx11-xcb1_1.8.7-1build1_armhf.deb",
+    "size": 7748,
+    "component": "main",
+    "sha256": "cb96224da0db544357a87ddfd2cf65a15c810d8d7fef90bc7a2aae2f07004164"
+  },
+  "libxxf86vm1": {
+    "version": "1:1.1.4-1build4",
+    "source": "libxxf86vm",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libXxf86vm.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxxf86vm/libxxf86vm1_1.1.4-1build4_armhf.deb",
+    "size": 8068,
+    "component": "main",
+    "sha256": "045094f3777106083d76541d5fbb59543691f4cce5df5b49e9000c6469102f1e"
+  },
+  "libxcb-shm0": {
+    "version": "1.15-1ubuntu2",
+    "source": "libxcb",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libxcb-shm.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcb/libxcb-shm0_1.15-1ubuntu2_armhf.deb",
+    "size": 5772,
+    "component": "main",
+    "sha256": "dbe9be57fceee45e989fa6f04d230dfe2cc467ccecee193f0b4e8630d8f8ad96"
+  },
+  "libexpat1": {
+    "version": "2.6.1-2ubuntu0.6",
+    "source": "expat",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libexpat.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/e/expat/libexpat1_2.6.1-2ubuntu0.6_armhf.deb",
+    "size": 73942,
+    "component": "main",
+    "sha256": "e071ab76a8c5ddab4b07cf5fdbcf949e4ca179347ba43b03b8cc2610f7f249c1"
+  },
+  "libxcb-dri3-0": {
+    "version": "1.15-1ubuntu2",
+    "source": "libxcb",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libxcb-dri3.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcb/libxcb-dri3-0_1.15-1ubuntu2_armhf.deb",
+    "size": 6730,
+    "component": "main",
+    "sha256": "5f2ccc6f781ff0374bd8ca0ee7c36f58b2b9b4459140649e1be3e7b7a376755e"
+  },
+  "libxcb-present0": {
+    "version": "1.15-1ubuntu2",
+    "source": "libxcb",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libxcb-present.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcb/libxcb-present0_1.15-1ubuntu2_armhf.deb",
+    "size": 5538,
+    "component": "main",
+    "sha256": "b6f1271f5234f6e145d7bef3ec789fec9bc1de585c88e53570f0fc84fe07ab04"
+  },
+  "libxcb-xfixes0": {
+    "version": "1.15-1ubuntu2",
+    "source": "libxcb",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libxcb-xfixes.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcb/libxcb-xfixes0_1.15-1ubuntu2_armhf.deb",
+    "size": 10048,
+    "component": "main",
+    "sha256": "7bf02372898bdb892e4c66cf9dea6174dd090bc7b604b41e2f708a0123be89da"
+  },
+  "libxfixes3": {
+    "version": "1:6.0.0-2build1",
+    "source": "libxfixes",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libXfixes.so.3"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxfixes/libxfixes3_6.0.0-2build1_armhf.deb",
+    "size": 9038,
+    "component": "main",
+    "sha256": "35d78ca24a0f5bb0e15cf3242a8f8a98621861cd2dd312a18fd04d54218c965b"
+  },
+  "zlib1g": {
+    "version": "1:1.3.dfsg-3.1ubuntu2.2",
+    "source": "zlib",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libz.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/z/zlib/zlib1g_1.3.dfsg-3.1ubuntu2.2_armhf.deb",
+    "size": 49392,
+    "component": "main",
+    "sha256": "90cf45fc10186c178bde862984f39d7ecb2c4b5e716edddb64ec8906c753e8fa"
+  },
+  "libbz2-1.0": {
+    "version": "1.0.8-5.1ubuntu0.1",
+    "source": "bzip2",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libbz2.so.1.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/b/bzip2/libbz2-1.0_1.0.8-5.1ubuntu0.1_armhf.deb",
+    "size": 31364,
+    "component": "main",
+    "sha256": "058331379bcb5a735e5506b75c098c62e2de203836618972806335ebb9624354"
+  },
+  "libpng16-16t64": {
+    "version": "1.6.43-5ubuntu0.6",
+    "source": "libpng1.6",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libpng16.so.16"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libp/libpng1.6/libpng16-16t64_1.6.43-5ubuntu0.6_armhf.deb",
+    "size": 168140,
+    "component": "main",
+    "sha256": "f287eec0d2268aad6e3c29f2eea404379611e9b69f2fd0704c964597b20ad091"
+  },
+  "libbrotli1": {
+    "version": "1.1.0-2build2",
+    "source": "brotli",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libbrotlidec.so.1",
+      "usr/lib/arm-linux-gnueabihf/libbrotlicommon.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/b/brotli/libbrotli1_1.1.0-2build2_armhf.deb",
+    "size": 318580,
+    "component": "main",
+    "sha256": "8b4c16ae8241e121c408810a984bb5740a7a69ddfcb569b15313a3261050253f"
+  },
+  "libdbus-1-3": {
+    "version": "1.14.10-4ubuntu4.1",
+    "source": "dbus",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libdbus-1.so.3"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/d/dbus/libdbus-1-3_1.14.10-4ubuntu4.1_armhf.deb",
+    "size": 189918,
+    "component": "main",
+    "sha256": "7aa06a7f4a3ec6f954bbd604c79da4f1f5d5ecefe5a0d4c5d5914e778ee6151d"
+  },
+  "libllvm20": {
+    "version": "1:20.1.2-0ubuntu1~24.04.3",
+    "source": "llvm-toolchain-20",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libLLVM.so.20.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/l/llvm-toolchain-20/libllvm20_20.1.2-0ubuntu1~24.04.3_armhf.deb",
+    "size": 29880070,
+    "component": "main",
+    "sha256": "92ba0e4393f9559d5ddf428c00f70def828e08a0aa4dbe735428621985bf1808"
+  },
+  "libzstd1": {
+    "version": "1.5.5+dfsg2-2build1.1",
+    "source": "libzstd",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libzstd.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libz/libzstd/libzstd1_1.5.5+dfsg2-2build1.1_armhf.deb",
+    "size": 264966,
+    "component": "main",
+    "sha256": "6caad7de164d7e64dc5b620110addc147484a62886b1c0f8ae834b1fd0a578eb"
+  },
+  "libsensors5": {
+    "version": "1:3.6.0-9build1",
+    "source": "lm-sensors",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libsensors.so.5"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/l/lm-sensors/libsensors5_3.6.0-9build1_armhf.deb",
+    "size": 24630,
+    "component": "main",
+    "sha256": "a18633aa3603c82b25fae96a72e79423475b27cbd0c3d514fd130a9e7e09b2f4"
+  },
+  "libxcb-randr0": {
+    "version": "1.15-1ubuntu2",
+    "source": "libxcb",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libxcb-randr.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcb/libxcb-randr0_1.15-1ubuntu2_armhf.deb",
+    "size": 16990,
+    "component": "main",
+    "sha256": "c4d30213ea48098d15c6aa134ec940c292179366134697c34f439bfd38df591e"
+  },
+  "libxcb-sync1": {
+    "version": "1.15-1ubuntu2",
+    "source": "libxcb",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libxcb-sync.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcb/libxcb-sync1_1.15-1ubuntu2_armhf.deb",
+    "size": 8738,
+    "component": "main",
+    "sha256": "25d73af29e0f2090534aeb97bfceb1291ec829737e862d795876d9a7837b8729"
+  },
+  "libxshmfence1": {
+    "version": "1.3-1build5",
+    "source": "libxshmfence",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libxshmfence.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxshmfence/libxshmfence1_1.3-1build5_armhf.deb",
+    "size": 4464,
+    "component": "main",
+    "sha256": "b518d4de4dae81b5b63b9324a25edd7c298938cdd2f8497d5268a9a66db684f3"
+  },
+  "libdrm-amdgpu1": {
+    "version": "2.4.125-1ubuntu0.1~24.04.2",
+    "source": "libdrm",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libdrm_amdgpu.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libd/libdrm/libdrm-amdgpu1_2.4.125-1ubuntu0.1~24.04.2_armhf.deb",
+    "size": 19694,
+    "component": "main",
+    "sha256": "9fab4f39c5077cd00a858bc65f142c4a6748f37f4168cbb22b6d7608ced787d0"
+  },
+  "libelf1t64": {
+    "version": "0.190-1.1ubuntu0.1",
+    "source": "elfutils",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libelf.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/e/elfutils/libelf1t64_0.190-1.1ubuntu0.1_armhf.deb",
+    "size": 50402,
+    "component": "main",
+    "sha256": "5ed385fd97dbd48eaf7fab57403b4964705f5f877d9329fd0747f2f88fc92aee"
+  },
+  "libstdc++6": {
+    "version": "14.2.0-4ubuntu2~24.04.1",
+    "source": "gcc-14",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libstdc++.so.6"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/g/gcc-14/libstdc++6_14.2.0-4ubuntu2~24.04.1_armhf.deb",
+    "size": 713208,
+    "component": "main",
+    "sha256": "299e7e7a9933a4ca087c23a5757a70c7edcad3f4cc399cfec031cead6b393ce3"
+  },
+  "libxau6": {
+    "version": "1:1.0.9-1build6",
+    "source": "libxau",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libXau.so.6"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxau/libxau6_1.0.9-1build6_armhf.deb",
+    "size": 6312,
+    "component": "main",
+    "sha256": "4d81e8801496288d9e32fce7fc06bd6b17f25a18e929d4236987d3f8c52bf2a3"
+  },
+  "libxdmcp6": {
+    "version": "1:1.1.3-0ubuntu6",
+    "source": "libxdmcp",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libXdmcp.so.6"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxdmcp/libxdmcp6_1.1.3-0ubuntu6_armhf.deb",
+    "size": 8738,
+    "component": "main",
+    "sha256": "aeb7d8134e5421b21478801186774f51be0c5b95f5671aa654f83df301a93401"
+  },
+  "libsndfile1": {
+    "version": "1.2.2-1ubuntu5.24.04.1",
+    "source": "libsndfile",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libsndfile.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libs/libsndfile/libsndfile1_1.2.2-1ubuntu5.24.04.1_armhf.deb",
+    "size": 200422,
+    "component": "main",
+    "sha256": "91e41675c9d17aac1a06a753ddb31fa387263dc9c4ebe599f11563a599af8692"
+  },
+  "libsystemd0": {
+    "version": "255.4-1ubuntu8.17",
+    "source": "systemd",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libsystemd.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/s/systemd/libsystemd0_255.4-1ubuntu8.17_armhf.deb",
+    "size": 409784,
+    "component": "main",
+    "sha256": "94e62120b89122a538587b2275ae10d8cc8c5ab16729a90f9616b7596fd273fb"
+  },
+  "libasyncns0": {
+    "version": "0.8-6build4",
+    "source": "libasyncns",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libasyncns.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/liba/libasyncns/libasyncns0_0.8-6build4_armhf.deb",
+    "size": 10144,
+    "component": "main",
+    "sha256": "d8c7780f36d9d0541c619064cd6da87e62d0e2aa85016a708adfaee33513a634"
+  },
+  "libapparmor1": {
+    "version": "4.0.1really4.0.1-0ubuntu0.24.04.8",
+    "source": "apparmor",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libapparmor.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/a/apparmor/libapparmor1_4.0.1really4.0.1-0ubuntu0.24.04.8_armhf.deb",
+    "size": 46912,
+    "component": "main",
+    "sha256": "c7c7fc027b62e544e9e0d25f1d8c63a94bcdaaa4af9c42709c6a05b536e087a5"
+  },
+  "libffi8": {
+    "version": "3.4.6-1build1",
+    "source": "libffi",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libffi.so.8"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libf/libffi/libffi8_3.4.6-1build1_armhf.deb",
+    "size": 21218,
+    "component": "main",
+    "sha256": "a5af6885f9b3f5e2910c767c74824c6415eeaaa54181bdfb31bdc6d481fc2bba"
+  },
+  "libedit2": {
+    "version": "3.1-20230828-1build1",
+    "source": "libedit",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libedit.so.2"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libe/libedit/libedit2_3.1-20230828-1build1_armhf.deb",
+    "size": 78668,
+    "component": "main",
+    "sha256": "9c0ca54edc7127e677332d19239e29dd20888587d06b5a052281dad47f8b0c59"
+  },
+  "libxml2": {
+    "version": "2.9.14+dfsg-1.3ubuntu3.9",
+    "source": "libxml2",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libxml2.so.2"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxml2/libxml2_2.9.14+dfsg-1.3ubuntu3.9_armhf.deb",
+    "size": 597334,
+    "component": "main",
+    "sha256": "eb35fc651e3528fea8bf9cecfe22b8579906aafccb29871ac518ca13544857f0"
+  },
+  "libbsd0": {
+    "version": "0.12.1-1build1.1",
+    "source": "libbsd",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libbsd.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libb/libbsd/libbsd0_0.12.1-1build1.1_armhf.deb",
+    "size": 36608,
+    "component": "main",
+    "sha256": "f203d6cb2e82a746f27833fb60ef562961b0b0dc068568dd54977332bfb9f3ab"
+  },
+  "libflac12t64": {
+    "version": "1.4.3+ds-2.1ubuntu2",
+    "source": "flac",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libFLAC.so.12"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/flac/libflac12t64_1.4.3+ds-2.1ubuntu2_armhf.deb",
+    "size": 143512,
+    "component": "main",
+    "sha256": "584cbaa1834292431d2d682eadfec6aacd02f81230f1ef92e90e47c67d85d907"
+  },
+  "libvorbis0a": {
+    "version": "1.3.7-1build3",
+    "source": "libvorbis",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libvorbis.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libv/libvorbis/libvorbis0a_1.3.7-1build3_armhf.deb",
+    "size": 85828,
+    "component": "main",
+    "sha256": "8d97fd5b262e500c64eb6247f3fe53dde8a749e052fd77d932b6df5598deeb77"
+  },
+  "libvorbisenc2": {
+    "version": "1.3.7-1build3",
+    "source": "libvorbis",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libvorbisenc.so.2"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libv/libvorbis/libvorbisenc2_1.3.7-1build3_armhf.deb",
+    "size": 72908,
+    "component": "main",
+    "sha256": "5faaeeb0414529ea2b0bcef69513b721f5f395b1251ccfb816335b3dcacbcd21"
+  },
+  "libopus0": {
+    "version": "1.4-1build1",
+    "source": "opus",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libopus.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/o/opus/libopus0_1.4-1build1_armhf.deb",
+    "size": 187386,
+    "component": "main",
+    "sha256": "9c8eb92ef1d6eeac8aabf2e09591669ad4f2f2c7b2b875928b7ea0705ea32fc8"
+  },
+  "libogg0": {
+    "version": "1.3.5-3build1",
+    "source": "libogg",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libogg.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libo/libogg/libogg0_1.3.5-3build1_armhf.deb",
+    "size": 20470,
+    "component": "main",
+    "sha256": "c520555ea4907e5fc866e8c408fca55e074d35bb5ebc528c9f5f5b6704bf258e"
+  },
+  "libmpg123-0t64": {
+    "version": "1.32.5-1ubuntu1.1",
+    "source": "mpg123",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libmpg123.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/m/mpg123/libmpg123-0t64_1.32.5-1ubuntu1.1_armhf.deb",
+    "size": 148482,
+    "component": "main",
+    "sha256": "e72a2326bddef77592131ccfa9c7907c5007cc57843e7e94024b33d91de11de5"
+  },
+  "libmp3lame0": {
+    "version": "3.100-6build1",
+    "source": "lame",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libmp3lame.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/l/lame/libmp3lame0_3.100-6build1_armhf.deb",
+    "size": 126338,
+    "component": "main",
+    "sha256": "833e0bf9e92dec17a7ce37891a0aaebbdb83a947697e9c019d4b92edbed2475a"
+  },
+  "libcap2": {
+    "version": "1:2.66-5ubuntu2.4",
+    "source": "libcap2",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libcap.so.2"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libc/libcap2/libcap2_2.66-5ubuntu2.4_armhf.deb",
+    "size": 26278,
+    "component": "main",
+    "sha256": "7586d6fe31a1fc9f5726aee1fdaee8d2be93853869b2efc4aa36ee0607b25f9b"
+  },
+  "libgcrypt20": {
+    "version": "1.10.3-2ubuntu0.2",
+    "source": "libgcrypt20",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libgcrypt.so.20"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libgcrypt20/libgcrypt20_1.10.3-2ubuntu0.2_armhf.deb",
+    "size": 456864,
+    "component": "main",
+    "sha256": "8d52e2073c943b3f380fc2238f1d0fa061a9dff09895b13356716a7711bde11d"
+  },
+  "liblz4-1": {
+    "version": "1.9.4-1build1.1",
+    "source": "lz4",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/liblz4.so.1"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/l/lz4/liblz4-1_1.9.4-1build1.1_armhf.deb",
+    "size": 58086,
+    "component": "main",
+    "sha256": "1dcf3be4ce0b0a020833c95e0b00d9809141fc593dba91150735bb3bde875cf8"
+  },
+  "liblzma5": {
+    "version": "5.6.1+really5.4.5-1ubuntu0.3",
+    "source": "xz-utils",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/liblzma.so.5"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/x/xz-utils/liblzma5_5.6.1+really5.4.5-1ubuntu0.3_armhf.deb",
+    "size": 111904,
+    "component": "main",
+    "sha256": "55652dbd67da7e5d6311c56876eaaba639f8518f12cc3a767a2669a13d6149b6"
+  },
+  "libicu74": {
+    "version": "74.2-1ubuntu3.1",
+    "source": "icu",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libicuuc.so.74",
+      "usr/lib/arm-linux-gnueabihf/libicudata.so.74"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/i/icu/libicu74_74.2-1ubuntu3.1_armhf.deb",
+    "size": 10536484,
+    "component": "main",
+    "sha256": "194762b6dce9c01e16fb047817d050e7be29482466f33c396fc9a4826261f63a"
+  },
+  "libmd0": {
+    "version": "1.1.0-2build1.1",
+    "source": "libmd",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libmd.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libm/libmd/libmd0_1.1.0-2build1.1_armhf.deb",
+    "size": 22986,
+    "component": "main",
+    "sha256": "3ba461c1e825ae6d79f9ac0620c4c42dcc66a1b2c86b857759bbca45dec11145"
+  },
+  "libgpg-error0": {
+    "version": "1.47-3build2.1",
+    "source": "libgpg-error",
+    "section": "libs",
+    "paths": [
+      "usr/lib/arm-linux-gnueabihf/libgpg-error.so.0"
+    ],
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libg/libgpg-error/libgpg-error0_1.47-3build2.1_armhf.deb",
+    "size": 61678,
+    "component": "main",
+    "sha256": "124818c2b56d9eb9f216fb8bd848dc4403a718f24a89ddb9460cec4a04ebf84e"
+  },
+  "fontconfig-config": {
+    "version": "2.15.0-1.1ubuntu2",
+    "source": "fontconfig",
+    "arch": "armhf",
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/fontconfig/fontconfig-config_2.15.0-1.1ubuntu2_armhf.deb",
+    "size": 37398,
+    "sha256": "67ebe8b139c039d7101cd0dba1a961f07fe94cf46a0446851e308fe5a14bc23b"
+  },
+  "fonts-dejavu-core": {
+    "version": "2.37-8",
+    "source": "fonts-dejavu",
+    "arch": "all",
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/f/fonts-dejavu/fonts-dejavu-core_2.37-8_all.deb",
+    "size": 835172,
+    "sha256": "40049660c194f3b8a2541fc7369efebb10e9f94bdac836a2f38fafedd10fa73a"
+  },
+  "libasound2-data": {
+    "version": "1.2.11-1ubuntu0.3",
+    "source": "alsa-lib",
+    "arch": "all",
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/a/alsa-lib/libasound2-data_1.2.11-1ubuntu0.3_all.deb",
+    "size": 21350,
+    "sha256": "0c26896193480d9dbb055e85e8ddfb9c9f34cf19afee340987cd6311e2886fc1"
+  },
+  "libvulkan1": {
+    "version": "1.3.275.0-1build1",
+    "source": "vulkan-loader",
+    "arch": "armhf",
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/v/vulkan-loader/libvulkan1_1.3.275.0-1build1_armhf.deb",
+    "size": 122574,
+    "sha256": "1e7c2ef47d733787dd818570d5fd44e6fe25f7120a6743b875bd97cfdcfbd841"
+  },
+  "libxcomposite1": {
+    "version": "1:0.4.5-1build3",
+    "source": "libxcomposite",
+    "arch": "armhf",
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libx/libxcomposite/libxcomposite1_0.4.5-1build3_armhf.deb",
+    "size": 5750,
+    "sha256": "5ae09dcf898fd37b62b1f8d75a38ebc072906d3ffdc0c98057ec2e9e79d6ff80"
+  },
+  "libudev1": {
+    "version": "255.4-1ubuntu8.17",
+    "source": "systemd",
+    "arch": "armhf",
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/s/systemd/libudev1_255.4-1ubuntu8.17_armhf.deb",
+    "size": 169742,
+    "sha256": "57c4f4ab4bb8fc5d327a6247ceb010536f95285503d39cbcaa6b02603aa12dcb"
+  },
+  "libusb-1.0-0": {
+    "version": "1.0.27-1",
+    "source": "libusb-1.0",
+    "arch": "armhf",
+    "url": "https://ports.ubuntu.com/ubuntu-ports/pool/main/libu/libusb-1.0/libusb-1.0-0_1.0.27-1_armhf.deb",
+    "size": 48702,
+    "sha256": "7c79ee683d3e0dee43cacfaa065ede78ee5479d526d4c577ab981401473ef84b"
+  }
+}

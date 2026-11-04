@@ -1,0 +1,27 @@
+{
+  "virgl": {
+    "repository": "https://gitlab.freedesktop.org/virgl/virglrenderer.git",
+    "revision": "ca50e008863837e094747a69974dde3ae148aeaa"
+  },
+  "epoxy": {
+    "url": "https://github.com/anholt/libepoxy/archive/refs/tags/1.5.10.tar.gz",
+    "sha256": "a7ced37f4102b745ac86d6a70a9da399cc139ff168ba6b8002b4d8d43c900c15"
+  },
+  "angle": {
+    "x86_64": {
+      "url": "https://packages.termux.dev/apt/termux-main/pool/main/a/angle-android/angle-android_2.1.24923-f09a19ce-2_x86_64.deb",
+      "size": 3263912,
+      "sha256": "26772f7d933fd1885135c4ba0f98d2c5c63150f0042c0b46e5262a7fe2c04770"
+    },
+    "arm64-v8a": {
+      "url": "https://packages.termux.dev/apt/termux-main/pool/main/a/angle-android/angle-android_2.1.24923-f09a19ce-2_aarch64.deb",
+      "size": 3006888,
+      "sha256": "3e421cecefc8cb5ca9c57ffe1eb38f77dc315d88d99f1018ef0fdd2add6ca330"
+    },
+    "armeabi-v7a": {
+      "url": "https://packages.termux.dev/apt/termux-main/pool/main/a/angle-android/angle-android_2.1.24923-f09a19ce-2_arm.deb",
+      "size": 2809528,
+      "sha256": "7ec3f5d9bd4269c0214a8ca32672b8db330578d66b2d11cf2556e17977ab504d"
+    }
+  }
+}

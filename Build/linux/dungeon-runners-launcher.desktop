@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Dungeon Runners Launcher
+Exec=DungeonRunnersLauncher
+Icon=dungeon-runners-launcher
+Terminal=false
+Categories=Game;

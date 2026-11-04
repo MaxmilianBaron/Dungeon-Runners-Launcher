@@ -1,0 +1,151 @@
+diff --git a/lorie/build.gradle b/lorie/build.gradle
+index 4580acb..ae053d1 100644
+--- a/lorie/build.gradle
++++ b/lorie/build.gradle
+@@ -38,7 +38,8 @@ android {
+ 
+     compileOptions.sourceCompatibility JavaVersion.VERSION_1_9
+     compileOptions.targetCompatibility JavaVersion.VERSION_1_9
+-    externalNativeBuild.cmake.path "src/main/cpp/CMakeLists.txt"
++    if (project.hasProperty("prebuiltNativeDir")) sourceSets.main.jniLibs.srcDirs = [project.property("prebuiltNativeDir")]
++    else externalNativeBuild.cmake.path "src/main/cpp/CMakeLists.txt"
+     packagingOptions.jniLibs.useLegacyPackaging false
+     buildFeatures.aidl true
+     buildFeatures.buildConfig true
+diff --git a/lorie/src/main/java/com/termux/x11/LorieView.java b/lorie/src/main/java/com/termux/x11/LorieView.java
+index 7f4cb0a..7e7b7f6 100644
+--- a/lorie/src/main/java/com/termux/x11/LorieView.java
++++ b/lorie/src/main/java/com/termux/x11/LorieView.java
+@@ -662,6 +662,6 @@ public class LorieView extends SurfaceView implements InputStub {
+         outAttrs.actionLabel = "↵";
+         // Note that IME_ACTION_NONE cannot be used as that makes it impossible to input newlines using the on-screen
+         // keyboard on Android TV (see https://github.com/termux/termux-app/issues/221).
+-        outAttrs.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN;
++        outAttrs.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN | EditorInfo.IME_FLAG_NO_EXTRACT_UI | EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING;
+         return mConnection;
+     }
+diff --git a/lorie/src/main/java/com/termux/x11/MainActivity.java b/lorie/src/main/java/com/termux/x11/MainActivity.java
+index 5d60a7c..f749942 100644
+--- a/lorie/src/main/java/com/termux/x11/MainActivity.java
++++ b/lorie/src/main/java/com/termux/x11/MainActivity.java
+@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
+     private static final float MIN_PIP_ASPECT_RATIO = getSystemDimenFloat("config_pictureInPictureMinAspectRatio", 1.f / 2.39f);
+     private static final float MAX_PIP_ASPECT_RATIO = getSystemDimenFloat("config_pictureInPictureMaxAspectRatio", 2.39f);
+ 
++    private GameControls gameControls;
+     public Prefs prefs;
+     LorieApp app;
+ 
+@@ -225,6 +226,7 @@ public class MainActivity extends AppCompatActivity {
+             }
+         });
+ 
++        gameControls = new GameControls(this);
+         ImeHeightProvider.assistActivity(this);
+ 
+         if (app.pendingConnection != null) {
+@@ -660,6 +663,7 @@ public class MainActivity extends AppCompatActivity {
+ 
+     @Override
+     public void onPause() {
++        if (gameControls != null) gameControls.releaseAll();
+         getLorieView().setKeyboardVisible(false);
+ 
+         orientationListener.disable();
+@@ -668,10 +672,25 @@ public class MainActivity extends AppCompatActivity {
+         app.onActivityPaused();
+     }
+ 
++    @Override
++    protected void onNewIntent(Intent intent) {
++        super.onNewIntent(intent);
++        setIntent(intent);
++        if (gameControls != null) { gameControls.applyIntent(); applyContentInsets(); gameControls.refresh(); }
++    }
++
+     public LorieView getLorieView() {
+         return findViewById(R.id.lorieView);
+     }
+ 
++    public boolean gameMouseClick(int button, boolean relative) {
++        return gameControls != null && gameControls.mouseClick(button, relative);
++    }
++
++    public void gameMouseEvent(int button) {
++        if (gameControls != null) gameControls.mouseEvent(button);
++    }
++
+     public ViewPager getTerminalToolbarViewPager() {
+         return findViewById(R.id.terminal_toolbar_view_pager);
+     }
+@@ -770,13 +789,15 @@ public class MainActivity extends AppCompatActivity {
+         // A bottom bar reserving its own space always sits right above the keyboard via bottomMargin,
+         // so content must stop there too, regardless of Reseed.
+         boolean barReservesKeyboardSpace = pos == PAGER_POSITION_BOTTOM && ekbarContentInset > 0;
+-        int imeContentInset = barReservesKeyboardSpace ? bottomMargin : (prefs.Reseed.get() ? imeHeight : 0);
++        int imeContentInset = barReservesKeyboardSpace ? bottomMargin : ((prefs.Reseed.get() || (gameControls != null && gameControls.enabled())) ? imeHeight : 0);
++        int gameGutter = gameControls == null ? 0 : gameControls.gutter();
+ 
+-        getLorieView().setContentInsets(pos == PAGER_POSITION_LEFT ? ekbarContentInset : 0,
++        getLorieView().setContentInsets(gameGutter + (pos == PAGER_POSITION_LEFT ? ekbarContentInset : 0),
+                 pos == PAGER_POSITION_TOP ? ekbarContentInset : 0,
+-                pos == PAGER_POSITION_RIGHT ? ekbarContentInset : 0,
++                gameGutter + (pos == PAGER_POSITION_RIGHT ? ekbarContentInset : 0),
+                 imeContentInset + (pos == PAGER_POSITION_BOTTOM ? ekbarContentInset : 0));
+         getLorieView().setObscuredBottom(imeHeight - imeContentInset);
++        if (gameControls != null) gameControls.setKeyboardHeight(imeHeight);
+ 
+         ViewPager pager = getTerminalToolbarViewPager();
+         ViewGroup.MarginLayoutParams pagerParams = (ViewGroup.MarginLayoutParams) pager.getLayoutParams();
+@@ -835,6 +856,7 @@ public class MainActivity extends AppCompatActivity {
+     @SuppressLint("WrongConstant")
+     @Override
+     public void onWindowFocusChanged(boolean hasFocus) {
++        if (!hasFocus && gameControls != null) gameControls.releaseAll();
+         super.onWindowFocusChanged(hasFocus);
+         KeyInterceptor.recheck();
+ 
+@@ -1073,6 +1095,7 @@ public class MainActivity extends AppCompatActivity {
+             findViewById(R.id.mouse_buttons).setVisibility(prefs.showMouseHelper.get() && "1".equals(prefs.touchMode.get()) && connected ? View.VISIBLE : View.GONE);
+             findViewById(R.id.stub).setVisibility(connected?View.INVISIBLE:View.VISIBLE);
+             getLorieView().setVisibility(connected?View.VISIBLE:View.INVISIBLE);
++            if (gameControls != null) gameControls.refresh();
+ 
+             // We should recover connection in the case if file descriptor for some reason was broken...
+             if (!connected)
+diff --git a/lorie/src/main/java/com/termux/x11/input/InputEventSender.java b/lorie/src/main/java/com/termux/x11/input/InputEventSender.java
+index 22135e6..a160663 100644
+--- a/lorie/src/main/java/com/termux/x11/input/InputEventSender.java
++++ b/lorie/src/main/java/com/termux/x11/input/InputEventSender.java
+@@ -115,6 +115,7 @@ public final class InputEventSender {
+     public void sendMouseEvent(PointF pos, int button, boolean down, boolean relative) {
+         if (!buttons.contains(button))
+             return;
++        mActivity.gameMouseEvent(button);
+         mInjector.sendMouseEvent(pos != null ? (int) pos.x : 0, pos != null ? (int) pos.y : 0, button, down, relative);
+     }
+ 
+@@ -123,20 +124,17 @@ public final class InputEventSender {
+     }
+ 
+     public void sendMouseDown(int button, boolean relative) {
+-        if (!buttons.contains(button)) 
+-            return;
+-        mInjector.sendMouseEvent(0, 0, button, true, relative);
++        sendMouseEvent(null, button, true, relative);
+     }
+ 
+     public void sendMouseUp(int button, boolean relative) {
+-        if (!buttons.contains(button))
+-            return;
+-        mInjector.sendMouseEvent(0, 0, button, false, relative);
++        sendMouseEvent(null, button, false, relative);
+     }
+ 
+     public void sendMouseClick(int button, boolean relative) {
+         if (!buttons.contains(button))
+             return;
++        if (mActivity.gameMouseClick(button, relative)) return;
+         mInjector.sendMouseEvent(0, 0, button, true, relative);
+         mInjector.sendMouseEvent(0, 0, button, false, relative);
+     }

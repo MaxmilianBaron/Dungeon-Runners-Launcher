@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup><EmbeddedResource Include="addon-catalog.json" LogicalName="addon-catalog.json" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="client-compatibility.json" LogicalName="client-compatibility.json" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="../../runtime/android-controls/wow64.json" LogicalName="android-runtime.json" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="../../runtime/mac-wow64/wow64cpu.dll" LogicalName="mac-wow64cpu.dll" /></ItemGroup>
+</Project>
