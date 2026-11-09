@@ -45,7 +45,7 @@ public static class WindowsGameDisplay
         {
             token.ThrowIfCancellationRequested();
             process.Refresh();
-            if (process.HasExited) throw new IOException("The game closed before its monitor could be selected.");
+            if (process.HasExited) throw new IOException($"The game closed before its monitor could be selected (exit 0x{process.ExitCode:X8}).");
             var window = FindWindow(process.Id);
             if (window != IntPtr.Zero)
             {

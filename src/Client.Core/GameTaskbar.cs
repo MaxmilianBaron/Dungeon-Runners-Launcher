@@ -35,7 +35,7 @@ public static class GameTaskbar
         while (limit.Elapsed < TimeSpan.FromSeconds(15))
         {
             process.Refresh();
-            if (process.HasExited) throw new IOException("The game closed before its window opened.");
+            if (process.HasExited) throw new IOException($"The game closed before its window opened (exit 0x{process.ExitCode:X8}).");
             var window = FindWindow(process.Id);
             if (window != IntPtr.Zero)
             {

@@ -21,6 +21,7 @@ public partial class MainWindow : Window
 {
     private readonly Downloads downloads = new();
     private readonly Installer installer = new(ReleaseKey.PublicKey, EnsureClosed);
+    private readonly WindowsMediaSetup windowsMedia = new();
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromSeconds(2) };
     private readonly DispatcherTimer artworkTimer = new() { Interval = TimeSpan.FromSeconds(5) };
     private readonly DispatcherTimer updateTimer = new() { Interval = TimeSpan.FromMinutes(5) };
@@ -39,6 +40,7 @@ public partial class MainWindow : Window
     private string? updateDetail;
     private bool operationFailed;
     private bool applicationControlFailure;
+    private WindowsMediaException? mediaFailure;
     private bool restartPending;
     private bool clientContentUpdate;
     private readonly bool preview;
@@ -95,7 +97,7 @@ public partial class MainWindow : Window
         monitorSelection = preview ? "" : GameDisplay.Read();
         Status.PropertyChanged += (_, e) => { if (e.Property == TextBlock.TextProperty) RefreshStatusVisibility(); };
         Detail.PropertyChanged += (_, e) => { if (e.Property == TextBlock.TextProperty) RefreshStatusVisibility(); };
-        PageScroll.SizeChanged += (_, _) => RevealApplicationControlHelp();
+        PageScroll.SizeChanged += (_, _) => RevealStartupHelp();
         ContentGrid.SizeChanged += (_, _) => UpdateResponsiveLayout();
         ArtworkHost.SizeChanged += (_, _) => ArtworkFrame.MaxHeight = Math.Max(244, ArtworkHost.Bounds.Width * 548 / 1024 + 4);
         ScalingChanged += (_, _) => { if (IsVisible) FitToScreen(); };
@@ -403,21 +405,24 @@ public partial class MainWindow : Window
 
     private void RefreshStatusVisibility()
     {
-        var guide = applicationControlFailure && Detail.Text == ApplicationControlHelp.Text;
+        var appControl = applicationControlFailure && Detail.Text == ApplicationControlHelp.Text;
+        var media = mediaFailure is { } failure && Detail.Text == failure.Message;
+        var guide = appControl || media;
         Detail.MaxHeight = guide ? double.PositiveInfinity : 44;
         Detail.TextTrimming = guide ? TextTrimming.None : TextTrimming.CharacterEllipsis;
-        var reveal = guide && !VerificationLinks.IsVisible;
-        VerificationLinks.IsVisible = guide;
+        var reveal = appControl && !VerificationLinks.IsVisible || media && !MediaHelpLinks.IsVisible;
+        VerificationLinks.IsVisible = appControl;
+        MediaHelpLinks.IsVisible = media;
         Status.IsVisible = !string.IsNullOrWhiteSpace(Status.Text);
         Detail.IsVisible = !string.IsNullOrWhiteSpace(Detail.Text);
         StatusPanel.IsVisible = operation is not null || Status.IsVisible || Detail.IsVisible || OpenGameLog.IsVisible;
-        if (reveal) RevealApplicationControlHelp();
+        if (reveal) RevealStartupHelp();
     }
 
-    private void RevealApplicationControlHelp()
+    private void RevealStartupHelp()
     {
-        if (!applicationControlFailure) return;
-        Dispatcher.UIThread.Post(() => { if (!closed && applicationControlFailure && VerificationLinks.IsVisible) Actions.BringIntoView(); }, DispatcherPriority.Loaded);
+        if (!VerificationLinks.IsVisible && !MediaHelpLinks.IsVisible) return;
+        Dispatcher.UIThread.Post(() => { if (!closed && (VerificationLinks.IsVisible || MediaHelpLinks.IsVisible)) Actions.BringIntoView(); }, DispatcherPriority.Loaded);
     }
 
     private void UpdateResponsiveLayout()
@@ -465,6 +470,7 @@ public partial class MainWindow : Window
         operation = new CancellationTokenSource();
         updateMessage = null; updateDetail = null; restartPending = false; operationFailed = false;
         applicationControlFailure = false;
+        mediaFailure = null;
         var succeeded = false;
         committing = false;
         Cancel.IsVisible = true;
@@ -487,7 +493,8 @@ public partial class MainWindow : Window
         {
             operationFailed = true;
             var appControl = applicationControlFailure = ApplicationControlHelp.AppliesTo(e);
-            Status.Text = updateMessage = appControl ? ApplicationControlHelp.Title : "Could not finish";
+            mediaFailure = e as WindowsMediaException;
+            Status.Text = updateMessage = appControl ? ApplicationControlHelp.Title : mediaFailure?.Title ?? "Could not finish";
             Status.Foreground = new SolidColorBrush(Color.FromRgb(245, 174, 140));
             Detail.Text = updateDetail = appControl ? ApplicationControlHelp.Text : e.Message;
         }
@@ -540,7 +547,7 @@ public partial class MainWindow : Window
         }, closeAfter);
     }
 
-    private async Task<InstallResult> InstallAsync(CancellationToken token)
+    private async Task<InstallResult> InstallAsync(CancellationToken token, bool prepareMedia = false)
     {
         if (releaseBytes is null) await FetchAsync(token);
         var root = SafeFiles.Root(Folder.Text ?? "");
@@ -562,11 +569,11 @@ public partial class MainWindow : Window
         var result = await Task.Run(() => installer.ApplyAsync(root, releaseBytes!, downloads.PackageAsync, progress, token), token);
         InstallationLocation.Save(root); rememberedFolder = true;
         await InstallEntryPointsAsync(root, createShortcut, installer.InstalledManifest(root)?.Schema == 2);
-        var requirements = await EnsureRequirementsAsync(root, token, initializeArmCompatibility);
+        var requirements = await EnsureRequirementsAsync(root, token, initializeArmCompatibility, prepareMedia);
         return result with { RequirementsChanged = requirements.Changed };
     }
 
-    private async Task<RuntimeSetup> EnsureRequirementsAsync(string root, CancellationToken token, bool initializeArmCompatibility = false)
+    private async Task<RuntimeSetup> EnsureRequirementsAsync(string root, CancellationToken token, bool initializeArmCompatibility = false, bool prepareMedia = false)
     {
         committing = false;
         Cancel.IsEnabled = true;
@@ -579,7 +586,13 @@ public partial class MainWindow : Window
             if (p.Total > 0) Progress.Value = p.Completed * 100.0 / p.Total;
             Transfer.Text = p.Total > 0 ? $"{p.Completed / 1048576.0:F1} / {p.Total / 1048576.0:F1} MiB" : "";
         });
-        return await Task.Run(() => Dependencies.EnsureAsync(root, downloads, progress, () => Dispatcher.UIThread.Invoke(() => { committing = true; Cancel.IsEnabled = false; }), token, initializeArmCompatibility: initializeArmCompatibility), token);
+        void Commit() => Dispatcher.UIThread.Invoke(() => { committing = true; Cancel.IsEnabled = false; });
+        return await Task.Run(async () =>
+        {
+            var requirements = await Dependencies.EnsureAsync(root, downloads, progress, Commit, token, initializeArmCompatibility: initializeArmCompatibility);
+            if (prepareMedia) await windowsMedia.EnsureAsync(progress, () => { EnsureClosed(root); Commit(); }, token);
+            return requirements;
+        }, token);
     }
 
     private static async Task InstallEntryPointsAsync(string root, bool createShortcut, bool retirePreviousEntries = false)
@@ -604,10 +617,10 @@ public partial class MainWindow : Window
         var mode = Mode;
         await RunAsync(async token =>
         {
-            if (mode != "play") { await InstallAsync(token); return; }
+            if (mode != "play") { await InstallAsync(token, prepareMedia: true); return; }
             var root = SafeFiles.Root(Folder.Text ?? "");
             ClientCompatibility.Require(root, ClientCompatibility.Read(SafeFiles.Under(root, "DungeonRunners.exe")), ClientCompatibility.Installed);
-            var requirements = await EnsureRequirementsAsync(root, token);
+            var requirements = await EnsureRequirementsAsync(root, token, prepareMedia: true);
             var manifest = LocalManifest() ?? releaseBytes;
             if (manifest is null)
             {
@@ -848,6 +861,7 @@ public partial class MainWindow : Window
     private void DiscordClick(object sender, RoutedEventArgs e) => OpenWebsite("https://discord.gg/hpXWhuS9Yj");
     private void VerifyRepositoryClick(object sender, RoutedEventArgs e) => OpenWebsite(ApplicationControlHelp.RepositoryUrl);
     private void VerifyCommunityClick(object sender, RoutedEventArgs e) => OpenWebsite(ApplicationControlHelp.CommunityUrl);
+    private void MediaHelpClick(object sender, RoutedEventArgs e) { if (mediaFailure is { } failure) OpenWebsite(failure.HelpUrl); }
     private void DesyncReportClick(object sender, RoutedEventArgs e) => OpenWebsite("https://play.dungeonrunnersreborn.com/report-desync");
     private void OpenWebsite(string url)
     {

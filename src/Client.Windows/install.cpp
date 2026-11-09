@@ -1,4 +1,5 @@
 #include "launcher.h"
+#include "windows_media_setup.h"
 
 namespace dr {
 static const std::set<std::string> managed={"DungeonRunners.exe","dbghelp.dll","fmodex.dll","game.pkg","game.pki","config/default.cfg","config/resourcemanager.cfg","config/DungeonRunners.cfg","config/User.cfg"};
@@ -157,6 +158,43 @@ void entry_points(const Path& root) {
         }
     }
 }
+void windows_media(const Progress& progress) {
+    static bool restart_required=false;
+    if(restart_required)throw WindowsMediaError(MediaRestartTitle,MediaRestartText,MediaPackHelp);
+    wchar_t system[MAX_PATH];const UINT system_length=GetSystemDirectoryW(system,MAX_PATH);
+    if(!system_length||system_length>=MAX_PATH)return;
+    const Path system_path(system);
+    const DWORD attributes=GetFileAttributesW((system_path+L"\\ResampleDmo.dll").c_str());
+    if(attributes!=INVALID_FILE_ATTRIBUTES&&!(attributes&FILE_ATTRIBUTE_DIRECTORY))return;
+    bool needed=false;
+    try{needed=direct_sound_needs_resampler(read(under(system_path,"dsound.dll"),4194304));}catch(const std::exception&){}
+    if(!needed)return;
+
+    OSVERSIONINFOW os{};os.dwOSVersionInfoSize=sizeof os;
+    using ProductInfo=BOOL (WINAPI*)(DWORD,DWORD,DWORD,DWORD,PDWORD);
+    FARPROC address=GetProcAddress(GetModuleHandleW(L"kernel32.dll"),"GetProductInfo");
+    ProductInfo product_info=nullptr;std::memcpy(&product_info,&address,sizeof product_info);
+    DWORD edition=0;
+    if(!GetVersionExW(&os)||os.dwMajorVersion<10||!product_info||!product_info(10,0,0,0,&edition)||!media_pack_edition(edition))
+        throw windows_audio_file_missing();
+
+    const Path windows=directory(system_path);
+    SYSTEM_INFO native{};GetNativeSystemInfo(&native);
+    const Path dism=windows+(native.wProcessorArchitecture==PROCESSOR_ARCHITECTURE_INTEL?L"\\System32\\dism.exe":L"\\Sysnative\\dism.exe");
+    if(!exists(dism))throw media_pack_manual("Windows is missing ResampleDmo.dll.");
+    game_closed();check_cancelled();
+    if(progress)progress("Installing Media Feature Pack",0,0);
+    DWORD code;
+    try{code=start(dism,{L"/Online",L"/Add-Capability",MediaCapability,L"/NoRestart",L"/Quiet"},windows,true,true);}
+    catch(const std::exception&){throw media_pack_manual("Windows could not start Media Feature Pack setup.");}
+    if(code!=0&&code!=3010){
+        char error[16];std::snprintf(error,sizeof error,"0x%08lX",code);
+        throw media_pack_manual(std::string("Windows could not install Media Feature Pack (")+error+").");
+    }
+    restart_required=true;
+    throw WindowsMediaError(MediaRestartTitle,MediaRestartText,MediaPackHelp);
+}
+
 void requirements(const Path& root,const Progress& progress) {
     wchar_t system[MAX_PATH]; require(GetSystemDirectoryW(system,MAX_PATH)>0,"Cannot locate Windows libraries.");
     if(exists(under(system,"d3dx9_31.dll"))&&exists(under(system,"d3dx9_40.dll")))return;
@@ -180,6 +218,6 @@ void play(const Path& root,const Progress& progress) {
       }
       runtime_folders(root);Path config=under(root,"config/DungeonRunners.cfg");Bytes original=exists(config)?read(config,65536):Bytes{},connected=connection_config(original);if(original!=connected){game_closed();atomic_write(config,connected);}if(!exists(saved))atomic_write(saved,signed_bytes);
     }
-    requirements(root,progress);check_cancelled();launch_game(root);
+    requirements(root,progress);windows_media(progress);check_cancelled();launch_game(root);
 }
 }

@@ -1,5 +1,6 @@
 #include "launcher.h"
 #include "application_control_help.h"
+#include "windows_media_setup.h"
 #include <commctrl.h>
 #include <gdiplus.h>
 
@@ -12,8 +13,10 @@ static bool busy=false,closing=false,installed=false,smoke_test=false,addonsOpen
 static Path root;
 static std::string activeAddon;
 static std::wstring status=L"Checking for updates",detail=L"Connecting to the release service...";
+static HWND mediaHelp=nullptr;
+static const char* mediaHelpUrl=nullptr;
 static bool statusVisible() { return busy||!detail.empty(); }
-static int guideExtra() { return detail==wide(ApplicationControlHelp)?60:0; }
+static int guideExtra() { return mediaHelpUrl?78:detail==wide(ApplicationControlHelp)?60:0; }
 static void layout(HWND hwnd);
 static void monitor_choices(){
     monitors=game_monitors();std::string saved=selected_monitor();int selected=0;SendMessageW(gameMonitor,CB_RESETCONTENT,0,0);SendMessageW(gameMonitor,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(L"Use game settings"));
@@ -25,14 +28,15 @@ static uint64_t completed=0,total=0;
 static std::unique_ptr<Gdiplus::Bitmap> background,artwork,logo;
 static const UINT status_message=WM_APP+1,done_message=WM_APP+2;
 struct State { std::string text;uint64_t done,size; };
-struct Done {std::string error;bool close;};
+struct Done {std::string error;bool close;const char* mediaTitle;const char* mediaUrl;};
 static std::unique_ptr<Gdiplus::Bitmap> bitmap(int id) {
     auto data=resource(id);HGLOBAL memory=GlobalAlloc(GMEM_MOVEABLE,data.size());require(memory!=nullptr,"Cannot load artwork.");void* target=GlobalLock(memory);memcpy(target,data.data(),data.size());GlobalUnlock(memory);IStream* stream=nullptr;require(SUCCEEDED(CreateStreamOnHGlobal(memory,TRUE,&stream)),"Cannot load artwork stream.");
     Gdiplus::Bitmap image(stream);auto copy=std::unique_ptr<Gdiplus::Bitmap>(image.Clone(0,0,image.GetWidth(),image.GetHeight(),PixelFormat32bppARGB));stream->Release();return copy;
 }
 static void refresh() {
     installed=exists(under(root,"DungeonRunners.exe"));SetWindowTextW(primary,installed?L"Play":L"Install game");
-    ShowWindow(verifyRepository,guideExtra()?SW_SHOW:SW_HIDE);ShowWindow(verifyCommunity,guideExtra()?SW_SHOW:SW_HIDE);
+    const bool policy=detail==wide(ApplicationControlHelp);
+    ShowWindow(verifyRepository,policy?SW_SHOW:SW_HIDE);ShowWindow(verifyCommunity,policy?SW_SHOW:SW_HIDE);ShowWindow(mediaHelp,mediaHelpUrl?SW_SHOW:SW_HIDE);
     int choice=static_cast<int>(SendMessageW(addonList,CB_GETCURSEL,0,0));if(choice<0||static_cast<size_t>(choice)>=addon_catalog().size())choice=0;
     SendMessageW(addonList,CB_RESETCONTENT,0,0);
     for(const auto& item:addon_catalog()){std::string label=item.at("name");if(addon_installed(root,item.at("id")))label+=" (installed)";auto value=wide(label);SendMessageW(addonList,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(value.c_str()));}
@@ -54,15 +58,17 @@ static DWORD WINAPI work(void* parameter) {
         else if(action==1&&installed){play(root,progress);}
         else {
             auto signed_bytes=download(feed,131072);install(root,signed_bytes,progress);entry_points(root);requirements(root,progress);
+            if(action==1)windows_media(progress);
             if(exists(under(root,"Addons/Runtime/Addons.dll")))install_addons(root,progress);
             if(action==2)result.close=update_launcher(root,progress);
         }
-    }catch(const std::exception& error){result.error=error.what();}
+    }catch(const WindowsMediaError& error){result.error=error.what();result.mediaTitle=error.title;result.mediaUrl=error.help;}
+    catch(const std::exception& error){result.error=error.what();}
     auto done=new Done(result);if(!PostMessageW(window,done_message,0,reinterpret_cast<LPARAM>(done)))delete done;return 0;
 }
 static void run(int action) {
     if(busy)return;wchar_t selected[MAX_PATH];GetWindowTextW(folder,selected,MAX_PATH);try{root=game_root(selected);refresh();}catch(const std::exception& error){detail=wide(error.what());InvalidateRect(window,nullptr,FALSE);return;}
-    busy=true;InterlockedExchange(&cancelled,0);completed=total=0;status=action>=4?L"Checking addons":action==1&&installed?L"Preparing game":L"Checking for updates";detail=L"Connecting to the release service...";refresh();InvalidateRect(window,nullptr,FALSE);
+    busy=true;mediaHelpUrl=nullptr;InterlockedExchange(&cancelled,0);completed=total=0;status=action>=4?L"Checking addons":action==1&&installed?L"Preparing game":L"Checking for updates";detail=L"Connecting to the release service...";refresh();InvalidateRect(window,nullptr,FALSE);
     HANDLE thread=CreateThread(nullptr,0,work,reinterpret_cast<void*>(static_cast<intptr_t>(action)),0,nullptr);if(thread)CloseHandle(thread);else{busy=false;status=L"Could not finish";detail=L"Cannot start the operation.";refresh();}
 }
 static void layout(HWND hwnd) {
@@ -70,6 +76,7 @@ static void layout(HWND hwnd) {
     MoveWindow(folder,left,height-223-extra,content-86,25,TRUE);MoveWindow(browse,left+content-78,height-223-extra,78,25,TRUE);
     MoveWindow(monitorLabel,left,height-185-extra,132,25,TRUE);MoveWindow(gameMonitor,left+132,height-187-extra,std::max(80,content-132),200,TRUE);int middle=width/2;MoveWindow(primary,middle-267,height-49,126,32,TRUE);MoveWindow(update,middle-131,height-49,108,32,TRUE);MoveWindow(addons,middle-13,height-49,108,32,TRUE);MoveWindow(repair,middle+105,height-46,82,28,TRUE);MoveWindow(quit,middle+197,height-49,70,32,TRUE);MoveWindow(cancel,left+content-80,height-127-extra,80,27,TRUE);
     MoveWindow(verifyRepository,left+12,height-91,132,25,TRUE);MoveWindow(verifyCommunity,left+151,height-91,144,25,TRUE);
+    MoveWindow(mediaHelp,left+12,height-91,132,25,TRUE);
     const int addonBottom=height-(statusVisible()?151+extra:61);
     MoveWindow(addonClose,left+content-92,165,70,28,TRUE);MoveWindow(addonList,left+22,201,content-44,230,TRUE);MoveWindow(addonDescription,left+22,238,content-44,std::max(32,addonBottom-289),TRUE);MoveWindow(addonInstall,left+22,addonBottom-39,94,28,TRUE);MoveWindow(addonRemove,left+126,addonBottom-39,102,28,TRUE);
     const int linksTop=width<760?86:54;MoveWindow(website,left,linksTop,70,28,TRUE);MoveWindow(armory,left+76,linksTop,70,28,TRUE);MoveWindow(discord,left+content-70,linksTop,70,28,TRUE);InvalidateRect(hwnd,nullptr,FALSE);
@@ -102,12 +109,20 @@ static LRESULT CALLBACK procedure(HWND hwnd,UINT message,WPARAM wp,LPARAM lp) {
             if(LOWORD(wp)==16&&HIWORD(wp)==CBN_SELCHANGE){int choice=static_cast<int>(SendMessageW(gameMonitor,CB_GETCURSEL,0,0));try{save_monitor(choice>0&&static_cast<size_t>(choice)<=monitors.size()?utf8(monitors[choice-1].id):std::string{});detail=choice>0?L"The game opens in windowed mode and fits this monitor.":L"Using saved game display settings.";}catch(const std::exception& error){detail=wide(error.what());}refresh();InvalidateRect(hwnd,nullptr,FALSE);return 0;}
             if(LOWORD(wp)==18&&HIWORD(wp)==BN_CLICKED){auto url=wide(VerificationRepository);ShellExecuteW(hwnd,L"open",url.c_str(),nullptr,nullptr,SW_SHOWNORMAL);return 0;}
             if(LOWORD(wp)==19&&HIWORD(wp)==BN_CLICKED){auto url=wide(VerificationCommunity);ShellExecuteW(hwnd,L"open",url.c_str(),nullptr,nullptr,SW_SHOWNORMAL);return 0;}
+            if(LOWORD(wp)==20&&HIWORD(wp)==BN_CLICKED&&mediaHelpUrl){auto url=wide(mediaHelpUrl);ShellExecuteW(hwnd,L"open",url.c_str(),nullptr,nullptr,SW_SHOWNORMAL);return 0;}
             if(LOWORD(wp)==15&&HIWORD(wp)==BN_CLICKED){ShellExecuteW(hwnd,L"open",L"https://play.dungeonrunnersreborn.com/report-desync",nullptr,nullptr,SW_SHOWNORMAL);return 0;}
             if(LOWORD(wp)==13&&HIWORD(wp)==BN_CLICKED){ShellExecuteW(hwnd,L"open",L"https://play.dungeonrunnersreborn.com/",nullptr,nullptr,SW_SHOWNORMAL);return 0;}
             if(LOWORD(wp)==14&&HIWORD(wp)==CBN_SELCHANGE){refresh();InvalidateRect(hwnd,nullptr,FALSE);return 0;}
             if(HIWORD(wp)==BN_CLICKED){switch(LOWORD(wp)){case 1:run(1);break;case 2:run(2);break;case 3:run(3);break;case 4:{BROWSEINFOW info{};info.hwndOwner=hwnd;info.lpszTitle=L"Choose the Dungeon Runners game folder";info.ulFlags=BIF_RETURNONLYFSDIRS|BIF_NEWDIALOGSTYLE;LPITEMIDLIST item=SHBrowseForFolderW(&info);wchar_t selected[MAX_PATH];if(item&&SHGetPathFromIDListW(item,selected)){try{root=game_root(selected);SetWindowTextW(folder,selected);refresh();}catch(const std::exception& error){detail=wide(error.what());InvalidateRect(hwnd,nullptr,FALSE);}}CoTaskMemFree(item);break;}case 5:InterlockedExchange(&cancelled,1);detail=L"Cancelling...";InvalidateRect(hwnd,nullptr,FALSE);break;case 6:addonsOpen=!addonsOpen;refresh();InvalidateRect(hwnd,nullptr,FALSE);break;case 7:run(4);break;case 8:run(5);break;case 9:addonsOpen=false;refresh();InvalidateRect(hwnd,nullptr,FALSE);break;case 10:ShellExecuteW(hwnd,L"open",L"https://www.dungeonrunnersreborn.com/",nullptr,nullptr,SW_SHOWNORMAL);break;case 11:ShellExecuteW(hwnd,L"open",L"https://dr-armory.com/",nullptr,nullptr,SW_SHOWNORMAL);break;case 12:ShellExecuteW(hwnd,L"open",L"https://discord.gg/hpXWhuS9Yj",nullptr,nullptr,SW_SHOWNORMAL);break;}}return 0;
-        case status_message:{std::unique_ptr<State> state(reinterpret_cast<State*>(lp));status=wide(state->text);completed=state->done;total=state->size;detail=total?std::to_wstring(completed/1048576)+L" / "+std::to_wstring(total/1048576)+L" MiB":L"Please keep the launcher open.";EnableWindow(cancel,state->text!="Installing");layout(hwnd);return 0;}
-        case done_message:{std::unique_ptr<Done> done(reinterpret_cast<Done*>(lp));busy=false;status=done->error.empty()?L"Ready":done->error==ApplicationControlHelp?wide(ApplicationControlTitle):L"Could not finish";detail=wide(done->error);refresh();layout(hwnd);if(closing||done->close)DestroyWindow(hwnd);return 0;}
+        case status_message:{
+            std::unique_ptr<State> state(reinterpret_cast<State*>(lp));status=wide(state->text);completed=state->done;total=state->size;
+            const bool media=state->text=="Installing Media Feature Pack";
+            if(media)detail=L"Approve the Windows prompt to add Media Feature Pack.";
+            else if(total)detail=std::to_wstring(completed/1048576)+L" / "+std::to_wstring(total/1048576)+L" MiB";
+            else detail=L"Please keep the launcher open.";
+            EnableWindow(cancel,state->text!="Installing"&&!media);layout(hwnd);return 0;
+        }
+        case done_message:{std::unique_ptr<Done> done(reinterpret_cast<Done*>(lp));busy=false;mediaHelpUrl=done->mediaUrl;status=done->mediaTitle?wide(done->mediaTitle):done->error.empty()?L"Ready":done->error==ApplicationControlHelp?wide(ApplicationControlTitle):L"Could not finish";detail=wide(done->error);refresh();layout(hwnd);if(closing||done->close)DestroyWindow(hwnd);return 0;}
         case WM_TIMER:if(smoke_test)DestroyWindow(hwnd);return 0;
         case WM_CLOSE:if(busy){closing=true;InterlockedExchange(&cancelled,1);detail=L"Finishing the current operation...";InvalidateRect(hwnd,nullptr,FALSE);}else DestroyWindow(hwnd);return 0;
         case WM_DESTROY:PostQuitMessage(0);return 0;
@@ -136,6 +151,7 @@ int legacy_ui(bool smoke,const Path& previews) {
     primary=button(1,L"Install game");update=button(2,L"Update");repair=button(3,L"Repair");browse=button(4,L"Browse");cancel=button(5,L"Cancel");addons=button(6,L"Addons");addonInstall=button(7,L"Install addons");addonRemove=button(8,L"Uninstall addons");addonClose=button(9,L"Close");website=button(10,L"Website");armory=button(11,L"Armory");discord=button(12,L"Discord");folder=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",root.c_str(),WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,0,0,100,25,window,nullptr,cls.hInstance,nullptr);SendMessageW(folder,WM_SETFONT,reinterpret_cast<WPARAM>(font),TRUE);
     leaderboard=button(13,L"Leaderboard");
     desync=button(15,L"Desync Report");quit=button(17,L"Quit");verifyRepository=button(18,L"GitHub repository");verifyCommunity=button(19,L"Discord community");
+    mediaHelp=button(20,L"Microsoft help");
     addonList=CreateWindowExW(0,L"COMBOBOX",L"",WS_CHILD|WS_TABSTOP|CBS_DROPDOWNLIST|CBS_OWNERDRAWFIXED|CBS_HASSTRINGS|WS_VSCROLL,0,0,100,230,window,reinterpret_cast<HMENU>(14),cls.hInstance,nullptr);
     addonDescription=CreateWindowExW(0,L"EDIT",L"",WS_CHILD|ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL|WS_VSCROLL,0,0,100,80,window,nullptr,cls.hInstance,nullptr);
     SendMessageW(addonList,WM_SETFONT,reinterpret_cast<WPARAM>(font),TRUE);SendMessageW(addonDescription,WM_SETFONT,reinterpret_cast<WPARAM>(font),TRUE);
@@ -143,7 +159,16 @@ int legacy_ui(bool smoke,const Path& previews) {
     monitorLabel=CreateWindowExW(0,L"STATIC",L"Game monitor",WS_CHILD|WS_VISIBLE,0,0,100,25,window,nullptr,cls.hInstance,nullptr);
     SendMessageW(gameMonitor,WM_SETFONT,reinterpret_cast<WPARAM>(font),TRUE);SendMessageW(monitorLabel,WM_SETFONT,reinterpret_cast<WPARAM>(font),TRUE);monitor_choices();
     layout(window);refresh();
-    if(!previews.empty()){folders(previews);status=L"Ready";detail=L"";layout(window);preview(under(previews,"launcher.png"));addonsOpen=true;refresh();preview(under(previews,"addons.png"));SetWindowPos(window,nullptr,0,0,640,560,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);preview(under(previews,"addons-small.png"));addonsOpen=false;status=wide(ApplicationControlTitle);detail=wide(ApplicationControlHelp);refresh();preview(under(previews,"application-control-small.png"));SetWindowPos(window,nullptr,0,0,960,800,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);layout(window);preview(under(previews,"application-control.png"));DestroyWindow(window);}
+    if(!previews.empty()){
+        folders(previews);status=L"Ready";detail=L"";layout(window);preview(under(previews,"launcher.png"));addonsOpen=true;refresh();preview(under(previews,"addons.png"));
+        SetWindowPos(window,nullptr,0,0,640,560,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);preview(under(previews,"addons-small.png"));
+        addonsOpen=false;status=wide(ApplicationControlTitle);detail=wide(ApplicationControlHelp);refresh();preview(under(previews,"application-control-small.png"));
+        const auto failure=windows_audio_file_missing();
+        status=wide(failure.title);detail=wide(failure.what());mediaHelpUrl=failure.help;refresh();preview(under(previews,"windows-audio-file-missing-small.png"));
+        status=wide(MediaRestartTitle);detail=wide(MediaRestartText);refresh();preview(under(previews,"media-restart-small.png"));
+        SetWindowPos(window,nullptr,0,0,960,800,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+        status=wide(ApplicationControlTitle);detail=wide(ApplicationControlHelp);mediaHelpUrl=nullptr;refresh();preview(under(previews,"application-control.png"));DestroyWindow(window);
+    }
     else{ShowWindow(window,SW_SHOW);UpdateWindow(window);if(smoke){status=L"Ready";detail=L"";SetTimer(window,1,1000,nullptr);}else run(0);}
     MSG message;while(GetMessageW(&message,nullptr,0,0)>0){if(message.message==WM_KEYDOWN&&message.wParam==VK_ESCAPE){if(addonsOpen){addonsOpen=false;refresh();InvalidateRect(window,nullptr,FALSE);}else SendMessageW(window,WM_CLOSE,0,0);continue;}if(!IsDialogMessageW(window,&message)){TranslateMessage(&message);DispatchMessageW(&message);}}
     background.reset();artwork.reset();logo.reset();DeleteObject(font);DeleteObject(fieldBrush);if(fontResource)RemoveFontMemResourceEx(fontResource);Gdiplus::GdiplusShutdown(graphics);CoUninitialize();return 0;
