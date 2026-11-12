@@ -11,5 +11,5 @@
   {"id":"loadouts","directory":"Loadouts","name":"Loadouts & Sorting","description":"Gear and hotbar saves. Sort Inventory or selected bank pages by item type, appearance and armor set.","legacyDirectories":["SortBankPages"]},
   {"id":"leaderboard","directory":"Leaderboard","name":"Leaderboard","description":"Official Reborn rankings inside the game. Open ESC > Leaderboard.","legacyDirectories":[]},
   {"id":"controller","directory":"Controller","name":"Controller","description":"Xbox/XInput and PS5 DualSense movement, right-stick camera or aim, skills, consumables and menus, with PlayStation button labels. Steam Deck uses the Steam Input Gamepad template; PS5 touchpad mouse is configured in Steam Input.","legacyDirectories":[]},
-  {"id":"enhanced-settings","directory":"EnhancedSettings","name":"Enhanced Settings","description":"Right-button mouse look, left-click attack control and an adjustable low-HP warning.","legacyDirectories":["LowHPWarning","UnbindLeftClick"]}
+  {"id":"enhanced-settings","directory":"EnhancedSettings","name":"Enhanced Settings","description":"Camera zoom, mouse look, left-click attack control, low-HP warning and optional local chat timestamps [HH:mm].","legacyDirectories":["LowHPWarning","UnbindLeftClick"]}
 ]
