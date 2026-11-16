@@ -25,6 +25,7 @@ public sealed class AndroidAddons
         var root = SafeFiles.Root(directory);
         guard(root);
         using var installLock = Installer.Lock(root);
+        GraphicsBackend.Recover(root);
         Recover(root);
         await AddonRemoval.RecoverAsync(root);
         if (selection is not null) foreach (var id in selection) AddonCatalog.Find(id);
@@ -200,6 +201,7 @@ public sealed class AndroidAddons
         var root = SafeFiles.Root(directory);
         guard(root);
         using var installLock = Installer.Lock(root);
+        GraphicsBackend.Recover(root);
         Recover(root);
         await AddonRemoval.RecoverAsync(root);
         var selected = AddonCatalog.ActiveIds(root).Where(id => id != addonId).ToArray();

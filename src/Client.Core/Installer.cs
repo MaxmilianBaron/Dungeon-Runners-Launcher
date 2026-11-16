@@ -212,9 +212,10 @@ public sealed class Installer
 
     public static async Task<bool> RecoverAsync(string root)
     {
+        var graphicsRecovered = GraphicsBackend.Recover(root);
         var androidRecovered = AndroidAddons.Recover(root);
         var addonsRecovered = await AddonRemoval.RecoverAsync(root);
-        addonsRecovered |= androidRecovered;
+        addonsRecovered |= androidRecovered || graphicsRecovered;
         var work = SafeFiles.Under(root, ".dr-client");
         var transaction = SafeFiles.Under(work, "transaction");
         var path = SafeFiles.Under(transaction, "journal.json");
@@ -270,7 +271,7 @@ public sealed class Installer
         var manifest = Catalog.Verify(signedManifest, publicKey);
         var root = SafeFiles.Root(directory);
         using var installLock = Lock(root);
-        if (Directory.Exists(SafeFiles.Under(root, ".dr-client/transaction")) || AddonRemoval.Pending(root) || AndroidAddons.Pending(root))
+        if (Directory.Exists(SafeFiles.Under(root, ".dr-client/transaction")) || AddonRemoval.Pending(root) || AndroidAddons.Pending(root) || GraphicsBackend.Pending(root))
         {
             gameGuard(root);
             await RecoverAsync(root);

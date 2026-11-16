@@ -64,6 +64,11 @@ public partial class MainWindow : Window
     private sealed record MonitorChoice(string Id, string Label) { public override string ToString() => Label; }
     private string monitorSelection = "";
     private bool loadingMonitors;
+    private sealed record GraphicsChoice(GraphicsBackendMode Mode, string Label) { public override string ToString() => Label; }
+    private bool loadingGraphics;
+    private string? graphicsRoot;
+    private GraphicsBackendMode graphicsMode = GraphicsBackendMode.Auto;
+    private string? graphicsError;
     private static string LocalData => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify);
 
     public MainWindow() : this(false) { }
@@ -75,6 +80,8 @@ public partial class MainWindow : Window
         this.openUrl = openUrl ?? (url => { using var process = Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); });
         this.addonAction = addonAction;
         InitializeComponent();
+        GraphicsMode.ItemsSource = new[] { new GraphicsChoice(GraphicsBackendMode.Auto, "Auto"), new GraphicsChoice(GraphicsBackendMode.Standard, "Standard"), new GraphicsChoice(GraphicsBackendMode.DgVoodoo, "dgVoodoo") };
+        GraphicsPanel.IsVisible = preview || OperatingSystem.IsWindows();
         BuildAddonList();
         AddonsPanel.SizeChanged += (_, _) => UpdateAddonLayout();
         var folder = Path.Combine(LocalData, "Dungeon Runners");
@@ -191,6 +198,8 @@ public partial class MainWindow : Window
     private void RefreshMonitors()
     {
         DisplayPanel.IsVisible = preview || OperatingSystem.IsWindows() || OperatingSystem.IsLinux();
+        SettingsPanel.IsVisible = DisplayPanel.IsVisible || GraphicsPanel.IsVisible;
+        UpdateResponsiveLayout();
         if (!DisplayPanel.IsVisible) return;
         var monitors = GameMonitors();
         var choices = new List<MonitorChoice> { new("", "Use game settings") };
@@ -224,6 +233,51 @@ public partial class MainWindow : Window
     }
 
     private void MonitorsChanged(object? sender, EventArgs e) => RefreshMonitors();
+
+    private void RefreshGraphics(bool force = false)
+    {
+        if (!GraphicsPanel.IsVisible) return;
+        var root = Folder.Text ?? "";
+        if (force || graphicsRoot != root)
+        {
+            graphicsRoot = root;
+            graphicsError = null;
+            try { if (!preview) graphicsMode = GraphicsBackend.Read(SafeFiles.Root(root)); }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException or System.Text.Json.JsonException)
+            {
+                graphicsError = error.Message;
+            }
+        }
+        loadingGraphics = true;
+        try { GraphicsMode.SelectedIndex = graphicsError is null ? graphicsMode switch { GraphicsBackendMode.Auto => 0, GraphicsBackendMode.Standard => 1, GraphicsBackendMode.DgVoodoo => 2, _ => -1 } : -1; }
+        finally { loadingGraphics = false; }
+        GraphicsHint.Text = graphicsError ?? (gameRunning() ? "Close Dungeon Runners to change graphics."
+            : graphicsMode == GraphicsBackendMode.Auto ? GraphicsBackend.Resolve(graphicsMode) == GraphicsBackendMode.DgVoodoo ? "Auto: dgVoodoo for Windows on ARM." : "Auto: Standard graphics."
+            : graphicsMode == GraphicsBackendMode.DgVoodoo ? "Compatibility renderer. Addons and settings are kept."
+            : "Standard graphics. Updates keep your choice.");
+    }
+
+    private async void GraphicsChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (!ready || loadingGraphics || GraphicsMode.SelectedItem is not GraphicsChoice choice) return;
+        if (operation is not null || conflict is not null || gameRunning()) { RefreshGraphics(); return; }
+        if (preview) { graphicsMode = choice.Mode; RefreshGraphics(); return; }
+        if (choice.Mode == graphicsMode && graphicsError is null) return;
+        await RunAsync(async token =>
+        {
+            var root = SafeFiles.Root(Folder.Text ?? "");
+            var progress = new Progress<ProgressInfo>(p =>
+            {
+                Status.Text = p.Phase; Detail.Text = p.Detail;
+                Progress.IsIndeterminate = p.Total <= 0;
+                Progress.Value = p.Total > 0 ? p.Completed * 100.0 / p.Total : 0;
+            });
+            await Task.Run(() => new GraphicsBackend(EnsureClosed).SetAsync(root, choice.Mode, downloads, progress, token,
+                () => Dispatcher.UIThread.Invoke(() => { committing = true; Cancel.IsEnabled = false; })), token);
+            updateMessage = choice.Label + " selected";
+            updateDetail = "Graphics choice, addons and settings are kept during updates.";
+        });
+    }
 
     private async Task CheckInBackgroundAsync()
     {
@@ -400,6 +454,8 @@ public partial class MainWindow : Window
         Folder.IsEnabled = !busy;
         Browse.IsEnabled = !busy;
         GameMonitor.IsEnabled = !busy && GameMonitors().Count > 0;
+        RefreshGraphics();
+        GraphicsMode.IsEnabled = !busy && !running && graphicsError is null;
         RefreshStatusVisibility();
     }
 
@@ -429,6 +485,12 @@ public partial class MainWindow : Window
     {
         if (ContentGrid.Bounds.Width <= 0) return;
         var layout = ContentGrid.Bounds.Width < 360 ? 2 : ContentGrid.Bounds.Width < 560 ? 1 : 0;
+        var stackedGraphics = layout != 0 || !DisplayPanel.IsVisible;
+        SettingsPanel.ColumnDefinitions = new ColumnDefinitions(GraphicsPanel.IsVisible && !stackedGraphics ? "*,220" : "*");
+        SettingsPanel.RowDefinitions = new RowDefinitions(GraphicsPanel.IsVisible && DisplayPanel.IsVisible && stackedGraphics ? "Auto,Auto" : "Auto");
+        Grid.SetColumn(GraphicsPanel, stackedGraphics ? 0 : 1);
+        Grid.SetRow(GraphicsPanel, stackedGraphics && DisplayPanel.IsVisible ? 1 : 0);
+        GraphicsPanel.Margin = !DisplayPanel.IsVisible ? default : stackedGraphics ? new Thickness(0, 8, 0, 0) : new Thickness(12, 0, 0, 0);
         if (headerLayout == layout) return;
         headerLayout = layout;
         var compact = layout != 0;
@@ -507,6 +569,7 @@ public partial class MainWindow : Window
             Progress.IsVisible = false;
             TransferRow.IsVisible = false;
             Transfer.Text = "";
+            RefreshGraphics(force: true);
             RefreshActions();
         }
         if (quitRequested || succeeded && (closeOnSuccess || restartPending)) Close();
@@ -591,7 +654,8 @@ public partial class MainWindow : Window
         {
             var requirements = await Dependencies.EnsureAsync(root, downloads, progress, Commit, token, initializeArmCompatibility: initializeArmCompatibility);
             if (prepareMedia) await windowsMedia.EnsureAsync(progress, () => { EnsureClosed(root); Commit(); }, token);
-            return requirements;
+            var graphicsChanged = OperatingSystem.IsWindows() && await new GraphicsBackend(EnsureClosed).EnsureAsync(root, downloads, progress, token, Commit);
+            return requirements with { Changed = requirements.Changed || graphicsChanged };
         }, token);
     }
 

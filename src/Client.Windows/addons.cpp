@@ -197,17 +197,17 @@ bool addon_installed(const Path& root,const std::string& id) {
 void recover_addons(const Path& root) {recover_one(root,false);recover_one(root,true);}
 void install_addons(const Path& root,const Progress& progress,const std::string& id) {
     if(!id.empty())definition(id);
-    game_closed();installation_lock(root,[&]{recover(root);recover_addons(root);Json manifest;auto files=select_files(root,public_files(root,manifest,progress),id);files=prepare(root,manifest,std::move(files));check_cancelled();game_closed();verify_client(root,manifest);apply(root,files,false,game_closed,progress);});
+    game_closed();installation_lock(root,[&]{recover(root);recover_addons(root);recover_graphics(root);Json manifest;auto files=select_files(root,public_files(root,manifest,progress),id);files=prepare(root,manifest,std::move(files));check_cancelled();game_closed();verify_client(root,manifest);apply(root,files,false,game_closed,progress);});
 }
 void remove_addon(const Path& root,const Progress& progress,const std::string& id) {
     const auto paths=definition_paths(definition(id));
-    game_closed();installation_lock(root,[&]{recover(root);recover_addons(root);auto ids=selection(root);ids.erase(id);Files files={{selection_path,selection_bytes(ids)}};
+    game_closed();installation_lock(root,[&]{recover(root);recover_addons(root);recover_graphics(root);auto ids=selection(root);ids.erase(id);Files files={{selection_path,selection_bytes(ids)}};
         for(const auto& path:paths)if(exists(under(root,path))){files[saved_path(path)]=addon_read(under(root,path));files[path]=Bytes{};}
         apply(root,files,false,game_closed,progress);
     });
 }
 void remove_addons(const Path& root,const Progress& progress) {
-    game_closed();installation_lock(root,[&]{recover(root);recover_addons(root);if(progress)progress("Checking addons",0,0);auto manifest=public_manifest();apply(root,removal_files(root,manifest),true,game_closed,progress);});
+    game_closed();installation_lock(root,[&]{recover(root);recover_addons(root);recover_graphics(root);if(progress)progress("Checking addons",0,0);auto manifest=public_manifest();apply(root,removal_files(root,manifest),true,game_closed,progress);});
 }
 void verify_addon_package(const Path& root,const Path& result) {
     Json manifest;auto files=public_files(root,manifest,{});Json checked=Json::array();for(const auto& file:files)checked.push_back({{"path",file.first},{"sha256",hash(file.second)},{"size",file.second.size()}});

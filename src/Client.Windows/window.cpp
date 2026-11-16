@@ -5,13 +5,14 @@
 #include <gdiplus.h>
 
 namespace dr {
-static HWND window=nullptr,primary=nullptr,update=nullptr,repair=nullptr,folder=nullptr,browse=nullptr,cancel=nullptr,quit=nullptr,addons=nullptr,addonInstall=nullptr,addonRemove=nullptr,addonClose=nullptr,addonList=nullptr,addonDescription=nullptr,website=nullptr,armory=nullptr,discord=nullptr,leaderboard=nullptr,desync=nullptr,gameMonitor=nullptr,monitorLabel=nullptr,verifyRepository=nullptr,verifyCommunity=nullptr;
+static HWND window=nullptr,primary=nullptr,update=nullptr,repair=nullptr,folder=nullptr,browse=nullptr,cancel=nullptr,quit=nullptr,addons=nullptr,addonInstall=nullptr,addonRemove=nullptr,addonClose=nullptr,addonList=nullptr,addonDescription=nullptr,website=nullptr,armory=nullptr,discord=nullptr,leaderboard=nullptr,desync=nullptr,gameMonitor=nullptr,monitorLabel=nullptr,verifyRepository=nullptr,verifyCommunity=nullptr,graphicsBackend=nullptr,graphicsLabel=nullptr,graphicsHint=nullptr;
 static std::vector<GameMonitor> monitors;
 static HFONT font=nullptr;
 static HBRUSH fieldBrush=nullptr;
 static bool busy=false,closing=false,installed=false,smoke_test=false,addonsOpen=false,addonsInstalled=false;
 static Path root;
 static std::string activeAddon;
+static GraphicsMode requestedGraphics=GraphicsMode::Auto;
 static std::wstring status=L"Checking for updates",detail=L"Connecting to the release service...";
 static HWND mediaHelp=nullptr;
 static const char* mediaHelpUrl=nullptr;
@@ -35,6 +36,10 @@ static std::unique_ptr<Gdiplus::Bitmap> bitmap(int id) {
 }
 static void refresh() {
     installed=exists(under(root,"DungeonRunners.exe"));SetWindowTextW(primary,installed?L"Play":L"Install game");
+    bool graphicsValid=true;
+    try {auto mode=graphics_mode(root);SendMessageW(graphicsBackend,CB_SETCURSEL,static_cast<int>(mode),0);SetWindowTextW(graphicsHint,mode==GraphicsMode::Auto?L"Automatically selects graphics for this PC.":mode==GraphicsMode::DgVoodoo?L"Compatibility renderer. Addons and settings are kept.":L"Standard graphics. Updates keep your choice.");}catch(const std::exception& error){graphicsValid=false;status=L"Could not read graphics settings";detail=wide(error.what());}
+    EnableWindow(graphicsBackend,!busy&&graphicsValid&&graphics_supported());
+    ShowWindow(graphicsBackend,!addonsOpen&&graphics_supported()?SW_SHOW:SW_HIDE);ShowWindow(graphicsLabel,!addonsOpen&&graphics_supported()?SW_SHOW:SW_HIDE);ShowWindow(graphicsHint,!addonsOpen&&graphics_supported()?SW_SHOW:SW_HIDE);
     const bool policy=detail==wide(ApplicationControlHelp);
     ShowWindow(verifyRepository,policy?SW_SHOW:SW_HIDE);ShowWindow(verifyCommunity,policy?SW_SHOW:SW_HIDE);ShowWindow(mediaHelp,mediaHelpUrl?SW_SHOW:SW_HIDE);
     int choice=static_cast<int>(SendMessageW(addonList,CB_GETCURSEL,0,0));if(choice<0||static_cast<size_t>(choice)>=addon_catalog().size())choice=0;
@@ -55,9 +60,10 @@ static DWORD WINAPI work(void* parameter) {
         if(action==0){manifest(download(feed,131072));}
         else if(action==4){install_addons(root,progress,activeAddon);}
         else if(action==5){remove_addon(root,progress,activeAddon);}
+        else if(action==6){set_graphics(root,requestedGraphics,progress);}
         else if(action==1&&installed){play(root,progress);}
         else {
-            auto signed_bytes=download(feed,131072);install(root,signed_bytes,progress);entry_points(root);requirements(root,progress);
+            auto signed_bytes=download(feed,131072);install(root,signed_bytes,progress);entry_points(root);requirements(root,progress);ensure_graphics(root,progress);
             if(action==1)windows_media(progress);
             if(exists(under(root,"Addons/Runtime/Addons.dll")))install_addons(root,progress);
             if(action==2)result.close=update_launcher(root,progress);
@@ -68,13 +74,13 @@ static DWORD WINAPI work(void* parameter) {
 }
 static void run(int action) {
     if(busy)return;wchar_t selected[MAX_PATH];GetWindowTextW(folder,selected,MAX_PATH);try{root=game_root(selected);refresh();}catch(const std::exception& error){detail=wide(error.what());InvalidateRect(window,nullptr,FALSE);return;}
-    busy=true;mediaHelpUrl=nullptr;InterlockedExchange(&cancelled,0);completed=total=0;status=action>=4?L"Checking addons":action==1&&installed?L"Preparing game":L"Checking for updates";detail=L"Connecting to the release service...";refresh();InvalidateRect(window,nullptr,FALSE);
+    busy=true;mediaHelpUrl=nullptr;InterlockedExchange(&cancelled,0);completed=total=0;status=action==6?L"Changing graphics":action>=4?L"Checking addons":action==1&&installed?L"Preparing game":L"Checking for updates";detail=L"Connecting to the release service...";refresh();InvalidateRect(window,nullptr,FALSE);
     HANDLE thread=CreateThread(nullptr,0,work,reinterpret_cast<void*>(static_cast<intptr_t>(action)),0,nullptr);if(thread)CloseHandle(thread);else{busy=false;status=L"Could not finish";detail=L"Cannot start the operation.";refresh();}
 }
 static void layout(HWND hwnd) {
     RECT r;GetClientRect(hwnd,&r);int width=r.right,height=r.bottom,left=std::max(18,width/8),content=width-left*2,extra=guideExtra();
-    MoveWindow(folder,left,height-223-extra,content-86,25,TRUE);MoveWindow(browse,left+content-78,height-223-extra,78,25,TRUE);
-    MoveWindow(monitorLabel,left,height-185-extra,132,25,TRUE);MoveWindow(gameMonitor,left+132,height-187-extra,std::max(80,content-132),200,TRUE);int middle=width/2;MoveWindow(primary,middle-267,height-49,126,32,TRUE);MoveWindow(update,middle-131,height-49,108,32,TRUE);MoveWindow(addons,middle-13,height-49,108,32,TRUE);MoveWindow(repair,middle+105,height-46,82,28,TRUE);MoveWindow(quit,middle+197,height-49,70,32,TRUE);MoveWindow(cancel,left+content-80,height-127-extra,80,27,TRUE);
+    MoveWindow(folder,left,height-261-extra,content-86,25,TRUE);MoveWindow(browse,left+content-78,height-261-extra,78,25,TRUE);
+    MoveWindow(monitorLabel,left,height-223-extra,132,25,TRUE);MoveWindow(gameMonitor,left+132,height-225-extra,std::max(80,content-132),200,TRUE);MoveWindow(graphicsLabel,left,height-185-extra,132,25,TRUE);MoveWindow(graphicsBackend,left+132,height-187-extra,std::max(80,content-132),200,TRUE);MoveWindow(graphicsHint,left,height-158-extra,content,18,TRUE);int middle=width/2;MoveWindow(primary,middle-267,height-49,126,32,TRUE);MoveWindow(update,middle-131,height-49,108,32,TRUE);MoveWindow(addons,middle-13,height-49,108,32,TRUE);MoveWindow(repair,middle+105,height-46,82,28,TRUE);MoveWindow(quit,middle+197,height-49,70,32,TRUE);MoveWindow(cancel,left+content-80,height-127-extra,80,27,TRUE);
     MoveWindow(verifyRepository,left+12,height-91,132,25,TRUE);MoveWindow(verifyCommunity,left+151,height-91,144,25,TRUE);
     MoveWindow(mediaHelp,left+12,height-91,132,25,TRUE);
     const int addonBottom=height-(statusVisible()?151+extra:61);
@@ -92,7 +98,7 @@ static LRESULT CALLBACK procedure(HWND hwnd,UINT message,WPARAM wp,LPARAM lp) {
         case WM_PAINT:case WM_PRINTCLIENT:{PAINTSTRUCT paint{};HDC dc=message==WM_PAINT?BeginPaint(hwnd,&paint):reinterpret_cast<HDC>(wp);RECT r;GetClientRect(hwnd,&r);HDC buffer=CreateCompatibleDC(dc);HBITMAP surface=CreateCompatibleBitmap(dc,r.right,r.bottom);HGDIOBJ old=SelectObject(buffer,surface);
             {Gdiplus::Graphics graphics(buffer);graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);graphics.Clear(Gdiplus::Color(255,16,14,12));if(background)graphics.DrawImage(background.get(),0,0,r.right,r.bottom);int left=std::max<int>(18,r.right/8),width=r.right-2*left;
             Gdiplus::Pen border(Gdiplus::Color(255,158,121,62),3);graphics.DrawRectangle(&border,5,5,r.right-11,r.bottom-11);if(logo){int logoWidth=r.right<760?260:300;graphics.DrawImage(logo.get(),(r.right-logoWidth)/2,r.right<760?12:25,logoWidth,logoWidth/4);}
-            int top=156,height=r.bottom-401-guideExtra();if(artwork&&height>0) {Gdiplus::SolidBrush black(Gdiplus::Color(255,0,0,0));graphics.FillRectangle(&black,left,top,width,height);float image_height=static_cast<float>(std::min(height,width*548/1024));graphics.DrawImage(artwork.get(),Gdiplus::RectF(static_cast<float>(left),top+(height-image_height)/2,static_cast<float>(width),image_height),0.0f,224.0f,1024.0f,548.0f,Gdiplus::UnitPixel);graphics.DrawRectangle(&border,left,top,width,height);}
+            int top=156,height=r.bottom-439-guideExtra();if(artwork&&height>0) {Gdiplus::SolidBrush black(Gdiplus::Color(255,0,0,0));graphics.FillRectangle(&black,left,top,width,height);float image_height=static_cast<float>(std::min(height,width*548/1024));graphics.DrawImage(artwork.get(),Gdiplus::RectF(static_cast<float>(left),top+(height-image_height)/2,static_cast<float>(width),image_height),0.0f,224.0f,1024.0f,548.0f,Gdiplus::UnitPixel);graphics.DrawRectangle(&border,left,top,width,height);}
             if(addonsOpen&&height>0){height=r.bottom-(statusVisible()?151+guideExtra():61)-top;Gdiplus::SolidBrush panel(Gdiplus::Color(245,17,15,12));graphics.FillRectangle(&panel,left+2,top+2,width-4,height-4);graphics.DrawRectangle(&border,left,top,width,height);RECT heading={left+22,top+10,left+width-108,top+37};text(buffer,L"Dungeon Runners Addons",heading,RGB(243,204,132));}
             if(statusVisible()){Gdiplus::SolidBrush dark(Gdiplus::Color(238,13,11,8));graphics.FillRectangle(&dark,left,r.bottom-139-guideExtra(),width,80+guideExtra());Gdiplus::Pen edge(Gdiplus::Color(255,89,68,37));graphics.DrawRectangle(&edge,left,r.bottom-139-guideExtra(),width,80+guideExtra());
             RECT title={left+12,r.bottom-132-guideExtra(),left+width-94,r.bottom-109-guideExtra()};text(buffer,status,title,RGB(243,204,132));RECT explanation={left+12,r.bottom-105-guideExtra(),left+width-12,r.bottom-(guideExtra()?106:70)};text(buffer,detail,explanation,RGB(237,217,177),DT_LEFT|DT_WORDBREAK|DT_NOPREFIX);
@@ -105,6 +111,7 @@ static LRESULT CALLBACK procedure(HWND hwnd,UINT message,WPARAM wp,LPARAM lp) {
             if(item->CtlType!=ODT_BUTTON)break;HBRUSH fill=CreateSolidBrush((item->itemState&ODS_SELECTED)?RGB(103,35,14):RGB(49,13,5));FillRect(item->hDC,&r,fill);DeleteObject(fill);HBRUSH frame=CreateSolidBrush(RGB(160,115,51));FrameRect(item->hDC,&r,frame);DeleteObject(frame);wchar_t label[80];GetWindowTextW(item->hwndItem,label,80);text(item->hDC,label,r,(item->itemState&ODS_DISABLED)?RGB(126,107,75):RGB(241,201,122),DT_CENTER|DT_VCENTER|DT_SINGLELINE);return TRUE;}
         case WM_DISPLAYCHANGE:monitor_choices();refresh();return 0;
         case WM_COMMAND:
+            if(LOWORD(wp)==21&&HIWORD(wp)==CBN_SELCHANGE){requestedGraphics=static_cast<GraphicsMode>(SendMessageW(graphicsBackend,CB_GETCURSEL,0,0));run(6);return 0;}
             if(LOWORD(wp)==17&&HIWORD(wp)==BN_CLICKED){SendMessageW(hwnd,WM_CLOSE,0,0);return 0;}
             if(LOWORD(wp)==16&&HIWORD(wp)==CBN_SELCHANGE){int choice=static_cast<int>(SendMessageW(gameMonitor,CB_GETCURSEL,0,0));try{save_monitor(choice>0&&static_cast<size_t>(choice)<=monitors.size()?utf8(monitors[choice-1].id):std::string{});detail=choice>0?L"The game opens in windowed mode and fits this monitor.":L"Using saved game display settings.";}catch(const std::exception& error){detail=wide(error.what());}refresh();InvalidateRect(hwnd,nullptr,FALSE);return 0;}
             if(LOWORD(wp)==18&&HIWORD(wp)==BN_CLICKED){auto url=wide(VerificationRepository);ShellExecuteW(hwnd,L"open",url.c_str(),nullptr,nullptr,SW_SHOWNORMAL);return 0;}
@@ -132,7 +139,7 @@ static LRESULT CALLBACK procedure(HWND hwnd,UINT message,WPARAM wp,LPARAM lp) {
 static void preview(const Path& destination) {
     RECT rect;GetClientRect(window,&rect);HDC dc=GetDC(window),memory=CreateCompatibleDC(dc);HBITMAP surface=CreateCompatibleBitmap(dc,rect.right,rect.bottom);HGDIOBJ old=SelectObject(memory,surface);
     SendMessageW(window,WM_PRINTCLIENT,reinterpret_cast<WPARAM>(memory),PRF_CLIENT);
-    for(HWND child=GetWindow(window,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT))if(GetWindowLongW(child,GWL_STYLE)&WS_VISIBLE){RECT area;GetWindowRect(child,&area);MapWindowPoints(nullptr,window,reinterpret_cast<POINT*>(&area),2);int saved=SaveDC(memory);SetViewportOrgEx(memory,area.left,area.top,nullptr);SendMessageW(child,WM_PRINT,reinterpret_cast<WPARAM>(memory),PRF_CLIENT|PRF_NONCLIENT|PRF_ERASEBKGND);if(child==addonList||child==gameMonitor){RECT selectedArea;GetClientRect(child,&selectedArea);selectedArea.left+=2;selectedArea.top+=2;selectedArea.right-=18;selectedArea.bottom-=2;DRAWITEMSTRUCT item{};item.CtlType=ODT_COMBOBOX;item.CtlID=child==addonList?14:16;item.itemID=static_cast<UINT>(SendMessageW(child,CB_GETCURSEL,0,0));item.itemAction=ODA_DRAWENTIRE;item.itemState=ODS_COMBOBOXEDIT;item.hwndItem=child;item.hDC=memory;item.rcItem=selectedArea;SendMessageW(window,WM_DRAWITEM,14,reinterpret_cast<LPARAM>(&item));}RestoreDC(memory,saved);}
+    for(HWND child=GetWindow(window,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT))if(GetWindowLongW(child,GWL_STYLE)&WS_VISIBLE){RECT area;GetWindowRect(child,&area);MapWindowPoints(nullptr,window,reinterpret_cast<POINT*>(&area),2);int saved=SaveDC(memory);SetViewportOrgEx(memory,area.left,area.top,nullptr);SendMessageW(child,WM_PRINT,reinterpret_cast<WPARAM>(memory),PRF_CLIENT|PRF_NONCLIENT|PRF_ERASEBKGND);if(child==addonList||child==gameMonitor||child==graphicsBackend){RECT selectedArea;GetClientRect(child,&selectedArea);selectedArea.left+=2;selectedArea.top+=2;selectedArea.right-=18;selectedArea.bottom-=2;DRAWITEMSTRUCT item{};item.CtlType=ODT_COMBOBOX;item.CtlID=child==addonList?14:child==gameMonitor?16:21;item.itemID=static_cast<UINT>(SendMessageW(child,CB_GETCURSEL,0,0));item.itemAction=ODA_DRAWENTIRE;item.itemState=ODS_COMBOBOXEDIT;item.hwndItem=child;item.hDC=memory;item.rcItem=selectedArea;SendMessageW(window,WM_DRAWITEM,14,reinterpret_cast<LPARAM>(&item));}RestoreDC(memory,saved);}
     CLSID encoder;require(SUCCEEDED(CLSIDFromString(L"{557CF406-1A04-11D3-9A73-0000F81EF32E}",&encoder)),"Cannot initialize PNG encoder.");
     {Gdiplus::Bitmap output(surface,nullptr);require(output.Save(destination.c_str(),&encoder)==Gdiplus::Ok,"Cannot save launcher preview.");}
     SelectObject(memory,old);DeleteObject(surface);DeleteDC(memory);ReleaseDC(window,dc);
@@ -158,9 +165,14 @@ int legacy_ui(bool smoke,const Path& previews) {
     gameMonitor=CreateWindowExW(0,L"COMBOBOX",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|CBS_DROPDOWNLIST|CBS_OWNERDRAWFIXED|CBS_HASSTRINGS|WS_VSCROLL,0,0,100,200,window,reinterpret_cast<HMENU>(16),cls.hInstance,nullptr);
     monitorLabel=CreateWindowExW(0,L"STATIC",L"Game monitor",WS_CHILD|WS_VISIBLE,0,0,100,25,window,nullptr,cls.hInstance,nullptr);
     SendMessageW(gameMonitor,WM_SETFONT,reinterpret_cast<WPARAM>(font),TRUE);SendMessageW(monitorLabel,WM_SETFONT,reinterpret_cast<WPARAM>(font),TRUE);monitor_choices();
+    graphicsBackend=CreateWindowExW(0,L"COMBOBOX",L"",WS_CHILD|WS_TABSTOP|CBS_DROPDOWNLIST|CBS_OWNERDRAWFIXED|CBS_HASSTRINGS|WS_VSCROLL,0,0,100,200,window,reinterpret_cast<HMENU>(21),cls.hInstance,nullptr);
+    graphicsLabel=CreateWindowExW(0,L"STATIC",L"Graphics",WS_CHILD,0,0,100,25,window,nullptr,cls.hInstance,nullptr);
+    graphicsHint=CreateWindowExW(0,L"STATIC",L"",WS_CHILD,0,0,100,18,window,nullptr,cls.hInstance,nullptr);SendMessageW(graphicsHint,WM_SETFONT,reinterpret_cast<WPARAM>(font),TRUE);
+    SendMessageW(graphicsBackend,WM_SETFONT,reinterpret_cast<WPARAM>(font),TRUE);SendMessageW(graphicsLabel,WM_SETFONT,reinterpret_cast<WPARAM>(font),TRUE);
+    SendMessageW(graphicsBackend,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(L"Auto (recommended)"));SendMessageW(graphicsBackend,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(L"Standard"));SendMessageW(graphicsBackend,CB_ADDSTRING,0,reinterpret_cast<LPARAM>(L"dgVoodoo"));
     layout(window);refresh();
     if(!previews.empty()){
-        folders(previews);status=L"Ready";detail=L"";layout(window);preview(under(previews,"launcher.png"));addonsOpen=true;refresh();preview(under(previews,"addons.png"));
+        folders(previews);status=L"Ready";detail=L"";layout(window);preview(under(previews,"launcher.png"));SendMessageW(graphicsBackend,CB_SETCURSEL,2,0);SetWindowTextW(graphicsHint,L"Compatibility renderer. Addons and settings are kept.");preview(under(previews,"graphics-dgvoodoo.png"));SendMessageW(graphicsBackend,CB_SETCURSEL,1,0);SetWindowTextW(graphicsHint,L"Standard graphics. Updates keep your choice.");preview(under(previews,"graphics-standard.png"));addonsOpen=true;refresh();preview(under(previews,"addons.png"));
         SetWindowPos(window,nullptr,0,0,640,560,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);preview(under(previews,"addons-small.png"));
         addonsOpen=false;status=wide(ApplicationControlTitle);detail=wide(ApplicationControlHelp);refresh();preview(under(previews,"application-control-small.png"));
         const auto failure=windows_audio_file_missing();

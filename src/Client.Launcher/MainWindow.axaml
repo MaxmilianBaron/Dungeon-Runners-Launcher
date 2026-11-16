@@ -54,11 +54,18 @@
             <Grid ColumnDefinitions="*,Auto"><TextBox x:Name="Folder" AutomationProperties.Name="Installation folder" TextChanged="FolderChanged" Padding="8,5" /><Button x:Name="Browse" Grid.Column="1" Content="Browse" Margin="10,0,0,0" Click="BrowseClick" FontSize="12" MinHeight="30" Padding="10,2" /></Grid>
             <CheckBox x:Name="DesktopShortcut" Content="Create a desktop shortcut" IsChecked="True" Margin="0,7,0,8" />
           </StackPanel>
-          <StackPanel x:Name="DisplayPanel" Grid.Row="3" Margin="0,0,0,10" Spacing="4">
-            <TextBlock Text="Game monitor" Foreground="{StaticResource Accent}" FontSize="14" />
-            <ComboBox x:Name="GameMonitor" AutomationProperties.Name="Game monitor" SelectionChanged="MonitorChanged" HorizontalAlignment="Stretch" FontSize="13" MinHeight="30" />
-            <TextBlock x:Name="MonitorHint" FontSize="11" Foreground="{StaticResource Muted}" TextWrapping="Wrap" />
-          </StackPanel>
+          <Grid x:Name="SettingsPanel" Grid.Row="3" Margin="0,0,0,10" ColumnDefinitions="*,220">
+            <StackPanel x:Name="DisplayPanel" Spacing="4">
+              <TextBlock Text="Game monitor" Foreground="{StaticResource Accent}" FontSize="14" />
+              <ComboBox x:Name="GameMonitor" AutomationProperties.Name="Game monitor" SelectionChanged="MonitorChanged" HorizontalAlignment="Stretch" FontSize="13" MinHeight="30" />
+              <TextBlock x:Name="MonitorHint" FontSize="11" Foreground="{StaticResource Muted}" TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel x:Name="GraphicsPanel" Grid.Column="1" Margin="12,0,0,0" Spacing="4" IsVisible="False">
+              <TextBlock Text="Graphics" Foreground="{StaticResource Accent}" FontSize="14" />
+              <ComboBox x:Name="GraphicsMode" AutomationProperties.Name="Graphics" SelectionChanged="GraphicsChanged" HorizontalAlignment="Stretch" FontSize="13" MinHeight="30" />
+              <TextBlock x:Name="GraphicsHint" FontSize="11" Foreground="{StaticResource Muted}" TextWrapping="Wrap" />
+            </StackPanel>
+          </Grid>
           <Border x:Name="StatusPanel" Grid.Row="4" Background="#CA090806" BorderBrush="#56422C" BorderThickness="1" Padding="12,7" Margin="0,0,0,10">
               <Grid RowDefinitions="Auto,Auto,Auto,Auto">
               <DockPanel><Button x:Name="Cancel" Content="Cancel" DockPanel.Dock="Right" Click="CancelClick" IsVisible="False" Padding="9,1" MinHeight="24" FontSize="12" Margin="12,0,0,0" /><Button x:Name="OpenGameLog" Content="Open log" DockPanel.Dock="Right" Click="OpenGameLogClick" IsVisible="False" Padding="9,1" MinHeight="24" FontSize="12" Margin="12,0,0,0" /><TextBlock x:Name="Status" Text="Checking for updates" FontSize="17" Foreground="{StaticResource Accent}" VerticalAlignment="Center" TextWrapping="Wrap" /></DockPanel>

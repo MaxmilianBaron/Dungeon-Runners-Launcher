@@ -168,6 +168,7 @@ public static partial class AddonBridge
             return "Installed addons updated. Settings and history were preserved.";
         }
         using var installLock = Installer.Lock(root);
+        GraphicsBackend.Recover(root);
         await AddonRemoval.RecoverAsync(root);
         var work = SafeFiles.Under(root, ".dr-client");
         var stage = SafeFiles.Under(work, "addons-" + Guid.NewGuid().ToString("N"));

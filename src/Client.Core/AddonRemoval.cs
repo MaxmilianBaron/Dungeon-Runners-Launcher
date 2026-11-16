@@ -29,6 +29,7 @@ public sealed class AddonRemoval
         token.ThrowIfCancellationRequested();
         gameGuard(root);
         using var installLock = Installer.Lock(root);
+        GraphicsBackend.Recover(root);
         AndroidAddons.Recover(root);
         await RecoverAsync(root);
         var runtime = SafeFiles.Under(root, Runtime);

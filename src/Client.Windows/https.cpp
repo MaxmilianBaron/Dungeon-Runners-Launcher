@@ -10,6 +10,7 @@ static Url split_url(const std::string& url) {
 }
 bool allowed_url(const std::string& url) {
     Url u=split_url(url);
+    if (url=="https://github.com/dege-diosg/dgVoodoo2/releases/download/2.87.6/dgVoodoo2_87_6.zip") return true;
     if (u.host=="release-assets.githubusercontent.com" || u.host=="objects.githubusercontent.com") return true;
     if (u.host=="github.com") return u.path.find("/MaxmilianBaron/Dungeon-Runners-Launcher/releases/")==0
         || u.path.find("/MaxmilianBaron/Dungeon-Runners-Addons/releases/")==0;
