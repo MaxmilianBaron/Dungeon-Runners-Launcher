@@ -55,16 +55,19 @@ public sealed class GraphicsBackend
     public static GraphicsBackendMode Read(string directory)
     {
         var root = SafeFiles.Root(directory);
+        if (!SupportsSelection) return GraphicsBackendMode.Standard;
         var settings = ReadSettings(root);
         if (settings is not null) return ParseMode(settings.Mode);
         return ActiveDgVoodoo(root) ? GraphicsBackendMode.DgVoodoo : GraphicsBackendMode.Auto;
     }
 
+    public static bool SupportsSelection => OperatingSystem.IsWindowsVersionAtLeast(10) && RuntimeInformation.OSArchitecture == Architecture.Arm64;
+
     public static GraphicsBackendMode Resolve(GraphicsBackendMode mode) => mode switch
     {
-        GraphicsBackendMode.Auto => OperatingSystem.IsWindowsVersionAtLeast(10) && RuntimeInformation.OSArchitecture == Architecture.Arm64
+        GraphicsBackendMode.Auto or GraphicsBackendMode.DgVoodoo => SupportsSelection
             ? GraphicsBackendMode.DgVoodoo : GraphicsBackendMode.Standard,
-        GraphicsBackendMode.Standard or GraphicsBackendMode.DgVoodoo => mode,
+        GraphicsBackendMode.Standard => GraphicsBackendMode.Standard,
         _ => throw new ArgumentOutOfRangeException(nameof(mode))
     };
 
@@ -80,14 +83,16 @@ public sealed class GraphicsBackend
             recovered = await Installer.RecoverAsync(root);
         }
         var settings = ReadSettings(root);
-        var mode = settings is null ? Read(root) : ParseMode(settings.Mode);
+        var mode = SupportsSelection ? settings is null ? Read(root) : ParseMode(settings.Mode) : GraphicsBackendMode.Standard;
+        var normalize = !SupportsSelection && settings is not null && settings.Mode != "standard";
         var resolved = Resolve(mode);
         if (!Pending(root))
         {
             var loader = Current(root, LoaderPath);
             var previous = Current(root, PreviousPath);
+            var unknown = loader is not null && !Known(loader) || previous is not null && previous is not (DgVoodooHash or OriginalGraphics);
             if (resolved == GraphicsBackendMode.Standard && settings?.OriginalHash is null && loader != DgVoodooHash
-                && (previous != DgVoodooHash || loader is not null && !AddonLoaders.Contains(loader))) return recovered;
+                && (previous != DgVoodooHash || loader is not null && !AddonLoaders.Contains(loader)) && (!normalize || unknown)) return recovered;
             if (resolved == GraphicsBackendMode.DgVoodoo && settings is not null && Exists(SafeFiles.Under(root, ConfigPath))
                 && (loader == DgVoodooHash && previous is null || loader is not null && AddonLoaders.Contains(loader) && previous == DgVoodooHash))
             {
@@ -106,6 +111,7 @@ public sealed class GraphicsBackend
     {
         if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("This graphics option is available on Windows.");
         var resolved = Resolve(mode);
+        if (!SupportsSelection) mode = GraphicsBackendMode.Standard;
         var root = SafeFiles.Root(directory);
         token.ThrowIfCancellationRequested();
         gameGuard(root);

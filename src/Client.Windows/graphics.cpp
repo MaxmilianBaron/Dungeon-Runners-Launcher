@@ -128,20 +128,21 @@ GraphicsPlan graphics_changes(const Path& root,GraphicsMode mode,bool enabled,co
     for(const auto& observed:plan.before)require(graphics_hash(root,observed.first)==observed.second,"Graphics files changed while preparing the operation. No graphics files were replaced.");return plan;
 }
 }
-bool graphics_supported(){OSVERSIONINFOW os{};os.dwOSVersionInfoSize=sizeof os;return GetVersionExW(&os)&&(os.dwMajorVersion>6||(os.dwMajorVersion==6&&os.dwMinorVersion>=1));}
-GraphicsMode graphics_mode(const Path& root){const auto mode=read_graphics(root).at("mode");return mode=="auto"?GraphicsMode::Auto:mode=="dgVoodoo"?GraphicsMode::DgVoodoo:GraphicsMode::Standard;}
+GraphicsMode graphics_mode(const Path& root){if(!graphics_supported())return GraphicsMode::Standard;const auto mode=read_graphics(root).at("mode");return mode=="auto"?GraphicsMode::Auto:mode=="dgVoodoo"?GraphicsMode::DgVoodoo:GraphicsMode::Standard;}
 bool graphics_arm64(){
     using Query=BOOL(WINAPI*)(HANDLE,USHORT*,USHORT*);auto kernel=GetModuleHandleW(L"kernel32.dll");auto query=reinterpret_cast<Query>(kernel?GetProcAddress(kernel,"IsWow64Process2"):nullptr);
     USHORT process=0,native=0;if(query&&query(GetCurrentProcess(),&process,&native))return native==0xaa64;
     SYSTEM_INFO info{};GetNativeSystemInfo(&info);return info.wProcessorArchitecture==12;
 }
-bool graphics_enabled(const Path& root){auto mode=graphics_mode(root);return mode==GraphicsMode::DgVoodoo||(mode==GraphicsMode::Auto&&graphics_supported()&&graphics_arm64());}
+bool graphics_supported(){OSVERSIONINFOW os{};os.dwOSVersionInfoSize=sizeof os;return GetVersionExW(&os)&&os.dwMajorVersion>=10&&graphics_arm64();}
+bool graphics_enabled(const Path& root){auto mode=graphics_mode(root);return graphics_supported()&&mode!=GraphicsMode::Standard;}
 bool graphics_pending(const Path& root){return exists(under(root,graphics_journal));}
 void recover_graphics(const Path& root){recover_graphics_transaction(root);}
 void set_graphics(const Path& root,GraphicsMode mode,const Progress& progress){
     require(mode==GraphicsMode::Auto||mode==GraphicsMode::Standard||mode==GraphicsMode::DgVoodoo,"Invalid graphics mode.");
-    bool enabled=mode==GraphicsMode::DgVoodoo||(mode==GraphicsMode::Auto&&graphics_supported()&&graphics_arm64());
-    require(!enabled||graphics_supported(),"dgVoodoo requires Windows 7 or newer.");game_closed();installation_lock(root,[&]{recover(root);recover_addons(root);recover_graphics(root);Bytes image;
+    if(!graphics_supported())mode=GraphicsMode::Standard;
+    bool enabled=mode!=GraphicsMode::Standard;
+    game_closed();installation_lock(root,[&]{recover(root);recover_addons(root);recover_graphics(root);Bytes image;
         if(enabled)image=obtain_wrapper(root,progress);
         auto changes=graphics_changes(root,mode,enabled,image);check_cancelled();game_closed();apply_graphics(root,std::move(changes),game_closed,progress);
     });
@@ -152,7 +153,8 @@ void ensure_graphics(const Path& root,const Progress& progress){
     bool addons=!loader.is_null()&&addon_loaders.count(loader.get<std::string>())!=0;bool active=(addons?previous:loader)==wrapper_hash;
     bool ready=active&&(addons||previous.is_null())&&exists(under(root,graphics_state));auto config=under(root,"dgVoodoo.conf");ready=ready&&exists(config)&&!(GetFileAttributesW(config.c_str())&FILE_ATTRIBUTE_DIRECTORY);
     const auto& original=state.at("originalHash");if(ready&&!original.is_null()){auto backup=original_path(root,original.get<std::string>());ready=exists(backup)&&hash(read(backup,graphics_limit))==original;}
-    if(enabled?ready:!active&&(previous!=wrapper_hash||!loader.is_null())&&original.is_null())return;
+    bool canonicalize=!graphics_supported()&&exists(under(root,graphics_state))&&state.at("mode")!="standard"&&(loader.is_null()||known_graphics_hash(loader))&&(previous.is_null()||recognized_graphics(previous));
+    if(enabled?ready:!active&&(previous!=wrapper_hash||!loader.is_null())&&original.is_null()&&!canonicalize)return;
     set_graphics(root,graphics_mode(root),progress);
 }
 

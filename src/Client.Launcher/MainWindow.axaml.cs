@@ -81,7 +81,14 @@ public partial class MainWindow : Window
         this.addonAction = addonAction;
         InitializeComponent();
         GraphicsMode.ItemsSource = new[] { new GraphicsChoice(GraphicsBackendMode.Auto, "Auto"), new GraphicsChoice(GraphicsBackendMode.Standard, "Standard"), new GraphicsChoice(GraphicsBackendMode.DgVoodoo, "dgVoodoo") };
-        GraphicsPanel.IsVisible = preview || OperatingSystem.IsWindows();
+        GraphicsPanel.IsVisible = GraphicsBackend.SupportsSelection;
+        if (!GraphicsPanel.IsVisible)
+        {
+            Grid.SetColumn(GraphicsPanel, 0);
+            Grid.SetRow(GraphicsPanel, 0);
+            SettingsPanel.ColumnDefinitions = new ColumnDefinitions("*");
+            SettingsPanel.RowDefinitions = new RowDefinitions("Auto");
+        }
         BuildAddonList();
         AddonsPanel.SizeChanged += (_, _) => UpdateAddonLayout();
         var folder = Path.Combine(LocalData, "Dungeon Runners");
@@ -259,7 +266,7 @@ public partial class MainWindow : Window
 
     private async void GraphicsChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (!ready || loadingGraphics || GraphicsMode.SelectedItem is not GraphicsChoice choice) return;
+        if (!GraphicsBackend.SupportsSelection || !ready || loadingGraphics || GraphicsMode.SelectedItem is not GraphicsChoice choice) return;
         if (operation is not null || conflict is not null || gameRunning()) { RefreshGraphics(); return; }
         if (preview) { graphicsMode = choice.Mode; RefreshGraphics(); return; }
         if (choice.Mode == graphicsMode && graphicsError is null) return;
@@ -455,7 +462,7 @@ public partial class MainWindow : Window
         Browse.IsEnabled = !busy;
         GameMonitor.IsEnabled = !busy && GameMonitors().Count > 0;
         RefreshGraphics();
-        GraphicsMode.IsEnabled = !busy && !running && graphicsError is null;
+        GraphicsMode.IsEnabled = GraphicsBackend.SupportsSelection && !busy && !running && graphicsError is null;
         RefreshStatusVisibility();
     }
 
@@ -485,11 +492,11 @@ public partial class MainWindow : Window
     {
         if (ContentGrid.Bounds.Width <= 0) return;
         var layout = ContentGrid.Bounds.Width < 360 ? 2 : ContentGrid.Bounds.Width < 560 ? 1 : 0;
-        var stackedGraphics = layout != 0 || !DisplayPanel.IsVisible;
+        var stackedGraphics = layout != 0 || !DisplayPanel.IsVisible || !GraphicsPanel.IsVisible;
+        Grid.SetColumn(GraphicsPanel, stackedGraphics ? 0 : 1);
+        Grid.SetRow(GraphicsPanel, GraphicsPanel.IsVisible && stackedGraphics && DisplayPanel.IsVisible ? 1 : 0);
         SettingsPanel.ColumnDefinitions = new ColumnDefinitions(GraphicsPanel.IsVisible && !stackedGraphics ? "*,220" : "*");
         SettingsPanel.RowDefinitions = new RowDefinitions(GraphicsPanel.IsVisible && DisplayPanel.IsVisible && stackedGraphics ? "Auto,Auto" : "Auto");
-        Grid.SetColumn(GraphicsPanel, stackedGraphics ? 0 : 1);
-        Grid.SetRow(GraphicsPanel, stackedGraphics && DisplayPanel.IsVisible ? 1 : 0);
         GraphicsPanel.Margin = !DisplayPanel.IsVisible ? default : stackedGraphics ? new Thickness(0, 8, 0, 0) : new Thickness(12, 0, 0, 0);
         if (headerLayout == layout) return;
         headerLayout = layout;

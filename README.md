@@ -15,7 +15,7 @@ Launch additional clients with `Play`. The launcher reopens after its updates.
 
 On Windows and Linux, select **Game monitor** to choose where the game opens. The launcher remembers the selection and fits the game window to that monitor. Selecting a monitor uses windowed mode; **Use game settings** keeps the game's own display settings. Linux monitor placement uses Wine with X11/XWayland.
 
-On Windows 7+, **Graphics** offers **Auto**, **Standard** and **dgVoodoo**. Auto selects dgVoodoo on Windows ARM64 and Standard elsewhere. dgVoodoo detects the graphics adapter and output API. The choice, existing graphics settings and Addons are preserved during updates and repair.
+On Windows ARM64, **Graphics** offers **Auto**, **Standard** and **dgVoodoo**. Auto selects dgVoodoo, which detects the graphics adapter and output API. Other Windows PCs use Standard automatically and do not show this menu. Updates restore Standard on those PCs if dgVoodoo was selected in an earlier launcher version. Existing graphics settings and Addons are preserved.
 
 Launcher links: `Website` · `Armory` · `Leaderboard` · `Discord` · `Desync Report`.
 
