@@ -352,9 +352,6 @@ public partial class MainWindow : Window
         releaseBytes = bytes;
         release = manifest;
         VersionLabel.Text = "Client 666 · Release " + release.Version;
-        await CheckAddonsAsync(token);
-        await CheckLauncherAsync(token);
-        if (addonCheckError is not null || launcherCheckError is not null) throw new IOException(addonCheckError ?? launcherCheckError);
     }
 
     private async Task CheckLauncherAsync(CancellationToken token)
@@ -527,7 +524,7 @@ public partial class MainWindow : Window
         Status.Foreground = Brushes.White;
         var missing = rememberedFolder && InstallationPanel.IsVisible;
         var checkError = addonCheckError ?? launcherCheckError;
-        var showCheckError = checkError is not null && !(operationFailed && updateMessage is not null);
+        var showCheckError = checkError is not null && (updateMessage is null || operation is null && !operationFailed);
         Status.Text = missing ? "Game folder not found" : showCheckError ? "Update check unavailable" : updateMessage ?? (Mode == "install" ? "Ready to install" : "");
         Detail.Text = missing ? "Locate the folder containing DungeonRunners.exe, or choose a new installation folder." : showCheckError ? checkError : updateDetail ?? "";
     }
@@ -760,7 +757,9 @@ public partial class MainWindow : Window
         await CheckAddonsAsync(token);
         var addonsChanged = addonUpdate is { Available: true };
         if (addonsChanged) await UpdateAddonsAsync(token);
-        if (addonCheckError is not null || addonUpdate is { Available: true }) throw new IOException(addonCheckError ?? "Addon verification did not finish. Select Addons to retry.");
+        if (addonsChanged && (addonCheckError is not null || addonUpdate is not { Available: false }))
+            throw new IOException(addonCheckError ?? "Addon verification did not finish. Select Addons to retry.");
+        await CheckLauncherAsync(token);
         if (launcherUpdate is { Available: true } update)
         {
             committing = false; Cancel.IsEnabled = true;
@@ -780,6 +779,13 @@ public partial class MainWindow : Window
 
     private void SetUpdateResult(bool changed, bool addonsInstalled)
     {
+        var checkErrors = new[] { addonCheckError, launcherCheckError }.OfType<string>().ToArray();
+        if (checkErrors.Length != 0)
+        {
+            updateMessage = changed ? "Updates installed" : "Update check incomplete";
+            updateDetail = string.Join(" ", checkErrors);
+            return;
+        }
         updateMessage = changed ? "Updates installed" : "Everything is up to date";
         updateDetail = addonsInstalled ? "Launcher, game and addons checked on GitHub." : "Launcher and game checked on GitHub. Addons are not installed.";
     }

@@ -30,19 +30,16 @@ public sealed class AndroidAddons
         await AddonRemoval.RecoverAsync(root);
         if (selection is not null) foreach (var id in selection) AddonCatalog.Find(id);
         progress?.Report(new("Checking addons", "Verifying the public release…"));
-        var metadata = await downloads.ReadAsync(AddonBridge.Api, 1024 * 1024, AddonBridge.ValidateUrl, token);
-        var manifestAsset = AddonBridge.ReadAsset(metadata, "package.json");
-        var manifestBytes = await downloads.ReadAsync(manifestAsset.Url, Math.Min(manifestAsset.Size, 128 * 1024), AddonBridge.ValidateUrl, token);
-        Verify(manifestAsset, manifestBytes);
+        var release = await AddonBridge.ReadReleaseAsync("package.json", downloads, token);
+        var manifestBytes = release.Manifest;
         AddonBridge.VerifyClient(root, manifestBytes);
-        var archiveAsset = AddonBridge.ReadAsset(metadata, "Dungeon-Runners-Addons.zip");
-        var archiveBytes = await downloads.ReadAsync(archiveAsset.Url, archiveAsset.Size, AddonBridge.ValidateUrl, token);
-        Verify(archiveAsset, archiveBytes);
+        var archiveBytes = await release.ReadArchiveAsync("Dungeon-Runners-Addons.zip", downloads, token);
         var stage = SafeFiles.Under(root, ".dr-client/android-addon-stage-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(stage);
         try
         {
             AddonBridge.Extract(archiveBytes, stage);
+            if (release.Metadata is null) AddonBridge.RequireArchiveManifest(stage, "package.json", manifestBytes);
             var files = ReadFiles(stage, manifestBytes);
             foreach (var path in files.Keys.Where(p => !AddonCatalog.Includes(p, selection)).ToArray()) files.Remove(path);
             if (selection is not null) files[AddonCatalog.SelectionPath] = AddonCatalog.SelectionBytes(selection);
@@ -225,8 +222,4 @@ public sealed class AndroidAddons
         return bytes;
     }
     private static string Hash(byte[] data) => Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
-    private static void Verify(AddonAsset asset, byte[] data)
-    {
-        if (data.Length != asset.Size || Hash(data) != asset.Sha256) throw new InvalidDataException("Addon download verification failed.");
-    }
 }

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -14,6 +15,8 @@ public static partial class AddonBridge
 {
     public const string Api = "https://api.github.com/repos/MaxmilianBaron/Dungeon-Runners-Addons/releases/latest";
     private const string Prefix = "/MaxmilianBaron/Dungeon-Runners-Addons/releases/download/";
+    private const string Latest = "https://github.com/MaxmilianBaron/Dungeon-Runners-Addons/releases/latest/download/";
+    private const int MaximumManifest = 128 * 1024;
     private const int MaximumArchive = 32 * 1024 * 1024;
     public static string ManifestName => OperatingSystem.IsMacOS() ? "macOS-package-v2.json" : OperatingSystem.IsLinux() ? "linux-package-v2.json" : "package.json";
 
@@ -72,13 +75,70 @@ public static partial class AddonBridge
         return new(version, false);
     }
 
-    internal static async Task<byte[]> ReadManifestAsync(Downloads downloads, CancellationToken token, bool portable = false)
+    internal sealed record Release(byte[] Manifest, byte[]? Metadata, string? PublicDownloadBase)
     {
-        var metadata = await downloads.ReadAsync(Api, 1024 * 1024, ValidateUrl, token);
-        var asset = ReadAsset(metadata, portable ? "package.json" : ManifestName);
-        var bytes = await downloads.ReadAsync(asset.Url, Math.Min(asset.Size, 128 * 1024), ValidateUrl, token);
+        public async Task<byte[]> ReadArchiveAsync(string name, Downloads downloads, CancellationToken token)
+        {
+            if (Metadata is null)
+                return await downloads.ReadAsync(PublicDownloadBase + name, MaximumArchive, ValidateUrl, token);
+
+            return await ReadVerifiedAssetAsync(Metadata, name, MaximumArchive, downloads, token);
+        }
+    }
+
+    internal static async Task<byte[]> ReadManifestAsync(Downloads downloads, CancellationToken token, bool portable = false)
+        => (await ReadReleaseAsync(portable ? "package.json" : ManifestName, downloads, token)).Manifest;
+
+    internal static async Task<Release> ReadReleaseAsync(string name, Downloads downloads, CancellationToken token)
+    {
+        byte[] metadata;
+        try { metadata = await downloads.ReadAsync(Api, 1024 * 1024, ValidateUrl, token); }
+        catch (HttpRequestException error) when (error.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
+        {
+            return await ReadPublishedManifestAsync(name, downloads, token);
+        }
+        return new(await ReadVerifiedAssetAsync(metadata, name, MaximumManifest, downloads, token), metadata, null);
+    }
+
+    private static async Task<byte[]> ReadVerifiedAssetAsync(byte[] metadata, string name, int limit, Downloads downloads, CancellationToken token)
+    {
+        var asset = ReadAsset(metadata, name);
+        var bytes = await downloads.ReadAsync(asset.Url, Math.Min(asset.Size, limit), ValidateUrl, token);
         VerifyAsset(asset, bytes);
         return bytes;
+    }
+
+    private static async Task<Release> ReadPublishedManifestAsync(string name, Downloads downloads, CancellationToken token)
+    {
+        var latest = Latest + name;
+        string? tag = null;
+        string? versioned = null;
+        Uri ValidateManifestUrl(string value)
+        {
+            if (tag is null && value == latest) return new Uri(latest);
+            var uri = ValidateUrl(value);
+            if (tag is null)
+            {
+                if (uri.Host != "github.com" || uri.Query.Length != 0)
+                    throw new InvalidDataException("The addon manifest did not resolve to a versioned release.");
+                var segments = uri.AbsolutePath[Prefix.Length..].Split('/');
+                if (segments.Length != 2 || !TagPattern().IsMatch(segments[0]) || segments[1] != name)
+                    throw new InvalidDataException("The addon manifest has an invalid release address.");
+                tag = segments[0];
+                versioned = "https://github.com" + Prefix + tag + "/";
+            }
+            if (value != versioned + name && uri.Host is not ("release-assets.githubusercontent.com" or "objects.githubusercontent.com"))
+                throw new InvalidDataException("The addon manifest changed its release address.");
+            return uri;
+        }
+
+        var bytes = await downloads.ReadAsync(latest, MaximumManifest, ValidateManifestUrl, token);
+        using var document = JsonDocument.Parse(bytes);
+        var manifest = document.RootElement;
+        if (tag is null || !manifest.GetProperty("schema").TryGetInt32(out var schema) || schema != 1 ||
+            manifest.GetProperty("version").GetString() != tag.TrimStart('V'))
+            throw new InvalidDataException("The addon manifest does not match the public release.");
+        return new(bytes, null, versioned);
     }
 
     private static void VerifyAsset(AddonAsset asset, byte[] bytes)
@@ -141,12 +201,15 @@ public static partial class AddonBridge
         }
     }
 
-    public static ProcessStartInfo Command(string script, string root)
+    public static ProcessStartInfo Command(string script, string root, string? offlinePackage = null)
     {
         if (!OperatingSystem.IsWindows())
         {
             var unix = new ProcessStartInfo("/bin/sh") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true, WorkingDirectory = root };
-            foreach (var arg in new[] { script, "--client", root }) unix.ArgumentList.Add(arg);
+            unix.ArgumentList.Add(script);
+            if (offlinePackage is not null)
+                foreach (var arg in new[] { "install", "--package", offlinePackage }) unix.ArgumentList.Add(arg);
+            foreach (var arg in new[] { "--client", root }) unix.ArgumentList.Add(arg);
             return unix;
         }
         var shell = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "powershell.exe");
@@ -178,25 +241,29 @@ public static partial class AddonBridge
         try
         {
             progress?.Report(new("Checking addons", "Looking for the latest public release…"));
-            var metadata = await downloads.ReadAsync(Api, 1024 * 1024, ValidateUrl, token);
-            var manifestAsset = ReadAsset(metadata, ManifestName);
-            var manifestBytes = await downloads.ReadAsync(manifestAsset.Url, Math.Min(manifestAsset.Size, 128 * 1024), ValidateUrl, token);
-            VerifyAsset(manifestAsset, manifestBytes);
-            VerifyClient(root, manifestBytes);
-            var asset = ReadAsset(metadata, update ? "Update" + suffix : archive);
-            progress?.Report(new("Downloading addons", asset.Name));
-            var bytes = await downloads.ReadAsync(asset.Url, asset.Size, ValidateUrl, token);
-            VerifyAsset(asset, bytes);
+            var release = await ReadReleaseAsync(ManifestName, downloads, token);
+            VerifyClient(root, release.Manifest);
+            var offline = release.Metadata is null;
+            var downloadUpdater = update && !offline;
+            var name = downloadUpdater ? "Update" + suffix : archive;
+            progress?.Report(new("Downloading addons", name));
+            var bytes = downloadUpdater
+                ? await ReadVerifiedAssetAsync(release.Metadata!, name, MaximumArchive, downloads, token)
+                : await release.ReadArchiveAsync(name, downloads, token);
             Directory.CreateDirectory(stage);
-            var script = SafeFiles.Under(stage, (update ? "Update" : "Install") + suffix);
-            if (update) SafeFiles.WriteAtomic(script, bytes);
-            else Extract(bytes, stage, "Install" + suffix);
+            var script = SafeFiles.Under(stage, (downloadUpdater ? "Update" : "Install") + suffix);
+            if (downloadUpdater) SafeFiles.WriteAtomic(script, bytes);
+            else
+            {
+                Extract(bytes, stage, "Install" + suffix);
+                if (offline) script = await VerifyOfflineInstallerAsync(stage, suffix, release.Manifest, token);
+            }
             token.ThrowIfCancellationRequested();
             gameGuard(root);
-            VerifyClient(root, manifestBytes);
+            VerifyClient(root, release.Manifest);
             committing();
             progress?.Report(new("Installing addons", "The Addons installer is finishing. Settings and history are preserved."));
-            using var process = Process.Start(Command(script, root)) ?? throw new IOException("The Addons installer could not be started.");
+            using var process = Process.Start(Command(script, root, offline ? stage : null)) ?? throw new IOException("The Addons installer could not be started.");
             var stdout = ReadOutputAsync(process.StandardOutput);
             var stderr = ReadOutputAsync(process.StandardError);
             await process.WaitForExitAsync(CancellationToken.None);
@@ -206,6 +273,28 @@ public static partial class AddonBridge
             return string.IsNullOrWhiteSpace(output) ? "Addons installed. Open ESC > Addons in the game." : output.Trim();
         }
         finally { SafeFiles.DeleteOwnedTree(work, stage); }
+    }
+
+    private static async Task<string> VerifyOfflineInstallerAsync(string stage, string suffix, byte[] manifestBytes, CancellationToken token)
+    {
+        var manifestName = suffix == ".command" ? "macOS-package.json" : suffix == ".sh" ? "linux-package.json" : "package.json";
+        RequireArchiveManifest(stage, manifestName, manifestBytes);
+        using var document = JsonDocument.Parse(manifestBytes);
+        var manifest = document.RootElement;
+        var relative = suffix == ".ps1" ? "Install.ps1" : "Addons/Update" + suffix;
+        var expected = suffix == ".ps1" ? manifest.GetProperty("installerSha256").GetString() :
+            manifest.GetProperty("files").EnumerateArray().Single(file => file.GetProperty("path").GetString() == relative).GetProperty("sha256").GetString();
+        var script = SafeFiles.Under(stage, relative);
+        if (!Catalog.IsHash(expected) || await Catalog.HashAsync(script, token) != expected)
+            throw new InvalidDataException("Addon installer checksum mismatch.");
+        return script;
+    }
+
+    internal static void RequireArchiveManifest(string stage, string name, byte[] bytes)
+    {
+        var manifest = SafeFiles.Under(stage, name);
+        if (new FileInfo(manifest).Length != bytes.Length || !File.ReadAllBytes(manifest).AsSpan().SequenceEqual(bytes))
+            throw new InvalidDataException("Addon archive manifest does not match the public release.");
     }
 
     private static async Task<string> ReadOutputAsync(StreamReader reader)
