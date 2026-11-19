@@ -38,7 +38,16 @@ int update_worker(const Path& path) {
     }
 }
 bool update_launcher(const Path& root,const Progress& progress) {
-    Json release=parse(download("https://api.github.com/repos/MaxmilianBaron/Dungeon-Runners-Launcher/releases/latest",1048576));std::string tag=release.at("tag_name");require(!tag.empty()&&tag.size()<64&&tag.find_first_not_of("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_")==std::string::npos&&!release.at("draft").get<bool>()&&!release.at("prerelease").get<bool>(),"Invalid launcher release.");
+    Json release;
+    std::string expectedTag;
+    try {
+        const auto index=published_asset("Dungeon-Runners-Launcher","launcher-update.json",65536);
+        release=parse(index.data);expectedTag=index.tag;
+    }catch(const DownloadHttpError& error) {
+        if(error.status!=404) throw;
+        release=parse(download("https://api.github.com/repos/MaxmilianBaron/Dungeon-Runners-Launcher/releases/latest",1048576));
+    }
+    std::string tag=release.at("tag_name");require(!tag.empty()&&tag.size()<64&&(expectedTag.empty()||expectedTag==tag)&&tag.find_first_not_of("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_")==std::string::npos&&!release.at("draft").get<bool>()&&!release.at("prerelease").get<bool>(),"Invalid launcher release.");
     Json asset;for(const auto& candidate:release.at("assets"))if(candidate.at("name")=="DungeonRunnersLauncher.exe"){require(asset.is_null(),"Duplicate launcher download.");asset=candidate;}
     require(!asset.is_null(),"The Windows installer is missing from the release.");std::string url=asset.at("browser_download_url"),digest=asset.at("digest");uint64_t size=asset.at("size");
     require(size>0&&size<=268435456&&url=="https://github.com/MaxmilianBaron/Dungeon-Runners-Launcher/releases/download/"+tag+"/DungeonRunnersLauncher.exe"&&digest.find("sha256:")==0&&valid_hash(digest.substr(7)),"The launcher release has no valid download checksum.");

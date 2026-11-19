@@ -65,8 +65,16 @@ Path local_data();
 std::wstring quote(const Path& argument);
 DWORD start(const Path& executable, const std::vector<Path>& args, const Path& cwd, bool wait, bool elevate = false);
 void game_closed();
+struct DownloadHttpError : std::runtime_error {
+    int status;
+    explicit DownloadHttpError(int code) : std::runtime_error(code==403||code==429
+        ? "The download service is temporarily limiting requests. Please retry later."
+        : "Download service returned HTTP "+std::to_string(code)+"."),status(code) {}
+};
+struct PublishedAsset { Bytes data; std::string tag; };
 void download(const std::string& url, const Path& target, uint64_t limit, const Progress& progress = {});
 Bytes download(const std::string& url, uint64_t limit);
+PublishedAsset published_asset(const std::string& repository, const std::string& name, uint64_t limit);
 bool allowed_url(const std::string& url);
 Json manifest(const Bytes& signed_bytes);
 bool compatible(const Bytes& image, const Json& profile);

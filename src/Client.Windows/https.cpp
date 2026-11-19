@@ -76,11 +76,14 @@ static uint64_t number(const std::string& text,int radix) {
     require(!text.empty() && text.size()<24 && text.find_first_not_of(radix==16?"0123456789abcdefABCDEF":"0123456789")==std::string::npos,"Invalid response size.");
     uint64_t value=0; for(char c:text) { int digit=c<='9'?c-'0':tolower(c)-'a'+10; require(value<=(UINT64_MAX-digit)/radix,"Response size overflow."); value=value*radix+digit; } return value;
 }
-void download(const std::string& requested,const Path& target,uint64_t limit,const Progress& progress) {
+using ValidateAddress=std::function<void(const std::string&)>;
+static void download_to(const std::string& requested,const Path& target,uint64_t limit,const Progress& progress,const ValidateAddress& validate) {
     require(limit>0 && limit<=2147483648ULL,"Invalid download limit.");
     std::string url=requested; folders(directory(target)); no_links(target);
     for(int hop=0;hop<6;hop++) {
-        require(allowed_url(url),"Untrusted download destination."); Url u=split_url(url); Tls tls; tls.connect(u.host);
+        require(allowed_url(url),"Untrusted download destination.");
+        if(validate) validate(url);
+        Url u=split_url(url); Tls tls; tls.connect(u.host);
         tls.send("GET "+u.path+" HTTP/1.1\r\nHost: "+u.host+"\r\nUser-Agent: Dungeon-Runners-Launcher/1.0.3\r\nAccept: */*\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n");
         Reader reader(tls); auto status=reader.line(1024); require(status.size()>=12 && status.compare(0,9,"HTTP/1.1 ")==0,"Invalid HTTP response."); int code=static_cast<int>(number(status.substr(9,3),10));
         std::map<std::string,std::string> headers; size_t header_size=status.size();
@@ -93,7 +96,7 @@ void download(const std::string& requested,const Path& target,uint64_t limit,con
             if(key=="content-length"||key=="transfer-encoding"||key=="location"||key=="content-encoding") require(headers.emplace(key,value).second,"Duplicate HTTP framing header.");
         }
         if(code==301||code==302||code==303||code==307||code==308) { require(headers.count("location")!=0,"Download redirect is missing."); url=headers.at("location"); if(!url.empty()&&url[0]=='/' && (url.size()==1||url[1]!='/')) url="https://"+u.host+url; continue; }
-        require(code==200,code==403||code==429?"The download service is temporarily limiting requests. Please retry later.":"Download service returned HTTP "+std::to_string(code)+".");
+        if(code!=200) throw DownloadHttpError(code);
         require(!headers.count("content-encoding")||headers.at("content-encoding")=="identity","Unexpected compressed HTTP response.");
         bool chunked=headers.count("transfer-encoding")!=0; if(chunked) require(headers.at("transfer-encoding")=="chunked"&&!headers.count("content-length"),"Invalid HTTP framing.");
         uint64_t total=headers.count("content-length")?number(headers.at("content-length"),10):0; require(total<=limit,"Download exceeds its allowed size.");
@@ -111,8 +114,37 @@ void download(const std::string& requested,const Path& target,uint64_t limit,con
     }
     throw std::runtime_error("Too many download redirects.");
 }
-Bytes download(const std::string& url,uint64_t limit) {
+void download(const std::string& url,const Path& target,uint64_t limit,const Progress& progress) {
+    download_to(url,target,limit,progress,{});
+}
+static Bytes download_bytes(const std::string& url,uint64_t limit,const ValidateAddress& validate) {
     Path cache=under(local_data(),"Dungeon Runners Launcher/network"); folders(cache); wchar_t name[MAX_PATH]; require(GetTempFileNameW(cache.c_str(),L"get",0,name)!=0,"Cannot create download buffer.");
-    try { download(url,name,limit); auto data=read(name,limit); DeleteFileW(name); return data; } catch(...) { DeleteFileW(name); throw; }
+    try { download_to(url,name,limit,{},validate); auto data=read(name,limit); DeleteFileW(name); return data; } catch(...) { DeleteFileW(name); throw; }
+}
+Bytes download(const std::string& url,uint64_t limit) {
+    return download_bytes(url,limit,{});
+}
+PublishedAsset published_asset(const std::string& repository,const std::string& name,uint64_t limit) {
+    const std::string origin="https://github.com/MaxmilianBaron/"+repository+"/releases/";
+    const auto latest=origin+"latest/download/"+name,prefix=origin+"download/";
+    std::string tag,versioned;
+    auto validate=[&](const std::string& url) {
+        if(tag.empty()&&url==latest) return;
+        if(tag.empty()) {
+            require(url.find(prefix)==0,"The download did not resolve to a versioned release.");
+            const auto split=url.find('/',prefix.size());
+            require(split!=std::string::npos&&url.substr(split+1)==name,"Invalid versioned release asset.");
+            const auto value=url.substr(prefix.size(),split-prefix.size());
+            const auto start=value.empty()?0u:(value.front()=='v'||value.front()=='V'?1u:0u);
+            require(value.size()>start&&value.size()<64&&value.find_first_not_of("0123456789.",start)==std::string::npos&&
+                value.find('.',start)!=std::string::npos,"Invalid release version.");
+            tag=value;versioned=url;
+        }
+        const auto host=split_url(url).host;
+        require(url==versioned||host=="release-assets.githubusercontent.com"||host=="objects.githubusercontent.com","The download changed its release address.");
+    };
+    auto data=download_bytes(latest,limit,validate);
+    require(!tag.empty(),"The download has no verified release tag.");
+    return {std::move(data),std::move(tag)};
 }
 }

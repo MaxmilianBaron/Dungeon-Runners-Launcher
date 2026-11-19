@@ -1,3 +1,4 @@
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -9,7 +10,9 @@ public sealed record LauncherUpdate(string Version, ClientPackage Asset, bool Av
 public static partial class LauncherUpdates
 {
     public const string Api = "https://api.github.com/repos/MaxmilianBaron/Dungeon-Runners-Launcher/releases/latest";
-    private const string Prefix = "https://github.com/MaxmilianBaron/Dungeon-Runners-Launcher/releases/download/";
+    private const string Repository = "https://github.com/MaxmilianBaron/Dungeon-Runners-Launcher";
+    private const string Prefix = Repository + "/releases/download/";
+    private const string UpdateIndex = "launcher-update.json";
     public static string Runtime => (OperatingSystem.IsWindows() ? "win" : OperatingSystem.IsMacOS() ? "osx" : "linux") + "-" + RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
 
     public static string AssetName(string runtime) => runtime switch
@@ -29,12 +32,16 @@ public static partial class LauncherUpdates
     }
 
     public static LauncherUpdate ReadRelease(byte[] bytes, string runtime, string currentHash)
+        => ReadRelease(bytes, runtime, currentHash, null);
+
+    private static LauncherUpdate ReadRelease(byte[] bytes, string runtime, string currentHash, string? publishedTag)
     {
         if (bytes.Length > 1024 * 1024 || !Catalog.IsHash(currentHash)) throw new InvalidDataException("Invalid launcher release identity.");
         using var document = JsonDocument.Parse(bytes);
         var release = document.RootElement;
         var tag = release.GetProperty("tag_name").GetString() ?? "";
-        if (!TagPattern().IsMatch(tag) || release.GetProperty("draft").GetBoolean() || release.GetProperty("prerelease").GetBoolean())
+        if (!TagPattern().IsMatch(tag) || (publishedTag is not null && publishedTag != tag) ||
+            release.GetProperty("draft").GetBoolean() || release.GetProperty("prerelease").GetBoolean())
             throw new InvalidDataException("The launcher release is not stable.");
         var name = AssetName(runtime);
         var assets = release.GetProperty("assets").EnumerateArray().Where(a => a.GetProperty("name").GetString() == name).ToArray();
@@ -54,8 +61,16 @@ public static partial class LauncherUpdates
     {
         SafeFiles.NoLinks(executable);
         var hash = await Catalog.HashAsync(executable, token);
-        var bytes = await downloads.ReadAsync(Api, 1024 * 1024, ValidateUrl, token);
-        return ReadRelease(bytes, Runtime, hash);
+        try
+        {
+            var release = await PublishedRelease.ReadAsync(Repository, UpdateIndex, 64 * 1024, downloads, token);
+            return ReadRelease(release.Bytes, Runtime, hash, release.Tag);
+        }
+        catch (HttpRequestException error) when (error.StatusCode == HttpStatusCode.NotFound)
+        {
+            var bytes = await downloads.ReadAsync(Api, 1024 * 1024, ValidateUrl, token);
+            return ReadRelease(bytes, Runtime, hash);
+        }
     }
 
     [GeneratedRegex(@"^[vV]?\d+(\.\d+){1,3}$", RegexOptions.CultureInvariant)]

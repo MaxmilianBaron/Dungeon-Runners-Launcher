@@ -3,14 +3,12 @@
 namespace dr {
 namespace {
 const uint64_t maximum_file=33554432;
-const char* api="https://api.github.com/repos/MaxmilianBaron/Dungeon-Runners-Addons/releases/latest";
 const char* install_journal=".dr-client/android-addon-install.json";
 const char* removal_journal=".dr-client/addon-removal.json";
 const char* selection_path="Addons/Runtime/selection.json";
 using Files=std::map<std::string,Bytes>;
 using Guard=std::function<void()>;
 using Checkpoint=std::function<void(const std::string&)>;
-struct Asset {std::string url,digest;uint64_t size;};
 std::string lower(std::string value) {std::transform(value.begin(),value.end(),value.begin(),[](unsigned char c){return static_cast<char>(tolower(c));});return value;}
 bool ends(const std::string& value,const std::string& suffix) {return value.size()>=suffix.size()&&value.compare(value.size()-suffix.size(),suffix.size(),suffix)==0;}
 const Json& definition(const std::string& id) {
@@ -68,18 +66,14 @@ std::set<std::string> hashes(const Json& manifest,const char* key) {
     const auto& list=manifest.at(key);require(list.is_array()&&list.size()<=64,"Invalid addon compatibility list.");std::set<std::string> result;
     for(const auto& value:list){std::string digest=value;require(valid_hash(digest)&&result.insert(digest).second,"Invalid addon compatibility checksum.");}return result;
 }
-Asset asset(const Json& release,const std::string& name) {
-    std::string tag=release.at("tag_name");require(!tag.empty()&&tag.size()<=64&&tag.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-")==std::string::npos&&!release.at("draft").get<bool>()&&!release.at("prerelease").get<bool>(),"A stable addon release is required.");
-    const auto& candidates=release.at("assets");require(candidates.is_array()&&candidates.size()<=128,"Invalid addon release assets.");Json found;
-    for(const auto& item:candidates)if(item.at("name")==name){require(found.is_null(),"Duplicate addon release asset.");found=item;}
-    require(!found.is_null(),"The addon release is incomplete.");std::string url=found.at("browser_download_url"),digest=found.at("digest");uint64_t size=found.at("size");
-    require(size>0&&size<=maximum_file&&url=="https://github.com/MaxmilianBaron/Dungeon-Runners-Addons/releases/download/"+tag+"/"+name&&digest.find("sha256:")==0&&valid_hash(digest.substr(7)),"The addon release has no valid download checksum.");
-    return {url,digest.substr(7),size};
+Json public_manifest(std::string* tag=nullptr) {
+    const auto asset=published_asset("Dungeon-Runners-Addons","package.json",131072);
+    auto result=parse(asset.data);
+    const auto start=asset.tag.front()=='V'||asset.tag.front()=='v'?1u:0u;
+    require(result.at("schema")==1&&result.at("version")==asset.tag.substr(start),"The addon manifest does not match the public release.");
+    if(tag) *tag=asset.tag;
+    return result;
 }
-Bytes fetch(const Asset& item,uint64_t limit=maximum_file) {
-    require(item.size<=limit,"Addon release asset is too large.");auto data=download(item.url,item.size);require(data.size()==item.size&&hash(data)==item.digest,"Addon download verification failed.");return data;
-}
-Json public_manifest() {auto release=parse(download(api,1048576));return parse(fetch(asset(release,"package.json"),131072));}
 void verify_client(const Path& root,const Json& manifest) {
     auto image=addon_read(under(root,"DungeonRunners.exe"));bool valid=false;
     if(manifest.contains("clientCompatibility"))valid=compatible(image,manifest.at("clientCompatibility"));
@@ -183,8 +177,8 @@ Files removal_files(const Path& root,const Json& manifest) {
     return files;
 }
 Files public_files(const Path& root,Json& manifest,const Progress& progress) {
-    if(progress)progress("Checking addons",0,0);auto release=parse(download(api,1048576));manifest=parse(fetch(asset(release,"package.json"),131072));verify_client(root,manifest);
-    if(progress)progress("Downloading addons",0,0);auto archive=fetch(asset(release,"Dungeon-Runners-Addons.zip"));auto files=archive_files(archive,manifest,root);
+    if(progress)progress("Checking addons",0,0);std::string tag;manifest=public_manifest(&tag);verify_client(root,manifest);
+    if(progress)progress("Downloading addons",0,0);auto archive=download("https://github.com/MaxmilianBaron/Dungeon-Runners-Addons/releases/download/"+tag+"/Dungeon-Runners-Addons.zip",maximum_file);auto files=archive_files(archive,manifest,root);
     if(progress)progress("Preparing addons",0,0);files["Addons/Runtime/ui.bin"]=addon_skin(root,files.at("Addons/Runtime/ui-resources.json"));return files;
 }
 }

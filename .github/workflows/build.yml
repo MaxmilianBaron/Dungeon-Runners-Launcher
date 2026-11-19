@@ -157,3 +157,42 @@ jobs:
           $files = @($names | ForEach-Object { (Get-Item -LiteralPath (Join-Path 'artifacts' $_) -ErrorAction Stop).FullName })
           & gh release upload $env:RELEASE_TAG @files --repo $env:GITHUB_REPOSITORY
           if ($LASTEXITCODE -ne 0) { throw 'Draft installer upload failed.' }
+
+  update-index:
+    if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+    needs: desktop
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Publish launcher update index to draft
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          $draft = & gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --json apiUrl,isDraft,targetCommitish,tagName | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or -not $draft.isDraft -or $draft.targetCommitish -cne $env:GITHUB_SHA -or $draft.tagName -cne $env:RELEASE_TAG) {
+            throw 'An existing draft release for this exact commit is required.'
+          }
+          $release = & gh api $draft.apiUrl | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Could not read the draft release assets.' }
+          $names = @('DungeonRunnersLauncher.exe', 'DungeonRunnersLauncher-linux-x64', 'DungeonRunnersLauncher-linux-arm64', 'DungeonRunnersLauncher-osx-x64', 'DungeonRunnersLauncher-osx-arm64')
+          $assets = foreach ($name in $names) {
+            $entries = @($release.assets | Where-Object { $_.name -ceq $name })
+            if ($entries.Count -ne 1 -or $entries[0].state -ne 'uploaded' -or $entries[0].digest -cnotmatch '^sha256:[a-f0-9]{64}$' -or $entries[0].size -le 0 -or $entries[0].size -gt 256MB) {
+              throw "Missing or invalid launcher asset $name."
+            }
+            @{
+              name = $name
+              size = $entries[0].size
+              digest = $entries[0].digest
+              browser_download_url = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/$env:RELEASE_TAG/$name"
+            }
+          }
+          $index = @{ tag_name = $env:RELEASE_TAG; draft = $false; prerelease = $false; assets = @($assets) }
+          $file = Join-Path $env:RUNNER_TEMP 'launcher-update.json'
+          $index | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $file -Encoding utf8NoBOM
+          & gh release upload $env:RELEASE_TAG $file --repo $env:GITHUB_REPOSITORY
+          if ($LASTEXITCODE -ne 0) { throw 'Draft update index upload failed.' }
