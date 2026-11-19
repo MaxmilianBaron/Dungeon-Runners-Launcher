@@ -233,7 +233,7 @@ public static partial class AddonBridge
             else
             {
                 Extract(bytes, stage, "Install" + suffix);
-                if (offline) script = await VerifyOfflineInstallerAsync(stage, suffix, release, downloads, token);
+                if (offline) script = await VerifyOfflineInstallerAsync(stage, suffix, release.Manifest, token);
             }
             token.ThrowIfCancellationRequested();
             gameGuard(root);
@@ -252,11 +252,9 @@ public static partial class AddonBridge
         finally { SafeFiles.DeleteOwnedTree(work, stage); }
     }
 
-    private static async Task<string> VerifyOfflineInstallerAsync(string stage, string suffix, Release release, Downloads downloads, CancellationToken token)
+    private static async Task<string> VerifyOfflineInstallerAsync(string stage, string suffix, byte[] manifestBytes, CancellationToken token)
     {
         var manifestName = suffix == ".command" ? "macOS-package.json" : suffix == ".sh" ? "linux-package.json" : "package.json";
-        var manifestBytes = suffix == ".ps1" ? release.Manifest :
-            await downloads.ReadAsync(release.PublicDownloadBase + manifestName, MaximumManifest, ValidateUrl, token);
         RequireArchiveManifest(stage, manifestName, manifestBytes);
         using var document = JsonDocument.Parse(manifestBytes);
         var manifest = document.RootElement;
@@ -266,22 +264,6 @@ public static partial class AddonBridge
         var script = SafeFiles.Under(stage, relative);
         if (!Catalog.IsHash(expected) || await Catalog.HashAsync(script, token) != expected)
             throw new InvalidDataException("Addon installer checksum mismatch.");
-        if (suffix != ".ps1" && !manifestBytes.AsSpan().SequenceEqual(release.Manifest))
-        {
-            const string resource = "Addons/Runtime/ui-resources.json";
-            using var current = JsonDocument.Parse(release.Manifest);
-            if (current.RootElement.GetProperty("version").GetString() != manifest.GetProperty("version").GetString())
-                throw new InvalidDataException("The addon archive versions do not match.");
-            var file = current.RootElement.GetProperty("files").EnumerateArray().Single(row => row.GetProperty("path").GetString() == resource);
-            if (file.GetProperty("asset").GetString() != "ui-resources.json")
-                throw new InvalidDataException("Invalid addon UI resource identity.");
-            var resourceHash = file.GetProperty("sha256").GetString();
-            var bytes = await downloads.ReadAsync(release.PublicDownloadBase + "ui-resources.json", MaximumManifest, ValidateUrl, token);
-            if (!Catalog.IsHash(resourceHash) || Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant() != resourceHash)
-                throw new InvalidDataException("Addon UI resource checksum mismatch.");
-            SafeFiles.WriteAtomic(SafeFiles.Under(stage, resource), bytes);
-            SafeFiles.WriteAtomic(SafeFiles.Under(stage, manifestName), release.Manifest);
-        }
         return script;
     }
 
